@@ -19,13 +19,13 @@ jobs:
       - name: 'az account show'
         run: |
           az account show
-      - name: Setup Tailscale
-        uses: tailscale/github-action@v1
-        with:
-          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
-      - name: Check Connectivity
-        run: |
-          curl -k -v "${REKOR_URL}/ping"
+#      - name: Setup Tailscale
+#        uses: tailscale/github-action@v1
+#        with:
+#          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+#      - name: Check Connectivity
+#        run: |
+#          curl -k -v "${REKOR_URL}/ping"
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3
         with:
