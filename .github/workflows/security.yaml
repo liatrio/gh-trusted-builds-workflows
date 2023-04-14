@@ -10,11 +10,6 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - name: Trust Rekor Certificate
-        run: |
-          openssl x509 -in <(openssl s_client -showcerts -servername "${REKOR_HOST}" -connect "${REKOR_HOST}":443 </dev/null) > rekor.crt
-          cp rekor.crt /usr/local/share/ca-certificates
-          sudo update-ca-certificates
       - name: 'az login'
         uses: azure/login@v1
         with:
@@ -28,9 +23,11 @@ jobs:
         uses: tailscale/github-action@v1
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
-      - name: Check Connectivity
+      - name: Trust Rekor Certificate
         run: |
-          curl -v "https://${REKOR_HOST}/ping"
+          openssl x509 -in <(openssl s_client -showcerts -servername "${REKOR_HOST}" -connect "${REKOR_HOST}":443 </dev/null) > rekor.crt
+          cp rekor.crt /usr/local/share/ca-certificates
+          sudo update-ca-certificates
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3
         with:
