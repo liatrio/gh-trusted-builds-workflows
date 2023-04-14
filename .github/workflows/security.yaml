@@ -41,7 +41,6 @@ jobs:
               --output-signature artifact.txt.sig \
               --key ${{ secrets.SECURITY_AZURE_KEYVAULT_KEY }} \
               --rekor-url "${REKOR_URL}" \
-              --tlog-upload=false \
               ./artifact.txt
 
 #  show-claims:
