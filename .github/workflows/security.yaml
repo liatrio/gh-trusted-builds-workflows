@@ -3,6 +3,7 @@ on:
     branches:
       - main
   workflow_call:
+  workflow_dispatch:
 
 env:
   REKOR_HOST: "rekor.sec-guild-dev.private.northcentralus.azmk8s.io"
@@ -53,10 +54,10 @@ jobs:
 #        run: |
 #          echo "Requesting token"
 #          IDTOKEN=$(curl -H "Authorization: Bearer ${{steps.script.outputs.TOKEN}}" ${{steps.script.outputs.TOKENURL}}  -H "Accept: application/json; api-version=2.0" -H "Content-Type: application/json" -d "{}" | jq -r '.value')
-#          jwtd() {
-#              if [[ -x $(command -v jq) ]]; then
-#                  jq -R 'split(".") | .[0],.[1] | @base64d | fromjson' <<< "${1}"
-#                  echo "Signature: $(echo "${1}" | awk -F'.' '{print $3}')"
-#              fi
-#          }
+          jwtd() {
+              if [[ -x $(command -v jq) ]]; then
+                  jq -R 'split(".") | .[0],.[1] | @base64d | fromjson' <<< "${1}"
+                  echo "Signature: $(echo "${1}" | awk -F'.' '{print $3}')"
+              fi
+          }
 #          jwtd $IDTOKEN
