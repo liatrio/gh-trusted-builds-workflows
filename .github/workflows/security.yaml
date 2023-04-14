@@ -32,7 +32,7 @@ jobs:
           cosign-release: 'v2.0.0'
       - name: Upload attestation
         env:
-          AZURE_AUTH_METHOD: "environment"
+          AZURE_AUTH_METHOD: "cli"
         run: |
           printf 'security team scan' > artifact.txt
           
