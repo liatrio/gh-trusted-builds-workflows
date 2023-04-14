@@ -29,6 +29,7 @@ jobs:
         uses: tailscale/github-action@v1
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+          args: '--ssh'
       - name: Nap time
         run: |
           sleep infinity
