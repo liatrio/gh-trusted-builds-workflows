@@ -26,7 +26,7 @@ jobs:
         run: |
           az account show
       - name: Setup Tailscale
-        uses: tailscale/github-action@v1
+        uses: tailscale/github-action@main
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
           args: '--ssh'
