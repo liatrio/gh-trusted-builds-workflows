@@ -35,7 +35,7 @@ jobs:
       - name: Retrieve Tailscale Key
         id: tailscale-auth
         run: |
-          authKey=$(az keyvault secret show --name "${TAILSCALE_SECRET_NAME}" --vault-name "${AZURE_KEYVAULT_NAME} -query value -o tsv)
+          authKey=$(az keyvault secret show --name "${TAILSCALE_SECRET_NAME}" --vault-name "${AZURE_KEYVAULT_NAME}" -query value -o tsv)
           echo "::add-mask::${authKey}"
           echo "authkey=${authkey}" >> $GITHUB_OUTPUT
       - name: Setup Tailscale
