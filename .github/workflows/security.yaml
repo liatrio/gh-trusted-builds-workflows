@@ -26,10 +26,22 @@ jobs:
       - name: Check Connectivity
         run: |
           curl -k -v "${REKOR_URL}/ping"
-      - name: Tailscale Logout
-        if: always()
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: 'v2.0.0'
+      - name: Upload attestation
+        image: gcr.io/projectsigstore/cosign:v1.13.0
         run: |
-          tailscale logout
+          printf 'security team scan' > artifact.txt
+          
+          cosign sign-blob \
+              --verbose \
+              --output-signature artifact.txt.sig \
+              --key ${{ secrets.SECURITY_AZURE_KEYVAULT_KEY }} \
+              --rekor-url "${REKOR_URL}" \
+              --tlog-upload=false \
+              ./artifact.txt
 
 #  show-claims:
 #    permissions:
