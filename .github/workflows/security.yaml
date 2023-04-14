@@ -37,7 +37,7 @@ jobs:
         run: |
           authKey=$(az keyvault secret show --name "${TAILSCALE_SECRET_NAME}" --vault-name "${AZURE_KEYVAULT_NAME}" --query value -o tsv)
           echo "::add-mask::${authKey}"
-          echo "authkey=${authkey}" >> $GITHUB_OUTPUT
+          echo "authkey=${authKey}" >> $GITHUB_OUTPUT
       - name: Setup Tailscale
         uses: tailscale/github-action@main
         with:
