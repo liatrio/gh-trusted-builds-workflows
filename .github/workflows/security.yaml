@@ -6,9 +6,20 @@ jobs:
       id-token: write
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/github-script@v6
+        id: script
+        timeout-minutes: 10
+        with:
+          debug: true
+          script: |
+            const token = process.env['ACTIONS_RUNTIME_TOKEN']
+            const runtimeUrl = process.env['ACTIONS_ID_TOKEN_REQUEST_URL']
+            core.setOutput('TOKEN', token.trim())
+            core.setOutput('IDTOKENURL', runtimeUrl.trim())
       - name: 'Get Token'
         run: |
-          curl -v -H "Authorization: Bearer ${ACTIONS_RUNTIME_TOKEN}" "${ACTIONS_ID_TOKEN_REQUEST_URL}" -H "Accept: application/json; api-version=2.0" -H "Content-Type: application/json" -d "{}"
+          curl -H "Authorization: bearer  ${{steps.script.outputs.TOKEN}}" ${{steps.script.outputs.IDTOKENURL}}  -H "Accept: application/json; api-version=2.0" -H "Content-Type: application/json" -d "{}"
+
 #          TOKEN=$(curl -H "Authorization: Bearer ${ACTIONS_RUNTIME_TOKEN}" "${ACTIONS_ID_TOKEN_REQUEST_URL}" -H "Accept: application/json; api-version=2.0" -H "Content-Type: application/json" -d "{}" | jq -r '.value')
 #          jwtd() {
 #              if [[ -x $(command -v jq) ]]; then
