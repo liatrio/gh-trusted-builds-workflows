@@ -2,10 +2,17 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch: {}
+  workflow_dispatch:
+  workflow_call:
 
 env:
+  AZURE_CLIENT_ID: "58162388-16a0-4c7c-91f4-bdfc1ce2cd69"
+  AZURE_TENANT_ID: "1b4a4fed-fed8-4823-a8a0-3d5cea83d122"
+  AZURE_SUBSCRIPTION_ID: "3e16852e-8399-4c16-b246-16bf46bc3747"
+  AZURE_KEYVAULT_NAME: "ag-poc-security-OtfL"
   REKOR_HOST: "rekor.sec-guild-dev.private.northcentralus.azmk8s.io"
+  SIGNING_KEY_NAME: "security-team-cosign"
+  TAILSCALE_SECRET_NAME: "tailscale-authkey"
 
 jobs:
   az-auth:
@@ -19,21 +26,46 @@ jobs:
       - name: 'az login'
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
       - name: 'az account show'
         run: |
           az account show
+      - name: Retrieve Tailscale Key
+        id: tailscale-auth
+        run: |
+          authKey=$(az keyvault secret show \
+                      --name "${TAILSCALE_SECRET_NAME}" \
+                      --vault-name "${AZURE_KEYVAULT_NAME} -query value -o tsv)
+          echo "::add-mask::${authKey}"
+          echo "authkey=${authkey}" >> $GITHUB_OUTPUT
+
       - name: Setup Tailscale
         uses: tailscale/github-action@main
         with:
-          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
-          args: '--ssh'
-      - name: Nap time
+          authkey: ${{ steps.tailscale-auth.outputs.authkey }}
+      - name: Trust Ingress CA Certificate
         run: |
-          sleep infinity
+          sudo cp ca.crt /usr/local/share/ca-certificates
+          sudo update-ca-certificates
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: 'v2.0.0'
+      - name: Upload attestation
+        env:
+          AZURE_AUTH_METHOD: "cli"
+        run: |
+          printf 'security team scan' > artifact.txt
 
+          cosign sign-blob \
+              --verbose \
+              --output-signature artifact.txt.sig \
+              --key "azurekms://${AZURE_KEYVAULT_NAME}.vault.azure.net/${SIGNING_KEY_NAME}" \
+              --rekor-url "https://${REKOR_HOST}" \
+              -y \
+              ./artifact.txt
 #  show-claims:
 #    permissions:
 #      id-token: write
