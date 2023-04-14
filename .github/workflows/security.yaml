@@ -31,7 +31,6 @@ jobs:
         with:
           cosign-release: 'v2.0.0'
       - name: Upload attestation
-        image: gcr.io/projectsigstore/cosign:v1.13.0
         run: |
           printf 'security team scan' > artifact.txt
           
