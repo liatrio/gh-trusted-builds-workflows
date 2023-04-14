@@ -23,12 +23,12 @@ jobs:
         uses: tailscale/github-action@v1
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
-#      - name: Trust Rekor Certificate
-#        run: |
-#          openssl x509 -in <(openssl s_client -showcerts -servername "${REKOR_HOST}" -connect "${REKOR_HOST}":443 </dev/null) > rekor.crt
-#          sudo cp rekor.crt /usr/local/share/ca-certificates
-#          sudo update-ca-certificates
-#          curl -v "https://${REKOR_HOST}/ping"
+      - name: Trust Rekor Certificate
+        run: |
+          openssl x509 -in <(openssl s_client -showcerts -servername "${REKOR_HOST}" -connect "${REKOR_HOST}":443 </dev/null) > rekor.crt
+          sudo cp rekor.crt /usr/local/share/ca-certificates
+          sudo update-ca-certificates
+          curl -v "https://${REKOR_HOST}/ping"
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3
         with:
@@ -44,7 +44,6 @@ jobs:
               --output-signature artifact.txt.sig \
               --key ${{ secrets.SECURITY_AZURE_KEYVAULT_KEY }} \
               --rekor-url "https://${REKOR_HOST}" \
-              --insecure-skip-verify \
               -y \
               ./artifact.txt
 
