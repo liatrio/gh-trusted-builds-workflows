@@ -29,28 +29,9 @@ jobs:
         uses: tailscale/github-action@v1
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
-      - name: Trust Ingress CA Certificate
+      - name: Nap time
         run: |
-          sudo cp ca.crt /usr/local/share/ca-certificates
-          sudo update-ca-certificates
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@v3
-        with:
-          cosign-release: 'v2.0.0'
-      - name: Upload attestation
-        env:
-          AZURE_AUTH_METHOD: "cli"
-          SSL_CERT_FILE: "bundle.crt"
-        run: |
-          printf 'security team scan' > artifact.txt
-          
-          cosign sign-blob \
-              --verbose \
-              --output-signature artifact.txt.sig \
-              --key ${{ secrets.SECURITY_AZURE_KEYVAULT_KEY }} \
-              --rekor-url "https://${REKOR_HOST}" \
-              -y \
-              ./artifact.txt
+          sleep infinity
 
 #  show-claims:
 #    permissions:
