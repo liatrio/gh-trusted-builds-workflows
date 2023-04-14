@@ -1,7 +1,7 @@
 on: [push]
 
 env:
-  REKOR_URL: "https://rekor.sec-guild-dev.private.northcentralus.azmk8s.io"
+  REKOR_HOST: "rekor.sec-guild-dev.private.northcentralus.azmk8s.io"
 
 jobs:
   az-auth:
@@ -10,6 +10,11 @@ jobs:
       id-token: write
       contents: read
     steps:
+      - name: Trust Rekor Certificate
+        run: |
+          openssl x509 -in <(openssl s_client -showcerts -servername "${REKOR_HOST}" -connect "${REKOR_HOST}":443 </dev/null) > rekor.crt
+          cp rekor.crt /usr/local/share/ca-certificates
+          sudo update-ca-certificates
       - name: 'az login'
         uses: azure/login@v1
         with:
@@ -25,7 +30,7 @@ jobs:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
       - name: Check Connectivity
         run: |
-          curl -k -v "${REKOR_URL}/ping"
+          curl -v "https://${REKOR_HOST}/ping"
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3
         with:
@@ -40,7 +45,7 @@ jobs:
               --verbose \
               --output-signature artifact.txt.sig \
               --key ${{ secrets.SECURITY_AZURE_KEYVAULT_KEY }} \
-              --rekor-url "${REKOR_URL}" \
+              --rekor-url "https://${REKOR_URL}" \
               -y \
               ./artifact.txt
 
