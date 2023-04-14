@@ -1,29 +1,45 @@
 on: [push]
 
 jobs:
-  show-claims:
+  az-auth:
+    runs-on: ubuntu-latest
     permissions:
       id-token: write
-    runs-on: ubuntu-latest
+      contents: read
     steps:
-      - uses: actions/github-script@v6
-        id: script
-        timeout-minutes: 10
+      - name: 'Az CLI login'
+        uses: azure/login@v1
         with:
-          debug: true
-          script: |
-            const token = process.env['ACTIONS_RUNTIME_TOKEN']
-            const runtimeUrl = process.env['ACTIONS_ID_TOKEN_REQUEST_URL']
-            core.setOutput('TOKEN', token.trim())
-            core.setOutput('TOKENURL', runtimeUrl.trim())
-      - name: 'Get Token'
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: 'Run az commands'
         run: |
-          echo "Requesting token"
-          IDTOKEN=$(curl -H "Authorization: Bearer ${{steps.script.outputs.TOKEN}}" ${{steps.script.outputs.TOKENURL}}  -H "Accept: application/json; api-version=2.0" -H "Content-Type: application/json" -d "{}" | jq -r '.value')
-          jwtd() {
-              if [[ -x $(command -v jq) ]]; then
-                  jq -R 'split(".") | .[0],.[1] | @base64d | fromjson' <<< "${1}"
-                  echo "Signature: $(echo "${1}" | awk -F'.' '{print $3}')"
-              fi
-          }
-          jwtd $IDTOKEN
+          az account show
+          az group list
+#  show-claims:
+#    permissions:
+#      id-token: write
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/github-script@v6
+#        id: script
+#        timeout-minutes: 10
+#        with:
+#          debug: true
+#          script: |
+#            const token = process.env['ACTIONS_RUNTIME_TOKEN']
+#            const runtimeUrl = process.env['ACTIONS_ID_TOKEN_REQUEST_URL']
+#            core.setOutput('TOKEN', token.trim())
+#            core.setOutput('TOKENURL', runtimeUrl.trim())
+#      - name: 'Get Token'
+#        run: |
+#          echo "Requesting token"
+#          IDTOKEN=$(curl -H "Authorization: Bearer ${{steps.script.outputs.TOKEN}}" ${{steps.script.outputs.TOKENURL}}  -H "Accept: application/json; api-version=2.0" -H "Content-Type: application/json" -d "{}" | jq -r '.value')
+#          jwtd() {
+#              if [[ -x $(command -v jq) ]]; then
+#                  jq -R 'split(".") | .[0],.[1] | @base64d | fromjson' <<< "${1}"
+#                  echo "Signature: $(echo "${1}" | awk -F'.' '{print $3}')"
+#              fi
+#          }
+#          jwtd $IDTOKEN
