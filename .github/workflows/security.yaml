@@ -1,4 +1,6 @@
-on: [push]
+on:
+  push: main
+  workflow_call:
 
 env:
   REKOR_HOST: "rekor.sec-guild-dev.private.northcentralus.azmk8s.io"
@@ -25,7 +27,7 @@ jobs:
         uses: tailscale/github-action@v1
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
-      - name: Trust Rekor Certificate
+      - name: Trust Ingress CA Certificate
         run: |
           sudo cp ca.crt /usr/local/share/ca-certificates
           sudo update-ca-certificates
