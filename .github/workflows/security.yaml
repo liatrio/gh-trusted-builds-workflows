@@ -25,7 +25,11 @@ jobs:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
       - name: Check Connectivity
         run: |
-          curl -k -v "${REKOR_URL}/ping"          
+          curl -k -v "${REKOR_URL}/ping"
+      - name: Tailscale Logout
+        if: always()
+        run: |
+          tailscale logout
 
 #  show-claims:
 #    permissions:
