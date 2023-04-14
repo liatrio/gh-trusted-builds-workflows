@@ -10,6 +10,8 @@ jobs:
       id-token: write
       contents: read
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
       - name: 'az login'
         uses: azure/login@v1
         with:
@@ -25,13 +27,8 @@ jobs:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
       - name: Trust Rekor Certificate
         run: |
-          openssl x509 -in <(openssl s_client -showcerts -servername "${REKOR_HOST}" -connect "${REKOR_HOST}":443 </dev/null) > rekor.crt
-          sudo cp rekor.crt /usr/local/share/ca-certificates
+          sudo cp ca.crt /usr/local/share/ca-certificates
           sudo update-ca-certificates
-          
-          cp  /etc/ssl/certs/ca-certificates.crt bundle.crt
-          cat rekor.crt >> bundle.crt
-          cat bundle.crt
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3
         with:
