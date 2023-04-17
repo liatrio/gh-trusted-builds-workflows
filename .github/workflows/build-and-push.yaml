@@ -58,12 +58,22 @@ jobs:
         run: az account show
       - name: Authenticate to ACR
         run: az acr login -n "${ACR_NAME}"
-      - name: 'Build & Push'
-        container:
-          image: gcr.io/kaniko-project/executor:latest
-        run: |
-          kaniko --destination=agplatformrnim.azurecr.io/test
-
+      - name: Image Metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            agplatformrnim.azurecr.io/test
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+      - name: Build & Push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 #  sign:
 #    permissions:
 #      id-token: write
