@@ -56,7 +56,7 @@ jobs:
       id-token: write
       contents: read
     runs-on: ubuntu-latest
-    needs: [build-and-push]
+    needs: [build]
     steps:
       - name: 'az login'
         uses: azure/login@v1
