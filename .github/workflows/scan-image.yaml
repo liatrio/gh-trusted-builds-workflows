@@ -1,6 +1,9 @@
 on:
   workflow_dispatch:
   workflow_call:
+    inputs:
+      digest:
+        description: "Docker image digest"
 
 env:
   AZURE_CLIENT_ID: "58162388-16a0-4c7c-91f4-bdfc1ce2cd69"
@@ -29,6 +32,21 @@ jobs:
       - name: 'az account show'
         run: |
           az account show
+      - name: Authenticate to ACR
+        run: az acr login -n "${ACR_NAME}"
+      - name: Trivy Scan
+        uses: aquasecurity/trivy-action@v0.9.2
+        with:
+          image-ref: ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
+          format: 'json'
+          exit-code: '1'
+          ignore-unfixed: true
+          output: trivy.report.json
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+      - name: Show Report
+        run: |
+          cat trivy.report.json
       - name: Retrieve Tailscale Key
         id: tailscale-auth
         run: |
@@ -48,16 +66,24 @@ jobs:
         uses: sigstore/cosign-installer@v3
         with:
           cosign-release: 'v2.0.0'
-      - name: Upload attestation
+      - name: Sign Image
         env:
           AZURE_AUTH_METHOD: "cli"
         run: |
-          printf 'security team scan' > artifact.txt
+          cosign sign \
+            --verbose \
+            -a liatr.io/built-from=${{ github.repository }} \
+            -a liatr.io/built-by='liatrio/gh-trusted-builds-workflows/.github/workflows/scan-image.yaml' \
+            -a liatr.io/signed-off-by=security-team \
+            --output-signature image.sig \
+            --key "azurekms://${AZURE_KEYVAULT_NAME}.vault.azure.net/${SIGNING_KEY_NAME}" \
+            --rekor-url "https://${REKOR_HOST}" \
+            -y ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
 
-          cosign sign-blob \
-              --verbose \
-              --output-signature artifact.txt.sig \
-              --key "azurekms://${AZURE_KEYVAULT_NAME}.vault.azure.net/${SIGNING_KEY_NAME}" \
-              --rekor-url "https://${REKOR_HOST}" \
-              -y \
-              ./artifact.txt
+#          cosign sign-blob \
+#              --verbose \
+#              --output-signature artifact.txt.sig \
+#              --key "azurekms://${AZURE_KEYVAULT_NAME}.vault.azure.net/${SIGNING_KEY_NAME}" \
+#              --rekor-url "https://${REKOR_HOST}" \
+#              -y \
+#              ./artifact.txt
