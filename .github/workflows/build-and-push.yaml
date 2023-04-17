@@ -98,7 +98,8 @@ jobs:
         run: |
           cosign sign \
               --verbose \
-              -a liatr.io/built-by=${{ github.workflow_ref }} \
+              -a liatr.io/built-from=${{ github.repository }} \
+              -a liatr.io/built-by='liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml' \
               -a liatr.io/signed-off-by=platform-team \
               --output-signature image.sig \
               --key "azurekms://${AZURE_KEYVAULT_NAME}.vault.azure.net/${SIGNING_KEY_NAME}" \
