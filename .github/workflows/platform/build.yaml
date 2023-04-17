@@ -1,0 +1,41 @@
+on:
+  workflow_dispatch:
+  workflow_call:
+
+env:
+  AZURE_CLIENT_ID: "58162388-16a0-4c7c-91f4-bdfc1ce2cd69"
+  AZURE_TENANT_ID: "1b4a4fed-fed8-4823-a8a0-3d5cea83d122"
+  AZURE_SUBSCRIPTION_ID: "3e16852e-8399-4c16-b246-16bf46bc3747"
+  AZURE_KEYVAULT_NAME: "ag-poc-security-OtfL"
+  REKOR_HOST: "rekor.sec-guild-dev.private.northcentralus.azmk8s.io"
+  INGRESS_CA: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJkakNDQVIyZ0F3SUJBZ0lSQU1wWEY5RERJbGpHVUpaQ2ZvMXVPV2N3Q2dZSUtvWkl6ajBFQXdJd0d6RVoKTUJjR0ExVUVBeE1RYlhrdGMyVnNabk5wWjI1bFpDMWpZVEFlRncweU16QXlNak15TXpVME5EQmFGdzB5TXpBMQpNalF5TXpVME5EQmFNQnN4R1RBWEJnTlZCQU1URUcxNUxYTmxiR1p6YVdkdVpXUXRZMkV3V1RBVEJnY3Foa2pPClBRSUJCZ2dxaGtqT1BRTUJCd05DQUFTaUVFQjd2eUxLOWJaOHN6V1NCc2x1UDVJTlFaMms1OHBtMXJlZEJGNkMKY3BrbXZRRGlPTURrZFU0dzhZenp0UnI1dG9jbHd4MGkrdDNjTk56ZGU4dDdvMEl3UURBT0JnTlZIUThCQWY4RQpCQU1DQXFRd0R3WURWUjBUQVFIL0JBVXdBd0VCL3pBZEJnTlZIUTRFRmdRVXJ5OUI4ZUNnQ2RBUXRnYUsxNThMCk1yTm9xdUl3Q2dZSUtvWkl6ajBFQXdJRFJ3QXdSQUlnS0wxQXVIMXRPTzlZOU5Yd0JGenlsV0dyckJJblBBNm4KQVlZU0wyWjN4UU1DSUZxcTV4aWs0S1I4Rk9FaGxFdDkxUDk4THBndnVnT21UR2hjblVKRlA3YXEKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo="
+  SIGNING_KEY_NAME: "security-team-cosign"
+  TAILSCALE_SECRET_NAME: "tailscale-authkey"
+
+jobs:
+  show-claims:
+    permissions:
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v6
+        id: script
+        timeout-minutes: 10
+        with:
+          debug: true
+          script: |
+            const token = process.env['ACTIONS_RUNTIME_TOKEN']
+            const runtimeUrl = process.env['ACTIONS_ID_TOKEN_REQUEST_URL']
+            core.setOutput('TOKEN', token.trim())
+            core.setOutput('TOKENURL', runtimeUrl.trim())
+      - name: 'Get Token'
+        run: |
+          echo "Requesting token"
+          IDTOKEN=$(curl -H "Authorization: Bearer ${{steps.script.outputs.TOKEN}}" ${{steps.script.outputs.TOKENURL}}  -H "Accept: application/json; api-version=2.0" -H "Content-Type: application/json" -d "{}" | jq -r '.value')
+          jwtd() {
+              if [[ -x $(command -v jq) ]]; then
+                  jq -R 'split(".") | .[0],.[1] | @base64d | fromjson' <<< "${1}"
+                  echo "Signature: $(echo "${1}" | awk -F'.' '{print $3}')"
+              fi
+          }
+          jwtd $IDTOKEN
