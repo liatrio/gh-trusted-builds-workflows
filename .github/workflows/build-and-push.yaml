@@ -43,6 +43,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
+    runs-on: ubuntu-latest
     steps:
       - name: 'az login'
         uses: azure/login@v1
