@@ -13,7 +13,7 @@ env:
   TAILSCALE_SECRET_NAME: "tailscale-authkey"
 
 jobs:
-  show-claims:
+  claims:
     permissions:
       id-token: write
     runs-on: ubuntu-latest

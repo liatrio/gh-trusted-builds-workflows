@@ -6,14 +6,15 @@ env:
   AZURE_CLIENT_ID: "48fbd2e1-8375-4c05-9957-f5c6c702181f"
   AZURE_TENANT_ID: "1b4a4fed-fed8-4823-a8a0-3d5cea83d122"
   AZURE_SUBSCRIPTION_ID: "3e16852e-8399-4c16-b246-16bf46bc3747"
-  AZURE_KEYVAULT_NAME: "ag-poc-security-OtfL" # ag-poc-platform-c2wn
+  AZURE_KEYVAULT_NAME: "ag-poc-platform-c2wn"
+  ACR_NAME: "agplatformRNim"
   REKOR_HOST: "rekor.sec-guild-dev.private.northcentralus.azmk8s.io"
   INGRESS_CA: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJkakNDQVIyZ0F3SUJBZ0lSQU1wWEY5RERJbGpHVUpaQ2ZvMXVPV2N3Q2dZSUtvWkl6ajBFQXdJd0d6RVoKTUJjR0ExVUVBeE1RYlhrdGMyVnNabk5wWjI1bFpDMWpZVEFlRncweU16QXlNak15TXpVME5EQmFGdzB5TXpBMQpNalF5TXpVME5EQmFNQnN4R1RBWEJnTlZCQU1URUcxNUxYTmxiR1p6YVdkdVpXUXRZMkV3V1RBVEJnY3Foa2pPClBRSUJCZ2dxaGtqT1BRTUJCd05DQUFTaUVFQjd2eUxLOWJaOHN6V1NCc2x1UDVJTlFaMms1OHBtMXJlZEJGNkMKY3BrbXZRRGlPTURrZFU0dzhZenp0UnI1dG9jbHd4MGkrdDNjTk56ZGU4dDdvMEl3UURBT0JnTlZIUThCQWY4RQpCQU1DQXFRd0R3WURWUjBUQVFIL0JBVXdBd0VCL3pBZEJnTlZIUTRFRmdRVXJ5OUI4ZUNnQ2RBUXRnYUsxNThMCk1yTm9xdUl3Q2dZSUtvWkl6ajBFQXdJRFJ3QXdSQUlnS0wxQXVIMXRPTzlZOU5Yd0JGenlsV0dyckJJblBBNm4KQVlZU0wyWjN4UU1DSUZxcTV4aWs0S1I4Rk9FaGxFdDkxUDk4THBndnVnT21UR2hjblVKRlA3YXEKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo="
-  SIGNING_KEY_NAME: "security-team-cosign"
+  SIGNING_KEY_NAME: "platform-team-cosign"
   TAILSCALE_SECRET_NAME: "tailscale-authkey"
 
 jobs:
-  show-claims:
+  claims:
     permissions:
       id-token: write
     runs-on: ubuntu-latest
@@ -45,18 +46,67 @@ jobs:
       contents: read
     runs-on: ubuntu-latest
     steps:
-      - name: 'az login'
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: az login
         uses: azure/login@v1
         with:
           client-id: ${{ env.AZURE_CLIENT_ID }}
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
-      - name: 'az account show'
+      - name: az account show
+        run: az account show
+      - name: Authenticate to ACR
+        run: az acr login -n "${ACR_NAME}"
+      - name: 'Build & Push'
+        container:
+          image: gcr.io/kaniko-project/executor:latest
         run: |
-          az account show
-      - name: Retrieve Tailscale Key
-        id: tailscale-auth
-        run: |
-          authKey=$(az keyvault secret show --name "${TAILSCALE_SECRET_NAME}" --vault-name "${AZURE_KEYVAULT_NAME}" --query value -o tsv)
-          echo "::add-mask::${authKey}"
-          echo "authkey=${authKey}" >> $GITHUB_OUTPUT
+          kaniko --destination=agplatformrnim.azurecr.io/test
+
+#  sign:
+#    permissions:
+#      id-token: write
+#      contents: read
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: 'az login'
+#        uses: azure/login@v1
+#        with:
+#          client-id: ${{ env.AZURE_CLIENT_ID }}
+#          tenant-id: ${{ env.AZURE_TENANT_ID }}
+#          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+#      - name: 'az account show'
+#        run: |
+#          az account show
+#      - name: Retrieve Tailscale Key
+#        id: tailscale-auth
+#        run: |
+#          authKey=$(az keyvault secret show --name "${TAILSCALE_SECRET_NAME}" --vault-name "${AZURE_KEYVAULT_NAME}" --query value -o tsv)
+#          echo "::add-mask::${authKey}"
+#          echo "authkey=${authKey}" >> $GITHUB_OUTPUT
+#      - name: Setup Tailscale
+#        uses: tailscale/github-action@main
+#        with:
+#          authkey: ${{ steps.tailscale-auth.outputs.authkey }}
+#      - name: Trust Ingress CA Certificate
+#        run: |
+#          printf "${INGRESS_CA}" | base64 -d > ca.crt
+#          sudo cp ca.crt /usr/local/share/ca-certificates
+#          sudo update-ca-certificates
+#      - name: Install Cosign
+#        uses: sigstore/cosign-installer@v3
+#        with:
+#          cosign-release: 'v2.0.0'
+#      - name: Sign
+#        env:
+#          AZURE_AUTH_METHOD: "cli"
+#        run: |
+#          # TODO: annotate
+#          cosign sign \
+#              --verbose \
+#              --output-signature artifact.txt.sig \
+#              --key "azurekms://${AZURE_KEYVAULT_NAME}.vault.azure.net/${SIGNING_KEY_NAME}" \
+#              --rekor-url "https://${REKOR_HOST}" \
+#              -y \
+#              ./artifact.txt
