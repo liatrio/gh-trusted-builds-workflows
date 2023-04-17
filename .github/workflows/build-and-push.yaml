@@ -96,4 +96,4 @@ jobs:
               --output-signature image.sig \
               --key "azurekms://${AZURE_KEYVAULT_NAME}.vault.azure.net/${SIGNING_KEY_NAME}" \
               --rekor-url "https://${REKOR_HOST}" \
-              -y agplatformrnim.azurecr.io/test@${{ needs.build-and-push.outputs.digest }}
+              -y agplatformrnim.azurecr.io/test@${{ needs.build.outputs.digest }}
