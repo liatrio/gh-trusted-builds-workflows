@@ -46,8 +46,6 @@ jobs:
       contents: read
     needs: [show-claims]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
       - name: 'az login'
         uses: azure/login@v1
         with:
