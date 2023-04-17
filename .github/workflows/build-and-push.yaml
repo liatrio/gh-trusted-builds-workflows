@@ -3,7 +3,7 @@ on:
   workflow_call:
 
 env:
-  AZURE_CLIENT_ID: "58162388-16a0-4c7c-91f4-bdfc1ce2cd69"
+  AZURE_CLIENT_ID: "48fbd2e1-8375-4c05-9957-f5c6c702181f"
   AZURE_TENANT_ID: "1b4a4fed-fed8-4823-a8a0-3d5cea83d122"
   AZURE_SUBSCRIPTION_ID: "3e16852e-8399-4c16-b246-16bf46bc3747"
   AZURE_KEYVAULT_NAME: "ag-poc-security-OtfL" # ag-poc-platform-c2wn
