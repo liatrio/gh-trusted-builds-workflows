@@ -46,6 +46,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
+            latest
       - name: Build & Push
         id: build
         uses: docker/build-push-action@v4
@@ -95,9 +96,10 @@ jobs:
         env:
           AZURE_AUTH_METHOD: "cli"
         run: |
-          # TODO: annotate
           cosign sign \
               --verbose \
+              -a liatr.io/built-by=${{ github.workflow_ref }} \
+              -a liatr.io/signed-off-by=platform-team \
               --output-signature image.sig \
               --key "azurekms://${AZURE_KEYVAULT_NAME}.vault.azure.net/${SIGNING_KEY_NAME}" \
               --rekor-url "https://${REKOR_HOST}" \
