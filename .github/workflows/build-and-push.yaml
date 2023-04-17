@@ -1,6 +1,10 @@
 on:
   workflow_dispatch:
   workflow_call:
+    outputs:
+      digest:
+        description: "Docker image digest"
+        value: ${{ jobs.build.outputs.digest }}
 
 env:
   AZURE_CLIENT_ID: "48fbd2e1-8375-4c05-9957-f5c6c702181f"
@@ -8,6 +12,7 @@ env:
   AZURE_SUBSCRIPTION_ID: "3e16852e-8399-4c16-b246-16bf46bc3747"
   AZURE_KEYVAULT_NAME: "ag-poc-platform-c2wn"
   ACR_NAME: "agplatformrnim"
+  IMAGE_URI: "${ACR_NAME}.azurecr.io/${{ github.repository }}"
   REKOR_HOST: "rekor.sec-guild-dev.private.northcentralus.azmk8s.io"
   INGRESS_CA: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJkakNDQVIyZ0F3SUJBZ0lSQU1wWEY5RERJbGpHVUpaQ2ZvMXVPV2N3Q2dZSUtvWkl6ajBFQXdJd0d6RVoKTUJjR0ExVUVBeE1RYlhrdGMyVnNabk5wWjI1bFpDMWpZVEFlRncweU16QXlNak15TXpVME5EQmFGdzB5TXpBMQpNalF5TXpVME5EQmFNQnN4R1RBWEJnTlZCQU1URUcxNUxYTmxiR1p6YVdkdVpXUXRZMkV3V1RBVEJnY3Foa2pPClBRSUJCZ2dxaGtqT1BRTUJCd05DQUFTaUVFQjd2eUxLOWJaOHN6V1NCc2x1UDVJTlFaMms1OHBtMXJlZEJGNkMKY3BrbXZRRGlPTURrZFU0dzhZenp0UnI1dG9jbHd4MGkrdDNjTk56ZGU4dDdvMEl3UURBT0JnTlZIUThCQWY4RQpCQU1DQXFRd0R3WURWUjBUQVFIL0JBVXdBd0VCL3pBZEJnTlZIUTRFRmdRVXJ5OUI4ZUNnQ2RBUXRnYUsxNThMCk1yTm9xdUl3Q2dZSUtvWkl6ajBFQXdJRFJ3QXdSQUlnS0wxQXVIMXRPTzlZOU5Yd0JGenlsV0dyckJJblBBNm4KQVlZU0wyWjN4UU1DSUZxcTV4aWs0S1I4Rk9FaGxFdDkxUDk4THBndnVnT21UR2hjblVKRlA3YXEKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo="
   SIGNING_KEY_NAME: "platform-team-cosign"
@@ -38,8 +43,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: |
-            agplatformrnim.azurecr.io/test
+          images: ${{ env.IMAGE_URI }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -98,4 +102,9 @@ jobs:
               --output-signature image.sig \
               --key "azurekms://${AZURE_KEYVAULT_NAME}.vault.azure.net/${SIGNING_KEY_NAME}" \
               --rekor-url "https://${REKOR_HOST}" \
-              -y agplatformrnim.azurecr.io/test@${{ needs.build.outputs.digest }}
+              -y ${IMAGE_URI}@${{ needs.build.outputs.digest }}
+      - name: Archive Image Signature
+        uses: actions/upload-artifact@v3
+        with:
+          name: image.sig
+          path: image.sig
