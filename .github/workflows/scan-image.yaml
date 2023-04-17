@@ -36,9 +36,9 @@ jobs:
           az account show
       - name: Authenticate to ACR
         run: az acr login -n "${ACR_NAME}"
-      - name: Pull Image
-        run: |
-          docker pull ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
+#      - name: Pull Image
+#        run: |
+#          docker pull ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
       - name: Trivy Scan
         uses: aquasecurity/trivy-action@0.9.2
         with:
@@ -49,6 +49,11 @@ jobs:
           output: trivy.report.json
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
+      - name: Upload Trivy Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: trivy.report.json
+          path: trivy.report.json
       - name: Show Report
         run: |
           cat trivy.report.json
@@ -91,3 +96,8 @@ jobs:
 #              --rekor-url "https://${REKOR_HOST}" \
 #              -y \
 #              ./artifact.txt
+      - name: Upload Image Signature
+        uses: actions/upload-artifact@v3
+        with:
+          name: image.sig
+          path: image.sig

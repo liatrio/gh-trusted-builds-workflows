@@ -105,7 +105,7 @@ jobs:
               --key "azurekms://${AZURE_KEYVAULT_NAME}.vault.azure.net/${SIGNING_KEY_NAME}" \
               --rekor-url "https://${REKOR_HOST}" \
               -y ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ needs.build.outputs.digest }}
-      - name: Archive Image Signature
+      - name: Upload Image Signature
         uses: actions/upload-artifact@v3
         with:
           name: image.sig
