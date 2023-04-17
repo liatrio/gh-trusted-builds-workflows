@@ -108,5 +108,5 @@ jobs:
       - name: Upload Image Signature
         uses: actions/upload-artifact@v3
         with:
-          name: image.sig
+          name: platform.sig
           path: image.sig

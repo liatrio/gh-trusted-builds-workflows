@@ -100,7 +100,7 @@ jobs:
       - name: Upload Signatures
         uses: actions/upload-artifact@v3
         with:
-          name: signatures
+          name: security.sig
           path: |
             image.sig
             trivy.report.json.sig
