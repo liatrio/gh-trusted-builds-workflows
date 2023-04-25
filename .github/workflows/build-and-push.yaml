@@ -69,7 +69,7 @@ jobs:
       id-token: write
       contents: read
     runs-on: ubuntu-latest
-    needs: [push]
+    needs: [build]
     steps:
       - name: Azure Login
         uses: azure/login@v1
