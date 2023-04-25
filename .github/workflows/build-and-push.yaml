@@ -22,6 +22,7 @@ jobs:
   build:
     permissions:
       id-token: none
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
