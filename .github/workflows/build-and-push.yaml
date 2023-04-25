@@ -19,6 +19,20 @@ env:
   TAILSCALE_SECRET_NAME: "tailscale-authkey"
 
 jobs:
+  source-attestations:
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ env.CUSTOM_ATTESTATIONS_IMAGE }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Pull Request Attestation
+        run: |
+          /app/attestor \
+            --attestor "github-pull-request" \
+            --rekor-url "https://${REKOR_HOST}" \
+            --kms-key-uri "azurekms://${AZURE_KEYVAULT_NAME}.vault.azure.net/${SIGNING_KEY_NAME}"
+
   build:
     permissions:
       id-token: write
