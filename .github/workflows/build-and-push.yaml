@@ -58,9 +58,10 @@ jobs:
 
       - name: Build & Push Image
         uses: docker/build-push-action@v4
+        id: build
         with:
           context: .
-          push: false
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           provenance: mode=max
