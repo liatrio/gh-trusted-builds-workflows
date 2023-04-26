@@ -22,14 +22,13 @@ jobs:
     permissions:
       id-token: write
       contents: read
+      pull-requests: read
     runs-on: ubuntu-latest
     container:
       image: "ghcr.io/liatrio/custom-attestations-poc:latest"
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GH_CR_PAT }}
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -45,6 +44,8 @@ jobs:
         run: az account show
 
       - name: Pull Request Attestation
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           /app/attestor \
             --attestor "github-pull-request" \
