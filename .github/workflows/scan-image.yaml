@@ -83,8 +83,8 @@ jobs:
         run: |
           cosign sign \
             --verbose \
-            -a liatr.io/scanned-by='${{ github.workflow_ref }}' \
-            -a liatr.io/job-link='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
+            -a liatr.io/scanned-by='liatrio/gh-trusted-builds-workflows/.github/workflows/scan-image.yaml' \
+            -a liatr.io/github-actions-run-link='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
             -a liatr.io/signed-off-by=security-team \
             --output-signature image.sig \
             --key "azurekms://${AZURE_KEYVAULT_NAME}.vault.azure.net/${SIGNING_KEY_NAME}" \
