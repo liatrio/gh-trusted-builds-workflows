@@ -102,9 +102,6 @@ jobs:
       - name: Authenticate to ACR
         run: az acr login -n "${ACR_NAME}"
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
       - name: Download Image Archive
         uses: actions/download-artifact@v3
         with:
@@ -117,7 +114,7 @@ jobs:
           docker load --input /tmp/image.tar
           image='${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}'
           docker push -a $image
-          digest=$(docker inspect --format='{{index .RepoDigests 0}}' | awk -F "${image}@" '{print $2}')
+          digest=$(docker inspect --format='{{index .RepoDigests 0}}' '${image}' | awk -F "${image}@" '{print $2}')
           echo "image digest: ${digest}"
           echo "digest=${digest}" >> $GITHUB_OUTPUT
 
