@@ -12,6 +12,7 @@ env:
   AZURE_SUBSCRIPTION_ID: "3e16852e-8399-4c16-b246-16bf46bc3747"
   AZURE_KEYVAULT_NAME: "ag-poc-platform-c2wn"
   ACR_NAME: "agplatformrnim"
+  CUSTOM_ATTESTOR_VERSION: "0.1.0"
   REKOR_HOST: "rekor.sec-guild-dev.private.northcentralus.azmk8s.io"
   INGRESS_CA: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJkakNDQVIyZ0F3SUJBZ0lSQU1wWEY5RERJbGpHVUpaQ2ZvMXVPV2N3Q2dZSUtvWkl6ajBFQXdJd0d6RVoKTUJjR0ExVUVBeE1RYlhrdGMyVnNabk5wWjI1bFpDMWpZVEFlRncweU16QXlNak15TXpVME5EQmFGdzB5TXpBMQpNalF5TXpVME5EQmFNQnN4R1RBWEJnTlZCQU1URUcxNUxYTmxiR1p6YVdkdVpXUXRZMkV3V1RBVEJnY3Foa2pPClBRSUJCZ2dxaGtqT1BRTUJCd05DQUFTaUVFQjd2eUxLOWJaOHN6V1NCc2x1UDVJTlFaMms1OHBtMXJlZEJGNkMKY3BrbXZRRGlPTURrZFU0dzhZenp0UnI1dG9jbHd4MGkrdDNjTk56ZGU4dDdvMEl3UURBT0JnTlZIUThCQWY4RQpCQU1DQXFRd0R3WURWUjBUQVFIL0JBVXdBd0VCL3pBZEJnTlZIUTRFRmdRVXJ5OUI4ZUNnQ2RBUXRnYUsxNThMCk1yTm9xdUl3Q2dZSUtvWkl6ajBFQXdJRFJ3QXdSQUlnS0wxQXVIMXRPTzlZOU5Yd0JGenlsV0dyckJJblBBNm4KQVlZU0wyWjN4UU1DSUZxcTV4aWs0S1I4Rk9FaGxFdDkxUDk4THBndnVnT21UR2hjblVKRlA3YXEKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo="
   SIGNING_KEY_NAME: "platform-team-cosign"
@@ -24,14 +25,18 @@ jobs:
       contents: read
       pull-requests: read
     runs-on: ubuntu-latest
-    container:
-      image: "ghcr.io/liatrio/custom-attestations-poc:latest"
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GH_CR_PAT }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Download Attestor
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          gh release download --pattern "custom-attestations-poc_${CUSTOM_ATTESTOR_VERSION}_linux_amd64.tar.gz"
+          tar xvf "custom-attestations-poc_${CUSTOM_ATTESTOR_VERSION}_linux_amd64.tar.gz"
+          sudo cp ./attestor /usr/local/bin/attestor
+          attestor --help
 
       - name: Azure Login
         uses: azure/login@v1
@@ -66,7 +71,7 @@ jobs:
           AZURE_AUTH_METHOD: "cli"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          /app/attestor \
+          attestor \
             --attestor "github-pull-request" \
             --rekor-url "https://${REKOR_HOST}" \
             --kms-key-uri "azurekms://${AZURE_KEYVAULT_NAME}.vault.azure.net/${SIGNING_KEY_NAME}"
