@@ -65,8 +65,8 @@ jobs:
       - name: Trust Ingress CA Certificate
         run: |
           printf "${INGRESS_CA}" | base64 -d > ca.crt
-          cp ca.crt /usr/local/share/ca-certificates
-          update-ca-certificates
+          sudo cp ca.crt /usr/local/share/ca-certificates
+          sudo update-ca-certificates
 
       - name: Pull Request Attestation
         env:
