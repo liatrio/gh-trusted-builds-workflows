@@ -24,7 +24,7 @@ jobs:
       image: "ghcr.io/liatrio/custom-attestations-poc:latest"
       credentials:
         username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        password: ${{ secrets.GH_CR_PAT }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
