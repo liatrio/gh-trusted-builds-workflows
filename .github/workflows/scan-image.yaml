@@ -44,7 +44,7 @@ jobs:
         uses: aquasecurity/trivy-action@0.9.2
         with:
           image-ref: ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
-          format: 'json'
+          format: 'cosign-vuln'
           exit-code: '1'
           ignore-unfixed: true
           output: trivy.report.json
@@ -97,6 +97,16 @@ jobs:
               --rekor-url "https://${REKOR_HOST}" \
               -y \
               ./trivy.report.json
+
+          cosign attest \
+            --verbose \
+            --predicate ./trivy.report.json \
+            --type vuln \
+            --key "azurekms://${AZURE_KEYVAULT_NAME}.vault.azure.net/${SIGNING_KEY_NAME}" \
+            --rekor-url "https://${REKOR_HOST}" \
+            -y \
+            ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
+
       - name: Upload Signatures
         uses: actions/upload-artifact@v3
         with:
