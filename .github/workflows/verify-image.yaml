@@ -36,6 +36,9 @@ jobs:
       - name: Azure Account
         run: az account show
 
+      - name: Authenticate to ACR
+        run: az acr login -n "${ACR_NAME}"
+
       - name: Retrieve Tailscale Key
         id: tailscale-auth
         run: |
