@@ -1,0 +1,85 @@
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      digest:
+        type: string
+        required: true
+        description: "Docker image digest"
+
+env:
+  AZURE_CLIENT_ID: "48fbd2e1-8375-4c05-9957-f5c6c702181f"
+  AZURE_TENANT_ID: "1b4a4fed-fed8-4823-a8a0-3d5cea83d122"
+  AZURE_SUBSCRIPTION_ID: "3e16852e-8399-4c16-b246-16bf46bc3747"
+  INGRESS_CA: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJkakNDQVIyZ0F3SUJBZ0lSQU1wWEY5RERJbGpHVUpaQ2ZvMXVPV2N3Q2dZSUtvWkl6ajBFQXdJd0d6RVoKTUJjR0ExVUVBeE1RYlhrdGMyVnNabk5wWjI1bFpDMWpZVEFlRncweU16QXlNak15TXpVME5EQmFGdzB5TXpBMQpNalF5TXpVME5EQmFNQnN4R1RBWEJnTlZCQU1URUcxNUxYTmxiR1p6YVdkdVpXUXRZMkV3V1RBVEJnY3Foa2pPClBRSUJCZ2dxaGtqT1BRTUJCd05DQUFTaUVFQjd2eUxLOWJaOHN6V1NCc2x1UDVJTlFaMms1OHBtMXJlZEJGNkMKY3BrbXZRRGlPTURrZFU0dzhZenp0UnI1dG9jbHd4MGkrdDNjTk56ZGU4dDdvMEl3UURBT0JnTlZIUThCQWY4RQpCQU1DQXFRd0R3WURWUjBUQVFIL0JBVXdBd0VCL3pBZEJnTlZIUTRFRmdRVXJ5OUI4ZUNnQ2RBUXRnYUsxNThMCk1yTm9xdUl3Q2dZSUtvWkl6ajBFQXdJRFJ3QXdSQUlnS0wxQXVIMXRPTzlZOU5Yd0JGenlsV0dyckJJblBBNm4KQVlZU0wyWjN4UU1DSUZxcTV4aWs0S1I4Rk9FaGxFdDkxUDk4THBndnVnT21UR2hjblVKRlA3YXEKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo="
+  PLATFORM_TEAM_PUB_KEY: "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFaUpmamtBY1FBZDJ1L1ZDeUpiOXF4bVV4d0pDYgoyZlBZZ1JrekdKbEYySUdHbnUrRWJycEo3SU1jaXN2cXYxOUE1cFVUazZCRXAxWnl0VzRVMmYxL3FBPT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg=="
+  SECURITY_TEAM_PUB_KEY: "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFQjFDNURoOGxsSzhxSnpNcFMvN3FINUR3dDZGMgp6SDlPNGNrYjVkSTYxQnF3RzZJbENBcmt1bkc0Vi9PcEltQU04TEtXTGtnYjVzV2dPbkFheU5VWlFnPT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg=="
+  REKOR_HOST: "rekor.sec-guild-dev.private.northcentralus.azmk8s.io"
+  TAILSCALE_SECRET_NAME: "tailscale-authkey"
+
+jobs:
+  verify:
+    permissions:
+      id-token: write
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Azure Account
+        run: az account show
+
+      - name: Retrieve Tailscale Key
+        id: tailscale-auth
+        run: |
+          authKey=$(az keyvault secret show --name "${TAILSCALE_SECRET_NAME}" --vault-name "${AZURE_KEYVAULT_NAME}" --query value -o tsv)
+          echo "::add-mask::${authKey}"
+          echo "authkey=${authKey}" >> $GITHUB_OUTPUT
+
+      - name: Setup Tailscale
+        uses: tailscale/github-action@main
+        with:
+          authkey: ${{ steps.tailscale-auth.outputs.authkey }}
+
+      - name: Trust Ingress CA Certificate
+        run: |
+          printf "${INGRESS_CA}" | base64 -d > ca.crt
+          sudo cp ca.crt /usr/local/share/ca-certificates
+          sudo update-ca-certificates
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: 'v2.0.0'
+
+      - name: Verify Platform Team Signature
+        run: |
+          printf "${PLATFORM_TEAM_PUB_KEY}" | base64 -d > platform.pub
+
+          cosign verify \
+              --rekor-url $REKOR_URL \
+              --key platform.pub \
+              -a liatr.io/built-from=liatrio/gh-trusted-builds-app \
+              -a liatr.io/built-by='liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml' \
+              -a liatr.io/signed-off-by=platform-team \
+              ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
+
+          rm platform.pub
+
+      - name: Verify Security Team Signature
+        run: |
+          printf "${SECURITY_TEAM_PUB_KEY}" | base64 -d > security.pub
+
+          cosign verify \
+            --rekor-url $REKOR_URL \
+            --key security.pub \
+            -a liatr.io/scanned-by='liatrio/gh-trusted-builds-workflows/.github/workflows/scan-image.yaml' \
+            -a liatr.io/signed-off-by=security-team \
+            ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
+
+          rm security.pub
