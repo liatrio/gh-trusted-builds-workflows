@@ -32,6 +32,8 @@ jobs:
         uses: actions/checkout@v3
       - name: Show Remotes
         run: |
+          git --version
+          git config --global --add safe.directory /__w/gh-trusted-builds-app/gh-trusted-builds-app
           git remote -v
       - name: Pull Request Attestation
         run: |
