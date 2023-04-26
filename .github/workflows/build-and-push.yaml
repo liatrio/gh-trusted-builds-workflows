@@ -116,8 +116,8 @@ jobs:
         run: |
           docker load --input /tmp/image.tar
           image='${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}'
-          docker push $image
-          digest=$(docker inspect --format='{{index .RepoDigests 0}} | awk -F "${image}@" '{print $2}')
+          docker push -a $image
+          digest=$(docker inspect --format='{{index .RepoDigests 0}}' | awk -F "${image}@" '{print $2}')
           echo "image digest: ${digest}"
           echo "digest=${digest}" >> $GITHUB_OUTPUT
 
