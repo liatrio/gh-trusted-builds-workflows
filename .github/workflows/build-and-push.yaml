@@ -19,6 +19,9 @@ env:
 
 jobs:
   source-attestations:
+    permissions:
+      id-token: write
+      contents: read
     runs-on: ubuntu-latest
     container:
       image: "ghcr.io/liatrio/custom-attestations-poc:latest"
@@ -30,6 +33,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Azure Account
+        run: az account show
+
       - name: Pull Request Attestation
         run: |
           /app/attestor \
