@@ -91,14 +91,6 @@ jobs:
             --rekor-url "https://${REKOR_HOST}" \
             -y ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
 
-          cosign sign-blob \
-              --verbose \
-              --output-signature trivy.report.json.sig \
-              --key "azurekms://${AZURE_KEYVAULT_NAME}.vault.azure.net/${SIGNING_KEY_NAME}" \
-              --rekor-url "https://${REKOR_HOST}" \
-              -y \
-              ./trivy.report.json
-
           cosign attest \
             --verbose \
             --predicate ./trivy.report.json \
@@ -114,4 +106,3 @@ jobs:
           name: security.sig
           path: |
             image.sig
-            trivy.report.json.sig
