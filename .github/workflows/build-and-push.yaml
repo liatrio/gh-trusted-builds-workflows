@@ -4,7 +4,7 @@ on:
     outputs:
       digest:
         description: "Docker image digest"
-        value: ${{ jobs.build.outputs.digest }}
+        value: ${{ jobs.push.outputs.digest }}
 
 env:
   AZURE_CLIENT_ID: "48fbd2e1-8375-4c05-9957-f5c6c702181f"
@@ -43,7 +43,6 @@ jobs:
       contents: read
     runs-on: ubuntu-latest
     outputs:
-      labels: ${{ steps.meta.outputs.labels }}
       tags: ${{ steps.meta.outputs.tags }}
     steps:
       - name: Checkout
@@ -112,17 +111,15 @@ jobs:
           name: image
           path: /tmp
 
-      - name: Load Image
+      - name: Load & Push Image
+        id: push
         run: |
           docker load --input /tmp/image.tar
-
-      - name: Push Image
-        uses: docker/build-push-action@v4
-        id: push
-        with:
-          tags: ${{ needs.build.outputs.tags }}
-          labels: ${{ needs.build.outputs.labels }}
-          push: true
+          image='${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}'
+          docker push $image
+          digest=$(docker inspect --format='{{index .RepoDigests 0}} | awk -F "${image}@" '{print $2}')
+          echo "image digest: ${digest}"
+          echo "digest=${digest}" >> $GITHUB_OUTPUT
 
   sign:
     permissions:
