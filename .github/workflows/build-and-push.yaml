@@ -219,6 +219,11 @@ jobs:
         run: |
           slsa-generator-container generate --predicate predicate.json
 
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: 'v2.0.2'
+
       - name: Attest Provenance
         run: |
           cosign attest --predicate="predicate.json" \
@@ -275,7 +280,7 @@ jobs:
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3
         with:
-          cosign-release: 'v2.0.0'
+          cosign-release: 'v2.0.2'
 
       - name: Sign
         env:
