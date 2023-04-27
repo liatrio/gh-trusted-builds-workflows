@@ -68,6 +68,8 @@ jobs:
           cosign-release: 'v2.0.2'
 
       - name: Install Rekor CLI
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           gh release download v1.1.0 \
             --repo sigstore/rekor \
