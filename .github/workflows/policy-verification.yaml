@@ -69,7 +69,7 @@ jobs:
 
       - name: Install Rekor CLI
         run: |
-          curl -o rekor-cli  https://github.com/sigstore/rekor/releases/download/v1.1.0/rekor-cli-linux-amd64
+          curl -Lo rekor-cli https://github.com/sigstore/rekor/releases/download/v1.1.0/rekor-cli-linux-amd64
           chmod +x rekor-cli
           sudo cp rekor-cli /usr/local/bin/.
           rekor-cli version
