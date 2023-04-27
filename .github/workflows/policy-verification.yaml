@@ -68,13 +68,10 @@ jobs:
           cosign-release: 'v2.0.2'
 
       - name: Install Rekor CLI
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         run: |
-          gh release download v1.1.0 \
-            --repo sigstore/rekor \
-            --pattern "rekor-cli-linux-amd64"
-          sudo cp rekor-cli-linux-amd64 /usr/local/bin/.
+          curl -o rekor-cli  https://github.com/sigstore/rekor/releases/download/v1.1.0/rekor-cli-linux-amd64
+          chmod +x rekor-cli
+          sudo cp rekor-cli /usr/local/bin/.
           rekor-cli version
 
       - name: Verify Attestations
