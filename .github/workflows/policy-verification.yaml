@@ -99,7 +99,7 @@ jobs:
           echo "Collect source attestations"
           rekor-cli search \
             --rekor_server "https://${REKOR_HOST}" \
-            --sha ${{ env.GITHUB_SHA }} \
+            --sha ${GITHUB_SHA} \
             --format json > source.json
           cat source.json
 
