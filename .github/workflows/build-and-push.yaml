@@ -19,26 +19,26 @@ env:
   TAILSCALE_SECRET_NAME: "tailscale-authkey"
 
 jobs:
-  source-attestations:
-    permissions:
-      id-token: write
-      contents: read
-      pull-requests: read
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Download Attestor
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
-        run: |
-          gh release download \
-            --repo liatrio/custom-attestations-poc \
-            --pattern "custom-attestations-poc_${CUSTOM_ATTESTOR_VERSION}_linux_amd64.tar.gz"
-          tar xvf "custom-attestations-poc_${CUSTOM_ATTESTOR_VERSION}_linux_amd64.tar.gz"
-          sudo cp ./attestor /usr/local/bin/attestor
-          attestor --help
+#  source-attestations:
+#    permissions:
+#      id-token: write
+#      contents: read
+#      pull-requests: read
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v3
+#
+#      - name: Download Attestor
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+#        run: |
+#          gh release download \
+#            --repo liatrio/custom-attestations-poc \
+#            --pattern "custom-attestations-poc_${CUSTOM_ATTESTOR_VERSION}_linux_amd64.tar.gz"
+#          tar xvf "custom-attestations-poc_${CUSTOM_ATTESTOR_VERSION}_linux_amd64.tar.gz"
+#          sudo cp ./attestor /usr/local/bin/attestor
+#          attestor --help
 
       - name: Azure Login
         uses: azure/login@v1
