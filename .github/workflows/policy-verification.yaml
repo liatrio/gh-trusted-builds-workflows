@@ -67,18 +67,31 @@ jobs:
         with:
           cosign-release: 'v2.0.2'
 
+      - name: Install Rekor CLI
+        run: |
+          gh release download v1.1.0 \
+            --repo sigstore/rekor \
+            --pattern "rekor-cli-linux-amd64"
+          sudo cp rekor-cli-linux-amd64 /usr/local/bin/.
+          rekor-cli version
+
       - name: Verify Attestations
         env:
           AZURE_AUTH_METHOD: "cli"
           SIGSTORE_REKOR_PUBLIC_KEY: ./rekor.pub
         run: |
           cosign tree ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }} 
-            
+          
           cosign verify-attestation \
             --key "azurekms://${AZURE_KEYVAULT_NAME}.vault.azure.net/${SIGNING_KEY_NAME}" \
             --rekor-url "https://${REKOR_HOST}" \
             --type vuln \
             ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
+
+      - name: Collect Attestations
+        run: |
+          echo "Collect artifact attestations"
+          rekor-cli --rekor_server "https://${REKOR_HOST}" search --sha ${{ inputs.digest }} --format json 
 
       - name: Sign Artifact
         env:
