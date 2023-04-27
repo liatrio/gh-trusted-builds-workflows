@@ -236,7 +236,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: provenance
-          path: provenance.json
+          path: predicate.json
 
   sign:
     permissions:
