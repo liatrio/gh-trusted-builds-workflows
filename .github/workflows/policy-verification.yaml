@@ -78,7 +78,7 @@ jobs:
             --key "azurekms://${AZURE_KEYVAULT_NAME}.vault.azure.net/${SIGNING_KEY_NAME}" \
             --rekor-url "https://${REKOR_HOST}" \
             --type vuln \
-            -${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
+            ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
 
       - name: Sign Artifact
         env:
