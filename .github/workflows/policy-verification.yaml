@@ -90,7 +90,18 @@ jobs:
       - name: Collect Attestations
         run: |
           echo "Collect artifact attestations"
-          rekor-cli --rekor_server "https://${REKOR_HOST}" search --sha ${{ inputs.digest }} --format json 
+          rekor-cli search \
+            --rekor_server "https://${REKOR_HOST}" \
+            --sha ${{ inputs.digest }} \
+            --format json > artifact.json
+          cat artifact.json
+          
+          echo "Collect source attestations"
+          rekor-cli search \
+            --rekor_server "https://${REKOR_HOST}" \
+            --sha ${{ env.GITHUB_SHA }} \
+            --format json > source.json
+          cat source.json
 
       - name: Sign Artifact
         env:
