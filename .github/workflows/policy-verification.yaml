@@ -69,7 +69,7 @@ jobs:
         run: |
           cosign tree ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }} 
             
-          cosign verify-attestations \
+          cosign verify-attestation \
             --key "azurekms://${AZURE_KEYVAULT_NAME}.vault.azure.net/${SIGNING_KEY_NAME}" \
             --rekor-url "https://${REKOR_HOST}" \
             --type vuln
