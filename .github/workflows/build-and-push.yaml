@@ -213,6 +213,8 @@ jobs:
           slsa-generator-container version
 
       - name: Generate Provenance
+        env:
+          GITHUB_CONTEXT: "${{ toJSON(github) }}"
         run: |
           slsa-generator-container generate --predicate predicate.json
 
