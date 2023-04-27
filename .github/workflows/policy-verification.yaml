@@ -40,32 +40,6 @@ jobs:
       - name: Authenticate to ACR
         run: az acr login -n "${ACR_NAME}"
 
-      # Trivy only supports basic auth credentials for the registry, so we're pulling it before running the scan
-      - name: Pull Image
-        run: |
-          docker pull ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
-
-      - name: Trivy Scan
-        uses: aquasecurity/trivy-action@0.9.2
-        with:
-          image-ref: ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
-          format: 'cosign-vuln'
-          exit-code: '1'
-          ignore-unfixed: true
-          output: trivy.report.json
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
-
-      - name: Upload Trivy Report
-        uses: actions/upload-artifact@v3
-        with:
-          name: trivy.report.json
-          path: trivy.report.json
-
-      - name: Show Report
-        run: |
-          cat trivy.report.json
-
       - name: Retrieve Tailscale Key
         id: tailscale-auth
         run: |
@@ -89,15 +63,34 @@ jobs:
         with:
           cosign-release: 'v2.0.2'
 
-      - name: Attest Scan
+      - name: Verify Attestations
         env:
           AZURE_AUTH_METHOD: "cli"
         run: |
-          cosign attest \
-            --verbose \
-            --predicate ./trivy.report.json \
-            --type vuln \
+          cosign tree ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }} 
+            
+          cosign verify-attestations \
             --key "azurekms://${AZURE_KEYVAULT_NAME}.vault.azure.net/${SIGNING_KEY_NAME}" \
             --rekor-url "https://${REKOR_HOST}" \
-            -y \
-            ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
+            --type vuln
+            -y ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
+
+      - name: Sign Artifact
+        env:
+          AZURE_AUTH_METHOD: "cli"
+        run: |
+          cosign sign \
+            -a liatr.io/scanned-by='liatrio/gh-trusted-builds-workflows/.github/workflows/scan-image.yaml' \
+            -a liatr.io/github-actions-run-link='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
+            -a liatr.io/signed-off-by=security-team \
+            --output-signature image.sig \
+            --key "azurekms://${AZURE_KEYVAULT_NAME}.vault.azure.net/${SIGNING_KEY_NAME}" \
+            --rekor-url "https://${REKOR_HOST}" \
+            -y ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
+
+      - name: Upload Signatures
+        uses: actions/upload-artifact@v3
+        with:
+          name: security.sig
+          path: |
+            image.sig
