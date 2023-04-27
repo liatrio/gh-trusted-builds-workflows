@@ -39,44 +39,44 @@ jobs:
 #          tar xvf "custom-attestations-poc_${CUSTOM_ATTESTOR_VERSION}_linux_amd64.tar.gz"
 #          sudo cp ./attestor /usr/local/bin/attestor
 #          attestor --help
-
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          client-id: ${{ env.AZURE_CLIENT_ID }}
-          tenant-id: ${{ env.AZURE_TENANT_ID }}
-          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Azure Account
-        run: az account show
-
-      - name: Retrieve Tailscale Key
-        id: tailscale-auth
-        run: |
-          authKey=$(az keyvault secret show --name "${TAILSCALE_SECRET_NAME}" --vault-name "${AZURE_KEYVAULT_NAME}" --query value -o tsv)
-          echo "::add-mask::${authKey}"
-          echo "authkey=${authKey}" >> $GITHUB_OUTPUT
-
-      - name: Setup Tailscale
-        uses: tailscale/github-action@main
-        with:
-          authkey: ${{ steps.tailscale-auth.outputs.authkey }}
-
-      - name: Trust Ingress CA Certificate
-        run: |
-          printf "${INGRESS_CA}" | base64 -d > ca.crt
-          sudo cp ca.crt /usr/local/share/ca-certificates
-          sudo update-ca-certificates
-
-      - name: Pull Request Attestation
-        env:
-          AZURE_AUTH_METHOD: "cli"
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          attestor \
-            --attestor "github-pull-request" \
-            --rekor-url "https://${REKOR_HOST}" \
-            --kms-key-uri "azurekms://${AZURE_KEYVAULT_NAME}.vault.azure.net/${SIGNING_KEY_NAME}"
+#
+#      - name: Azure Login
+#        uses: azure/login@v1
+#        with:
+#          client-id: ${{ env.AZURE_CLIENT_ID }}
+#          tenant-id: ${{ env.AZURE_TENANT_ID }}
+#          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+#
+#      - name: Azure Account
+#        run: az account show
+#
+#      - name: Retrieve Tailscale Key
+#        id: tailscale-auth
+#        run: |
+#          authKey=$(az keyvault secret show --name "${TAILSCALE_SECRET_NAME}" --vault-name "${AZURE_KEYVAULT_NAME}" --query value -o tsv)
+#          echo "::add-mask::${authKey}"
+#          echo "authkey=${authKey}" >> $GITHUB_OUTPUT
+#
+#      - name: Setup Tailscale
+#        uses: tailscale/github-action@main
+#        with:
+#          authkey: ${{ steps.tailscale-auth.outputs.authkey }}
+#
+#      - name: Trust Ingress CA Certificate
+#        run: |
+#          printf "${INGRESS_CA}" | base64 -d > ca.crt
+#          sudo cp ca.crt /usr/local/share/ca-certificates
+#          sudo update-ca-certificates
+#
+#      - name: Pull Request Attestation
+#        env:
+#          AZURE_AUTH_METHOD: "cli"
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        run: |
+#          attestor \
+#            --attestor "github-pull-request" \
+#            --rekor-url "https://${REKOR_HOST}" \
+#            --kms-key-uri "azurekms://${AZURE_KEYVAULT_NAME}.vault.azure.net/${SIGNING_KEY_NAME}"
 
   build:
     permissions:
