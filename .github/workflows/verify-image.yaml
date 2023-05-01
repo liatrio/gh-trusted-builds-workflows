@@ -66,6 +66,6 @@ jobs:
             --rekor-url "https://${REKOR_HOST}" \
             --certificate-oidc-issuer "${GITHUB_ACTIONS_ISSUER}" \
             --certificate-github-workflow-repository ${{ github.repository }} \
-            --certificate-identity https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/scan-image.yaml@refs/heads/keyless \
+            --certificate-identity https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/policy-verification.yaml@refs/heads/keyless \
             -a liatr.io/signed-off-by=security-team \
             ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
