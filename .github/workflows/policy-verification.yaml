@@ -60,7 +60,6 @@ jobs:
       - name: Verify Attestations
         env:
           AZURE_AUTH_METHOD: "cli"
-          SIGSTORE_REKOR_PUBLIC_KEY: ./rekor.pub
         run: |
           cosign tree ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }} 
           
