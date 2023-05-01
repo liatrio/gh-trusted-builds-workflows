@@ -12,6 +12,7 @@ env:
   AZURE_TENANT_ID: "1b4a4fed-fed8-4823-a8a0-3d5cea83d122"
   AZURE_SUBSCRIPTION_ID: "3e16852e-8399-4c16-b246-16bf46bc3747"
   ACR_NAME: "agplatformrnim"
+  GITHUB_ACTIONS_ISSUER: "https://token.actions.githubusercontent.com"
   REKOR_HOST: "rekor-ham0vei9.ngrok.io"
   FULCIO_HOST: "fulcio-ham0vei9.ngrok.io"
   TUF_ROOT_MIRROR: "https://agtufrootcrml.blob.core.windows.net/tuf-root"
@@ -61,6 +62,9 @@ jobs:
           
           cosign verify-attestation \
             --rekor-url "https://${REKOR_HOST}" \
+            --certificate-oidc-issuer "${GITHUB_ACTIONS_ISSUER}" \
+            --certificate-github-workflow-repository ${{ github.repository }}
+            --certificate-identity https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/scan-image.yaml@refs/heads/keyless
             --type vuln \
             ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
 
