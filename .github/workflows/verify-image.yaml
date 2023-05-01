@@ -61,8 +61,6 @@ jobs:
               ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
 
       - name: Verify Security Team Signature
-        env:
-          SIGSTORE_REKOR_PUBLIC_KEY: ./rekor.pub
         run: |
           cosign verify \
             --rekor-url "https://${REKOR_HOST}" \
