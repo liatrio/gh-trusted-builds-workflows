@@ -10,74 +10,13 @@ env:
   AZURE_CLIENT_ID: "48fbd2e1-8375-4c05-9957-f5c6c702181f"
   AZURE_TENANT_ID: "1b4a4fed-fed8-4823-a8a0-3d5cea83d122"
   AZURE_SUBSCRIPTION_ID: "3e16852e-8399-4c16-b246-16bf46bc3747"
-  AZURE_KEYVAULT_NAME: "ag-poc-platform-c2wn"
   ACR_NAME: "agplatformrnim"
   CUSTOM_ATTESTOR_VERSION: "0.1.0"
-  REKOR_HOST: "rekor.sec-guild-dev.private.northcentralus.azmk8s.io"
-  INGRESS_CA: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJkakNDQVIyZ0F3SUJBZ0lSQU1wWEY5RERJbGpHVUpaQ2ZvMXVPV2N3Q2dZSUtvWkl6ajBFQXdJd0d6RVoKTUJjR0ExVUVBeE1RYlhrdGMyVnNabk5wWjI1bFpDMWpZVEFlRncweU16QXlNak15TXpVME5EQmFGdzB5TXpBMQpNalF5TXpVME5EQmFNQnN4R1RBWEJnTlZCQU1URUcxNUxYTmxiR1p6YVdkdVpXUXRZMkV3V1RBVEJnY3Foa2pPClBRSUJCZ2dxaGtqT1BRTUJCd05DQUFTaUVFQjd2eUxLOWJaOHN6V1NCc2x1UDVJTlFaMms1OHBtMXJlZEJGNkMKY3BrbXZRRGlPTURrZFU0dzhZenp0UnI1dG9jbHd4MGkrdDNjTk56ZGU4dDdvMEl3UURBT0JnTlZIUThCQWY4RQpCQU1DQXFRd0R3WURWUjBUQVFIL0JBVXdBd0VCL3pBZEJnTlZIUTRFRmdRVXJ5OUI4ZUNnQ2RBUXRnYUsxNThMCk1yTm9xdUl3Q2dZSUtvWkl6ajBFQXdJRFJ3QXdSQUlnS0wxQXVIMXRPTzlZOU5Yd0JGenlsV0dyckJJblBBNm4KQVlZU0wyWjN4UU1DSUZxcTV4aWs0S1I4Rk9FaGxFdDkxUDk4THBndnVnT21UR2hjblVKRlA3YXEKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo="
-  SIGNING_KEY_NAME: "platform-team-cosign"
-  TAILSCALE_SECRET_NAME: "tailscale-authkey"
+  REKOR_HOST: "rekor-ham0vei9.ngrok.io"
+  FULCIO_HOST: "fulcio-ham0vei9.ngrok.io"
+  TUF_ROOT_MIRROR: "https://agtufrootcrml.blob.core.windows.net/tuf-root"
 
 jobs:
-  source-attestations:
-    permissions:
-      id-token: write
-      contents: read
-      pull-requests: read
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Download Attestor
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
-        run: |
-          gh release download \
-            --repo liatrio/custom-attestations-poc \
-            --pattern "custom-attestations-poc_${CUSTOM_ATTESTOR_VERSION}_linux_amd64.tar.gz"
-          tar xvf "custom-attestations-poc_${CUSTOM_ATTESTOR_VERSION}_linux_amd64.tar.gz"
-          sudo cp ./attestor /usr/local/bin/attestor
-          attestor --help
-
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          client-id: ${{ env.AZURE_CLIENT_ID }}
-          tenant-id: ${{ env.AZURE_TENANT_ID }}
-          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Azure Account
-        run: az account show
-
-      - name: Retrieve Tailscale Key
-        id: tailscale-auth
-        run: |
-          authKey=$(az keyvault secret show --name "${TAILSCALE_SECRET_NAME}" --vault-name "${AZURE_KEYVAULT_NAME}" --query value -o tsv)
-          echo "::add-mask::${authKey}"
-          echo "authkey=${authKey}" >> $GITHUB_OUTPUT
-
-      - name: Setup Tailscale
-        uses: tailscale/github-action@main
-        with:
-          authkey: ${{ steps.tailscale-auth.outputs.authkey }}
-
-      - name: Trust Ingress CA Certificate
-        run: |
-          printf "${INGRESS_CA}" | base64 -d > ca.crt
-          sudo cp ca.crt /usr/local/share/ca-certificates
-          sudo update-ca-certificates
-
-      - name: Pull Request Attestation
-        env:
-          AZURE_AUTH_METHOD: "cli"
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          attestor \
-            --attestor "github-pull-request" \
-            --rekor-url "https://${REKOR_HOST}" \
-            --kms-key-uri "azurekms://${AZURE_KEYVAULT_NAME}.vault.azure.net/${SIGNING_KEY_NAME}"
-
   build:
     permissions:
       id-token: none
@@ -182,24 +121,6 @@ jobs:
       - name: Authenticate to ACR
         run: az acr login -n "${ACR_NAME}"
 
-      - name: Retrieve Tailscale Key
-        id: tailscale-auth
-        run: |
-          authKey=$(az keyvault secret show --name "${TAILSCALE_SECRET_NAME}" --vault-name "${AZURE_KEYVAULT_NAME}" --query value -o tsv)
-          echo "::add-mask::${authKey}"
-          echo "authkey=${authKey}" >> $GITHUB_OUTPUT
-
-      - name: Setup Tailscale
-        uses: tailscale/github-action@main
-        with:
-          authkey: ${{ steps.tailscale-auth.outputs.authkey }}
-
-      - name: Trust Ingress CA Certificate
-        run: |
-          printf "${INGRESS_CA}" | base64 -d > ca.crt
-          sudo cp ca.crt /usr/local/share/ca-certificates
-          sudo update-ca-certificates
-
       - name: Download SLSA Generator
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -224,11 +145,16 @@ jobs:
         with:
           cosign-release: 'v2.0.2'
 
+      - name: Initialize Cosign
+        run: |
+          cosign initialize --mirror ${TUF_ROOT_MIRROR} --root root.json
+
       - name: Attest Provenance
         run: |
           cosign attest --predicate="predicate.json" \
             --rekor-url "https://${REKOR_HOST}" \
             --type slsaprovenance \
+            --fulcio-url "https://${FULCIO_HOST}" \
             --yes \
             ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
 
@@ -259,32 +185,19 @@ jobs:
       - name: Authenticate to ACR
         run: az acr login -n "${ACR_NAME}"
 
-      - name: Retrieve Tailscale Key
-        id: tailscale-auth
-        run: |
-          authKey=$(az keyvault secret show --name "${TAILSCALE_SECRET_NAME}" --vault-name "${AZURE_KEYVAULT_NAME}" --query value -o tsv)
-          echo "::add-mask::${authKey}"
-          echo "authkey=${authKey}" >> $GITHUB_OUTPUT
-
-      - name: Setup Tailscale
-        uses: tailscale/github-action@main
-        with:
-          authkey: ${{ steps.tailscale-auth.outputs.authkey }}
-
-      - name: Trust Ingress CA Certificate
-        run: |
-          printf "${INGRESS_CA}" | base64 -d > ca.crt
-          sudo cp ca.crt /usr/local/share/ca-certificates
-          sudo update-ca-certificates
-
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3
         with:
           cosign-release: 'v2.0.2'
 
+      - name: Initialize Cosign
+        run: |
+          cosign initialize --mirror ${TUF_ROOT_MIRROR} --root root.json
+
       - name: Sign
         env:
           AZURE_AUTH_METHOD: "cli"
+          COSIGN_EXPERIMENTAL: 1
         run: |
           cosign sign \
               --verbose \
@@ -293,8 +206,8 @@ jobs:
               -a liatr.io/github-actions-run-link='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
               -a liatr.io/signed-off-by=platform-team \
               --output-signature image.sig \
-              --key "azurekms://${AZURE_KEYVAULT_NAME}.vault.azure.net/${SIGNING_KEY_NAME}" \
               --rekor-url "https://${REKOR_HOST}" \
+              --fulcio-url "https://${FULCIO_HOST}" \
               -y ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
 
       - name: Upload Image Signature
