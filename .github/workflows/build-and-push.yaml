@@ -208,7 +208,6 @@ jobs:
           cosign sign \
               --verbose \
               -a liatr.io/built-from=${{ github.repository }} \
-              -a liatr.io/built-by='liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml' \
               -a liatr.io/github-actions-run-link='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
               -a liatr.io/signed-off-by=platform-team \
               --output-signature image.sig \
