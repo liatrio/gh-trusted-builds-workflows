@@ -54,8 +54,8 @@ jobs:
           cosign verify \
               --rekor-url "https://${REKOR_HOST}" \
               --certificate-oidc-issuer "${GITHUB_ACTIONS_ISSUER}" \
-              --certificate-github-workflow-repository ${{ github.repository }}
-              --certificate-identity https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml@refs/heads/keyless
+              --certificate-github-workflow-repository ${{ github.repository }} \
+              --certificate-identity https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml@refs/heads/keyless \
               -a liatr.io/built-from=liatrio/gh-trusted-builds-app \
               -a liatr.io/signed-off-by=platform-team \
               ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
@@ -67,7 +67,7 @@ jobs:
           cosign verify \
             --rekor-url "https://${REKOR_HOST}" \
             --certificate-oidc-issuer "${GITHUB_ACTIONS_ISSUER}" \
-            --certificate-github-workflow-repository ${{ github.repository }}
-            --certificate-identity https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/scan-image.yaml@refs/heads/keyless
+            --certificate-github-workflow-repository ${{ github.repository }} \
+            --certificate-identity https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/scan-image.yaml@refs/heads/keyless \
             -a liatr.io/signed-off-by=security-team \
             ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
