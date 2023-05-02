@@ -27,6 +27,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: 'v2.0.2'
+
+      - name: Initialize Cosign
+        run: |
+          cosign initialize --mirror ${TUF_ROOT_MIRROR} --root root.json
+
       - name: Download Attestor
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
