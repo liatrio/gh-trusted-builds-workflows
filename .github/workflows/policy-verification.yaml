@@ -103,6 +103,14 @@ jobs:
             --format json > source.json
           cat source.json
 
+      - name: Download Governance OPA Bundle
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          gh release download v1.0.1 \
+            --repo liatrio/gh-trusted-builds-policy \
+            --pattern "bundle.tar.gz"
+
       - name: Sign Artifact
         env:
           AZURE_AUTH_METHOD: "cli"
