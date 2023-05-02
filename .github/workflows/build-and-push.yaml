@@ -11,12 +11,43 @@ env:
   AZURE_TENANT_ID: "1b4a4fed-fed8-4823-a8a0-3d5cea83d122"
   AZURE_SUBSCRIPTION_ID: "3e16852e-8399-4c16-b246-16bf46bc3747"
   ACR_NAME: "agplatformrnim"
-  CUSTOM_ATTESTOR_VERSION: "0.1.0"
+  CUSTOM_ATTESTOR_VERSION: "0.2.0"
   REKOR_HOST: "rekor-ham0vei9.ngrok.io"
   FULCIO_HOST: "fulcio-ham0vei9.ngrok.io"
   TUF_ROOT_MIRROR: "https://agtufrootcrml.blob.core.windows.net/tuf-root"
 
 jobs:
+  source-attestations:
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Download Attestor
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          gh release download \
+            --repo liatrio/custom-attestations-poc \
+            --pattern "custom-attestations-poc_${CUSTOM_ATTESTOR_VERSION}_linux_amd64.tar.gz"
+          tar xvf "custom-attestations-poc_${CUSTOM_ATTESTOR_VERSION}_linux_amd64.tar.gz"
+          sudo cp ./attestor /usr/local/bin/attestor
+          attestor --help
+
+      - name: Pull Request Attestation
+        env:
+          AZURE_AUTH_METHOD: "cli"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          attestor \
+            --attestor "github-pull-request" \
+            --rekor-url "https://${REKOR_HOST}" \
+            --fulcio-url "https://${FULCIO_HOST}"
+
   build:
     permissions:
       id-token: none
