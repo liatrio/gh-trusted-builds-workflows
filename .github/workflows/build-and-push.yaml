@@ -289,6 +289,24 @@ jobs:
         run: |
           cosign initialize --mirror ${TUF_ROOT_MIRROR} --root root.json
 
+      - name: Retrieve Tailscale Key
+        id: tailscale-auth
+        run: |
+          authKey=$(az keyvault secret show --name "${TAILSCALE_SECRET_NAME}" --vault-name "${AZURE_KEYVAULT_NAME}" --query value -o tsv)
+          echo "::add-mask::${authKey}"
+          echo "authkey=${authKey}" >> $GITHUB_OUTPUT
+
+      - name: Setup Tailscale
+        uses: tailscale/github-action@main
+        with:
+          authkey: ${{ steps.tailscale-auth.outputs.authkey }}
+
+      - name: Trust Ingress CA Certificate
+        run: |
+          printf "${INGRESS_CA}" | base64 -d > ca.crt
+          sudo cp ca.crt /usr/local/share/ca-certificates
+          sudo update-ca-certificates
+
       - name: Sign
         env:
           AZURE_AUTH_METHOD: "cli"
