@@ -19,7 +19,7 @@ env:
   TAILSCALE_SECRET_NAME: "tailscale-authkey"
 
 jobs:
-  scan:
+  verify:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -115,6 +115,11 @@ jobs:
           $(jq -c --argjson new "$attestation" '. += [$new]' attestations.json)
           EOF
           done
+
+      - name: Setup OPA
+        uses: open-policy-agent/setup-opa@v2
+        with:
+          version: 0.52.0
 
       - name: Download Governance OPA Bundle
         env:
