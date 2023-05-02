@@ -89,19 +89,32 @@ jobs:
 
       - name: Collect Attestations
         run: |
-          echo "Collect artifact attestations"
+          echo "collect artifact attestation uuids"
           rekor-cli search \
             --rekor_server "https://${REKOR_HOST}" \
             --sha ${{ inputs.digest }} \
             --format json > artifact.json
           cat artifact.json
           
-          echo "Collect source attestations"
+          echo "collect source attestation uuids"
           rekor-cli search \
             --rekor_server "https://${REKOR_HOST}" \
             --sha ${GITHUB_SHA} \
             --format json > source.json
           cat source.json
+          
+          echo '[]' > attestations.json
+          
+          echo "collect attestations"
+          for uuid in $(jq -rn 'inputs.UUIDs[]' artifact.json source.json); do
+          attestation=$(rekor-cli get \
+          --rekor_server "https://${REKOR_HOST}" \
+          --uuid "$uuid" \
+          --format json)
+          cat << EOF > attestations.json
+          $(jq -c --argjson new "$attestation" '. += [$new]' attestations.json)
+          EOF
+          done
 
       - name: Download Governance OPA Bundle
         env:
@@ -110,6 +123,13 @@ jobs:
           gh release download v1.0.1 \
             --repo liatrio/gh-trusted-builds-policy \
             --pattern "bundle.tar.gz"
+
+      - name: Check Governance Policy
+        run: |
+          opa eval 'data.governance.allow' \
+            --bundle bundle.tar.gz \
+            --input attestations.json \
+            | jq -e '.result[0].expressions[0].value == true'
 
       - name: Sign Artifact
         env:
