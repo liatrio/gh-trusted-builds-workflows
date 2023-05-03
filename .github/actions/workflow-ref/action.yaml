@@ -1,0 +1,16 @@
+name: "workflow-ref"
+description: "Determine workflow ref from branch"
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/github-script@v6
+      id: script
+      with:
+        debug: true
+        script: |
+          const token = await core.getIDToken();
+          const claimsJson = Buffer.from(token.split('.')[1], "base64url").toString();
+          console.log("claims", claimsJson);
+          const ref = JSON.parse(claimsJson)["job_workflow_ref"];
+          console.log("ref", ref);

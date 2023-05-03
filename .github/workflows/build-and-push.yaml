@@ -10,6 +10,16 @@ env:
   CUSTOM_ATTESTOR_VERSION: "0.2.0"
 
 jobs:
+  workflow-ref:
+    permission:
+      id-token: write
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine Workflow Ref
+        id: ref
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/workflow-ref@keyless
+
   source-attestations:
     permissions:
       id-token: write
