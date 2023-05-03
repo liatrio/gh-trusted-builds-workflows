@@ -76,7 +76,7 @@ jobs:
             --rekor-url ${{ steps.config.outputs.REKOR_URL }} \
             --certificate-oidc-issuer "${GITHUB_ACTIONS_ISSUER}" \
             --certificate-github-workflow-repository ${{ github.repository }} \
-            --certificate-identity https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/scan-image.yaml@refs/heads/keyless \
+            --certificate-identity https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/scan-image.yaml@${{ needs.metadata.outputs.ref }} \
             --type vuln \
             ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
 

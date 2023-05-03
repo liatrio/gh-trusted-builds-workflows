@@ -65,7 +65,7 @@ jobs:
               --rekor-url ${{ steps.config.outputs.REKOR_URL }} \
               --certificate-oidc-issuer "${GITHUB_ACTIONS_ISSUER}" \
               --certificate-github-workflow-repository ${{ github.repository }} \
-              --certificate-identity https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml@refs/heads/keyless \
+              --certificate-identity https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml@${{ needs.metadata.outputs.ref }} \
               -a liatr.io/signed-off-by=platform-team \
               ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
 
@@ -75,6 +75,6 @@ jobs:
             --rekor-url ${{ steps.config.outputs.REKOR_URL }} \
             --certificate-oidc-issuer "${GITHUB_ACTIONS_ISSUER}" \
             --certificate-github-workflow-repository ${{ github.repository }} \
-            --certificate-identity https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/policy-verification.yaml@refs/heads/keyless \
+            --certificate-identity https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/policy-verification.yaml@${{ needs.metadata.outputs.ref }} \
             -a liatr.io/signed-off-by=security-team \
             ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
