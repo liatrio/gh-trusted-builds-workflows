@@ -84,14 +84,14 @@ jobs:
         run: |
           echo "collect artifact attestation uuids"
           rekor-cli search \
-            --rekor_server "https://${REKOR_HOST}" \
+            --rekor_server ${{ steps.config.outputs.REKOR_URL }} \
             --sha ${{ inputs.digest }} \
             --format json > artifact.json
           cat artifact.json
           
           echo "collect source attestation uuids"
           rekor-cli search \
-            --rekor_server "https://${REKOR_HOST}" \
+            --rekor_server ${{ steps.config.outputs.REKOR_URL }} \
             --sha ${GITHUB_SHA} \
             --format json > source.json
           cat source.json
@@ -101,7 +101,7 @@ jobs:
           echo "collect attestations"
           for uuid in $(jq -rn 'inputs.UUIDs[]' artifact.json source.json); do
           attestation=$(rekor-cli get \
-          --rekor_server "https://${REKOR_HOST}" \
+          --rekor_server ${{ steps.config.outputs.REKOR_URL }} \
           --uuid "$uuid" \
           --format json)
           cat << EOF > attestations.json
