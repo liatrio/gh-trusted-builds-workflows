@@ -50,16 +50,11 @@ runs:
         token: ${{ inputs.token }}
         ref: 'keyless' # TODO: pull this from the job token
         path: gh-trusted-builds-workflows
-    - name: Neil Breen
-      shell: bash
-      run: | 
-        pwd
-        ls -lah
     - name: Map Configuration
       shell: bash
       id: config
       env:
-        CONFIG_FILE_PATH: "./gh-trusted-builds-workflows/config.yaml"
+        CONFIG_FILE_PATH: "./gh-trusted-builds-workflows/config/config.yaml"
       run: |
         function output() {
           name="${1}"
