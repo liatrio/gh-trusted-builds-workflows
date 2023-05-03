@@ -23,6 +23,8 @@ jobs:
       - name: Trusted Builds Config
         id: config
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@keyless
+        with:
+          token: ${{ secrets.GH_PAT }}
 
       - name: Azure Setup
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@keyless
@@ -71,6 +73,8 @@ jobs:
       - name: Trusted Builds Config
         id: config
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@keyless
+        with:
+          token: ${{ secrets.GH_PAT }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -117,6 +121,8 @@ jobs:
       - name: Trusted Builds Config
         id: config
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@keyless
+        with:
+          token: ${{ secrets.GH_PAT }}
 
       - name: Azure Setup
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@keyless
@@ -155,6 +161,8 @@ jobs:
       - name: Trusted Builds Config
         id: config
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@keyless
+        with:
+          token: ${{ secrets.GH_PAT }}
 
       - name: Azure Setup
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@keyless
@@ -221,6 +229,8 @@ jobs:
       - name: Trusted Builds Config
         id: config
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@keyless
+        with:
+          token: ${{ secrets.GH_PAT }}
 
       - name: Azure Setup
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@keyless

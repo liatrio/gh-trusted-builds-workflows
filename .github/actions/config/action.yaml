@@ -1,6 +1,10 @@
 name: "config"
 description: "Loads liatrio/gh-trusted-builds-workflows configuration"
 
+inputs:
+  token:
+    description: "GitHub PAT with permission to read liatrio/gh-trusted-builds-workflows"
+
 outputs:
   ACR_NAME:
     description: "Azure container registry instance name"
