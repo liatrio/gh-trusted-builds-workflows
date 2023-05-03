@@ -45,10 +45,6 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Log
-      shell: bash
-      run: |
-        echo "ref: ${{ inputs.ref }}"
     - name: Checkout
       uses: actions/checkout@v3
       with:

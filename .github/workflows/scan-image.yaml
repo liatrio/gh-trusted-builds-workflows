@@ -8,11 +8,25 @@ on:
         description: "Docker image digest"
 
 jobs:
+  jobs:
+    metadata:
+      permissions:
+        id-token: write
+        contents: read
+      runs-on: ubuntu-latest
+      outputs:
+        ref: ${{ steps.workflow.outputs.ref }}
+      steps:
+        - name: Determine Workflow Ref
+          id: workflow
+          uses: liatrio/gh-trusted-builds-workflows/.github/actions/workflow-ref@keyless # TODO: point at main
+
   scan:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
+    needs: [metadata]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -21,6 +35,7 @@ jobs:
         id: config
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@keyless
         with:
+          ref: ${{needs.metadata.outputs.ref}}
           token: ${{ secrets.GH_PAT }}
 
       - name: Azure Setup
