@@ -7,48 +7,58 @@ on:
         required: true
         description: "Docker image digest"
 
-env:
-  AZURE_CLIENT_ID: "58162388-16a0-4c7c-91f4-bdfc1ce2cd69"
-  AZURE_TENANT_ID: "1b4a4fed-fed8-4823-a8a0-3d5cea83d122"
-  AZURE_SUBSCRIPTION_ID: "3e16852e-8399-4c16-b246-16bf46bc3747"
-  AZURE_KEYVAULT_NAME: "ag-poc-security-OtfL"
-  ACR_NAME: "agplatformrnim"
-  REKOR_HOST: "rekor.sec-guild-dev.private.northcentralus.azmk8s.io"
-  INGRESS_CA: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJkVENDQVJ5Z0F3SUJBZ0lRVG95NnBId0Rwb2R2UnFuRFZsMkY4REFLQmdncWhrak9QUVFEQWpBYk1Sa3cKRndZRFZRUURFeEJ0ZVMxelpXeG1jMmxuYm1Wa0xXTmhNQjRYRFRJek1EVXdNakF5TURNd09Wb1hEVEl6TURjegpNVEF5TURNd09Wb3dHekVaTUJjR0ExVUVBeE1RYlhrdGMyVnNabk5wWjI1bFpDMWpZVEJaTUJNR0J5cUdTTTQ5CkFnRUdDQ3FHU000OUF3RUhBMElBQlB3SjdWREl6bExjR2dBZTgwODJjRDhiLzNqZ3V2S0o5U0xXb1F0TDl4L1kKcDNYaTdKNDBkSEFicFV0QUJlaEhOWjhXUXJ0V0h3SVFNOE44SUtBTlk5R2pRakJBTUE0R0ExVWREd0VCL3dRRQpBd0lDcERBUEJnTlZIUk1CQWY4RUJUQURBUUgvTUIwR0ExVWREZ1FXQkJTRjZjRVI1SUlnZGVvaE93U2pzNmRKCm9aZnIxakFLQmdncWhrak9QUVFEQWdOSEFEQkVBaUVBalZwQk84Nnc4alEyTk9tRTZqQml4L2xBbWp0SUVMOCsKcDBMTEp0d1N2Y2tDSDFEVnh1QVJidVhFS05RTUFrdTRHSktQWU9YWEtIY0hzbWdvMW9sN3BzST0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo="
-  SIGNING_KEY_NAME: "security-team-cosign"
-  TAILSCALE_SECRET_NAME: "tailscale-authkey"
-
 jobs:
+  metadata:
+    permissions:
+      id-token: write
+      contents: read
+    runs-on: ubuntu-latest
+    outputs:
+      ref: ${{ steps.workflow.outputs.ref }}
+    steps:
+      - name: Determine Workflow Ref
+        id: workflow
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/workflow-ref@main
+
   scan:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
+    needs: [metadata]
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
 
-      - name: 'az login'
-        uses: azure/login@v1
+      - name: Trusted Builds Config
+        id: config
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@main
         with:
-          client-id: ${{ env.AZURE_CLIENT_ID }}
-          tenant-id: ${{ env.AZURE_TENANT_ID }}
-          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          ref: ${{needs.metadata.outputs.ref}}
+          token: ${{ secrets.GH_PAT }}
 
-      - name: 'az account show'
-        run: |
-          az account show
+      - name: Azure Setup
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@main
+        with:
+          acrName: ${{ steps.config.outputs.ACR_NAME }}
+          client: ${{ steps.config.outputs.SECURITY_TEAM_SP_CLIENT_ID }}
+          subscription: ${{ steps.config.outputs.AZURE_SUBSCRIPTION_ID }}
+          tenant: ${{ steps.config.outputs.AZURE_TENANT_ID }}
 
-      - name: Authenticate to ACR
-        run: az acr login -n "${ACR_NAME}"
+      - name: Tailscale
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/tailscale@main
+        with:
+          vault: ${{ steps.config.outputs.SECURITY_TEAM_VAULT }}
 
       # Trivy only supports basic auth credentials for the registry, so we're pulling it before running the scan
       - name: Pull Image
         run: |
-          docker pull ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
+          docker pull ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
 
       - name: Trivy Scan
         uses: aquasecurity/trivy-action@0.9.2
         with:
-          image-ref: ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
+          image-ref: ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
           format: 'cosign-vuln'
           exit-code: '1'
           ignore-unfixed: true
@@ -66,38 +76,22 @@ jobs:
         run: |
           cat trivy.report.json
 
-      - name: Retrieve Tailscale Key
-        id: tailscale-auth
-        run: |
-          authKey=$(az keyvault secret show --name "${TAILSCALE_SECRET_NAME}" --vault-name "${AZURE_KEYVAULT_NAME}" --query value -o tsv)
-          echo "::add-mask::${authKey}"
-          echo "authkey=${authKey}" >> $GITHUB_OUTPUT
-
-      - name: Setup Tailscale
-        uses: tailscale/github-action@main
+      - name: Cosign Setup
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@main
         with:
-          authkey: ${{ steps.tailscale-auth.outputs.authkey }}
-
-      - name: Trust Ingress CA Certificate
-        run: |
-          printf "${INGRESS_CA}" | base64 -d > ca.crt
-          sudo cp ca.crt /usr/local/share/ca-certificates
-          sudo update-ca-certificates
-
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@v3
-        with:
-          cosign-release: 'v2.0.2'
+          tufRoot: ${{ steps.config.outputs.TUF_ROOT_PATH }}
+          tufMirror: ${{ steps.config.outputs.TUF_ROOT_MIRROR }}
 
       - name: Attest Scan
         env:
           AZURE_AUTH_METHOD: "cli"
+          COSIGN_EXPERIMENTAL: 1
         run: |
           cosign attest \
             --verbose \
             --predicate ./trivy.report.json \
             --type vuln \
-            --key "azurekms://${AZURE_KEYVAULT_NAME}.vault.azure.net/${SIGNING_KEY_NAME}" \
-            --rekor-url "https://${REKOR_HOST}" \
+            --rekor-url ${{ steps.config.outputs.REKOR_URL }} \
+            --fulcio-url ${{ steps.config.outputs.FULCIO_URL }} \
             -y \
-            ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
+            ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}

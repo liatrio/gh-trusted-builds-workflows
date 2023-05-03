@@ -8,90 +8,73 @@ on:
         description: "Docker image digest"
 
 env:
-  AZURE_CLIENT_ID: "48fbd2e1-8375-4c05-9957-f5c6c702181f"
-  AZURE_TENANT_ID: "1b4a4fed-fed8-4823-a8a0-3d5cea83d122"
-  AZURE_SUBSCRIPTION_ID: "3e16852e-8399-4c16-b246-16bf46bc3747"
-  AZURE_KEYVAULT_NAME: "ag-poc-platform-c2wn"
-  ACR_NAME: "agplatformrnim"
-  INGRESS_CA: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJkVENDQVJ5Z0F3SUJBZ0lRVG95NnBId0Rwb2R2UnFuRFZsMkY4REFLQmdncWhrak9QUVFEQWpBYk1Sa3cKRndZRFZRUURFeEJ0ZVMxelpXeG1jMmxuYm1Wa0xXTmhNQjRYRFRJek1EVXdNakF5TURNd09Wb1hEVEl6TURjegpNVEF5TURNd09Wb3dHekVaTUJjR0ExVUVBeE1RYlhrdGMyVnNabk5wWjI1bFpDMWpZVEJaTUJNR0J5cUdTTTQ5CkFnRUdDQ3FHU000OUF3RUhBMElBQlB3SjdWREl6bExjR2dBZTgwODJjRDhiLzNqZ3V2S0o5U0xXb1F0TDl4L1kKcDNYaTdKNDBkSEFicFV0QUJlaEhOWjhXUXJ0V0h3SVFNOE44SUtBTlk5R2pRakJBTUE0R0ExVWREd0VCL3dRRQpBd0lDcERBUEJnTlZIUk1CQWY4RUJUQURBUUgvTUIwR0ExVWREZ1FXQkJTRjZjRVI1SUlnZGVvaE93U2pzNmRKCm9aZnIxakFLQmdncWhrak9QUVFEQWdOSEFEQkVBaUVBalZwQk84Nnc4alEyTk9tRTZqQml4L2xBbWp0SUVMOCsKcDBMTEp0d1N2Y2tDSDFEVnh1QVJidVhFS05RTUFrdTRHSktQWU9YWEtIY0hzbWdvMW9sN3BzST0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo="
-  PLATFORM_TEAM_PUB_KEY: "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFaUpmamtBY1FBZDJ1L1ZDeUpiOXF4bVV4d0pDYgoyZlBZZ1JrekdKbEYySUdHbnUrRWJycEo3SU1jaXN2cXYxOUE1cFVUazZCRXAxWnl0VzRVMmYxL3FBPT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg=="
-  SECURITY_TEAM_PUB_KEY: "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFQjFDNURoOGxsSzhxSnpNcFMvN3FINUR3dDZGMgp6SDlPNGNrYjVkSTYxQnF3RzZJbENBcmt1bkc0Vi9PcEltQU04TEtXTGtnYjVzV2dPbkFheU5VWlFnPT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg=="
-  REKOR_HOST: "rekor.sec-guild-dev.private.northcentralus.azmk8s.io"
-  TAILSCALE_SECRET_NAME: "tailscale-authkey"
+  GITHUB_ACTIONS_ISSUER: "https://token.actions.githubusercontent.com"
 
 jobs:
+  metadata:
+    permissions:
+      id-token: write
+      contents: read
+    runs-on: ubuntu-latest
+    outputs:
+      ref: ${{ steps.workflow.outputs.ref }}
+    steps:
+      - name: Determine Workflow Ref
+        id: workflow
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/workflow-ref@main
+
   verify:
     permissions:
       id-token: write
       contents: read
     runs-on: ubuntu-latest
+    needs: [metadata]
     steps:
-      - name: Azure Login
-        uses: azure/login@v1
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Trusted Builds Config
+        id: config
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@main
         with:
-          client-id: ${{ env.AZURE_CLIENT_ID }}
-          tenant-id: ${{ env.AZURE_TENANT_ID }}
-          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          ref: ${{needs.metadata.outputs.ref}}
+          token: ${{ secrets.GH_PAT }}
 
-      - name: Azure Account
-        run: az account show
-
-      - name: Authenticate to ACR
-        run: az acr login -n "${ACR_NAME}"
-
-      - name: Retrieve Tailscale Key
-        id: tailscale-auth
-        run: |
-          authKey=$(az keyvault secret show --name "${TAILSCALE_SECRET_NAME}" --vault-name "${AZURE_KEYVAULT_NAME}" --query value -o tsv)
-          echo "::add-mask::${authKey}"
-          echo "authkey=${authKey}" >> $GITHUB_OUTPUT
-
-      - name: Setup Tailscale
-        uses: tailscale/github-action@main
+      - name: Azure Setup
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@main
         with:
-          authkey: ${{ steps.tailscale-auth.outputs.authkey }}
+          acrName: ${{ steps.config.outputs.ACR_NAME }}
+          client: ${{ steps.config.outputs.PLATFORM_TEAM_SP_CLIENT_ID }}
+          subscription: ${{ steps.config.outputs.AZURE_SUBSCRIPTION_ID }}
+          tenant: ${{ steps.config.outputs.AZURE_TENANT_ID }}
 
-      - name: Trust Ingress CA Certificate
-        run: |
-          printf "${INGRESS_CA}" | base64 -d > ca.crt
-          sudo cp ca.crt /usr/local/share/ca-certificates
-          sudo update-ca-certificates
-
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@v3
+      - name: Tailscale
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/tailscale@main
         with:
-          cosign-release: 'v2.0.0'
-      - name: Download Rekor Public Key
-        run: |
-          curl -o rekor.pub "https://${REKOR_HOST}/api/v1/log/publicKey"
+          vault: ${{ steps.config.outputs.PLATFORM_TEAM_VAULT }}
 
-      - name: Verify Platform Team Signature
-        env:
-          SIGSTORE_REKOR_PUBLIC_KEY: ./rekor.pub
-        run: |
-          printf "${PLATFORM_TEAM_PUB_KEY}" | base64 -d > platform.pub
+      - name: Cosign Setup
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@main
+        with:
+          tufRoot: ${{ steps.config.outputs.TUF_ROOT_PATH }}
+          tufMirror: ${{ steps.config.outputs.TUF_ROOT_MIRROR }}
 
+      - name: Verify Image Built From Platform Team Workflow
+        run: |
           cosign verify \
-              --rekor-url "https://${REKOR_HOST}" \
-              --key platform.pub \
-              -a liatr.io/built-from=liatrio/gh-trusted-builds-app \
-              -a liatr.io/built-by='liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml' \
+              --rekor-url ${{ steps.config.outputs.REKOR_URL }} \
+              --certificate-oidc-issuer "${GITHUB_ACTIONS_ISSUER}" \
+              --certificate-github-workflow-repository ${{ github.repository }} \
+              --certificate-identity https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml@${{ needs.metadata.outputs.ref }} \
               -a liatr.io/signed-off-by=platform-team \
-              ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
+              ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
 
-          rm platform.pub
-
-      - name: Verify Security Team Signature
-        env:
-          SIGSTORE_REKOR_PUBLIC_KEY: ./rekor.pub
+      - name: Verify Image Passed Security Team Policy
         run: |
-          printf "${SECURITY_TEAM_PUB_KEY}" | base64 -d > security.pub
-
           cosign verify \
-            --rekor-url "https://${REKOR_HOST}" \
-            --key security.pub \
-            -a liatr.io/scanned-by='liatrio/gh-trusted-builds-workflows/.github/workflows/scan-image.yaml' \
+            --rekor-url ${{ steps.config.outputs.REKOR_URL }} \
+            --certificate-oidc-issuer "${GITHUB_ACTIONS_ISSUER}" \
+            --certificate-github-workflow-repository ${{ github.repository }} \
+            --certificate-identity https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/policy-verification.yaml@${{ needs.metadata.outputs.ref }} \
             -a liatr.io/signed-off-by=security-team \
-            ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
-
-          rm security.pub
+            ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}

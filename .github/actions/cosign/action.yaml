@@ -1,0 +1,23 @@
+name: "cosign"
+description: "Setups cosign with a custom TUF mirror"
+
+inputs:
+  version:
+    description: "Cosign version to install"
+    default: "v2.0.2"
+  tufRoot:
+    description: "TUF trusted root file"
+  tufMirror:
+    description: "TUF Mirror URL"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Cosign
+      uses: sigstore/cosign-installer@v3
+      with:
+        cosign-release: ${{ inputs.version }}
+    - name: Initialize Cosign
+      shell: bash
+      run: |
+        cosign initialize --mirror ${{ inputs.tufMirror }} --root ${{ inputs.tufRoot }}

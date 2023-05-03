@@ -1,0 +1,83 @@
+name: "config"
+description: "Loads liatrio/gh-trusted-builds-workflows configuration"
+
+inputs:
+  ref:
+    description: "Git reference to use when checking out the workflows repo"
+  token:
+    description: "GitHub PAT with permission to read liatrio/gh-trusted-builds-workflows"
+
+outputs:
+  ACR_NAME:
+    description: "Azure container registry instance name"
+    value: "${{ steps.config.outputs.ACR_NAME }}"
+  AZURE_TENANT_ID:
+    description: "Azure tenant id"
+    value: "${{ steps.config.outputs.AZURE_TENANT_ID }}"
+  AZURE_SUBSCRIPTION_ID:
+    description: "Azure subscription id"
+    value: "${{ steps.config.outputs.AZURE_SUBSCRIPTION_ID }}"
+  FULCIO_URL:
+    description: "Fulcio CA URL"
+    value: "${{ steps.config.outputs.FULCIO_URL }}"
+  PLATFORM_TEAM_SP_CLIENT_ID:
+    description: "The platform team's service principal client id"
+    value: "${{ steps.config.outputs.PLATFORM_TEAM_SP_CLIENT_ID }}"
+  PLATFORM_TEAM_VAULT:
+    description: "The platform team's service Azure KeyVault instance name"
+    value: "${{ steps.config.outputs.PLATFORM_TEAM_VAULT }}"
+  SECURITY_TEAM_SP_CLIENT_ID:
+    description: "The security team's service principal client id"
+    value: "${{ steps.config.outputs.SECURITY_TEAM_SP_CLIENT_ID }}"
+  SECURITY_TEAM_VAULT:
+    description: "The security team's service Azure KeyVault instance name"
+    value: "${{ steps.config.outputs.SECURITY_TEAM_VAULT }}"
+  REKOR_URL:
+    description: "Transparency log URL"
+    value: "${{ steps.config.outputs.REKOR_URL }}"
+  TUF_ROOT_PATH:
+    description: "Trusted TUF root path on disk"
+    value: "gh-trusted-builds-workflows/config/tuf/root.json"
+  TUF_ROOT_MIRROR:
+    description: "URL to a TUF root mirror"
+    value: "${{ steps.config.outputs.TUF_ROOT_MIRROR }}"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        repository: liatrio/gh-trusted-builds-workflows
+        token: ${{ inputs.token }}
+        ref: ${{ inputs.ref }}
+        path: gh-trusted-builds-workflows
+    - name: Map Configuration
+      shell: bash
+      id: config
+      env:
+        CONFIG_FILE_PATH: "./gh-trusted-builds-workflows/config/config.yaml"
+      run: |
+        function output() {
+          name="${1}"
+          path="${2}"
+
+          value=$(yq eval "${path}" "${CONFIG_FILE_PATH}")
+          echo "${name}=${value}" >> $GITHUB_OUTPUT
+        }
+        
+        output "ACR_NAME" ".azure.acr.name"
+        output "AZURE_TENANT_ID" ".azure.tenant"
+        output "AZURE_SUBSCRIPTION_ID" ".azure.subscription"
+        output "FULCIO_URL" ".fulcio.url"
+        output "PLATFORM_TEAM_SP_CLIENT_ID" ".teams.platform.clientId"
+        output "PLATFORM_TEAM_VAULT" ".teams.platform.vault"
+        output "SECURITY_TEAM_SP_CLIENT_ID" ".teams.security.clientId"
+        output "SECURITY_TEAM_VAULT" ".teams.security.vault"
+        output "REKOR_URL" ".rekor.url"
+        output "TUF_ROOT_MIRROR" ".tuf.mirror"
+    - name: Trust Ingress CA Certificate
+      shell: bash
+      run: |
+        sudo cp gh-trusted-builds-workflows/config/ca.crt /usr/local/share/ca-certificates
+        sudo update-ca-certificates
