@@ -11,7 +11,7 @@ env:
 
 jobs:
   workflow-ref:
-    permission:
+    permissions:
       id-token: write
       contents: read
     runs-on: ubuntu-latest
