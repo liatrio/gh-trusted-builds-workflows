@@ -16,10 +16,10 @@ jobs:
       contents: read
     runs-on: ubuntu-latest
     outputs:
-      ref: ${{ steps.outputs.workflow-ref.ref }}
+      ref: ${{ steps.workflow.outputs.ref }}
     steps:
       - name: Determine Workflow Ref
-        id: workflow-ref
+        id: workflow
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/workflow-ref@keyless # TODO: point at main
 
   source-attestations:
