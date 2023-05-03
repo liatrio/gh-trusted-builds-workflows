@@ -18,5 +18,5 @@ runs:
           const claimsJson = Buffer.from(token.split('.')[1], "base64url").toString();
           const workflowRef = JSON.parse(claimsJson)["job_workflow_ref"];
           const ref = workflowRef.split("@")[1];
-          
+          console.log('ref', ref);
           core.setOutput(ref, ref);
