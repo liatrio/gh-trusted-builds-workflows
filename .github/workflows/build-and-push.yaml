@@ -30,6 +30,7 @@ jobs:
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@keyless
         with:
           acrName: ${{ steps.config.outputs.ACR_NAME }}
+          client: ${{ steps.config.outputs.PLATFORM_TEAM_SP_CLIENT_ID }}
           subscription: ${{ steps.config.outputs.AZURE_SUBSCRIPTION_ID }}
           tenant: ${{ steps.config.outputs.AZURE_TENANT_ID }}
 
@@ -128,6 +129,7 @@ jobs:
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@keyless
         with:
           acrName: ${{ steps.config.outputs.ACR_NAME }}
+          client: ${{ steps.config.outputs.PLATFORM_TEAM_SP_CLIENT_ID }}
           subscription: ${{ steps.config.outputs.AZURE_SUBSCRIPTION_ID }}
           tenant: ${{ steps.config.outputs.AZURE_TENANT_ID }}
 
@@ -168,6 +170,7 @@ jobs:
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@keyless
         with:
           acrName: ${{ steps.config.outputs.ACR_NAME }}
+          client: ${{ steps.config.outputs.PLATFORM_TEAM_SP_CLIENT_ID }}
           subscription: ${{ steps.config.outputs.AZURE_SUBSCRIPTION_ID }}
           tenant: ${{ steps.config.outputs.AZURE_TENANT_ID }}
 
@@ -236,6 +239,7 @@ jobs:
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@keyless
         with:
           acrName: ${{ steps.config.outputs.ACR_NAME }}
+          client: ${{ steps.config.outputs.PLATFORM_TEAM_SP_CLIENT_ID }}
           subscription: ${{ steps.config.outputs.AZURE_SUBSCRIPTION_ID }}
           tenant: ${{ steps.config.outputs.AZURE_TENANT_ID }}
 

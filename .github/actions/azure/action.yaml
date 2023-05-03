@@ -4,11 +4,11 @@ description: "Loads liatrio/gh-trusted-builds-workflows configuration"
 inputs:
   acrName:
     description: "Azure container registry instance name"
-  clientId:
+  client:
     description: "Service principal client id"
-  tenantId:
+  tenant:
     description: "Azure tenant id"
-  subscriptionId:
+  subscription:
     description: "Azure subscription id"
 
 runs:
@@ -18,8 +18,8 @@ runs:
       uses: azure/login@v1
       with:
         client-id: ${{ inputs.client }}
-        tenant-id: ${{ inputs.tenantId }}
-        subscription-id: ${{ inputs.suscriptionId }}
+        tenant-id: ${{ inputs.tenant }}
+        subscription-id: ${{ inputs.subscription }}
 
     - name: Azure Account
       shell: bash

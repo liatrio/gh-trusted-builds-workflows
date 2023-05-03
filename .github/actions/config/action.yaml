@@ -56,7 +56,6 @@ runs:
       env:
         CONFIG_FILE_PATH: "./gh-trusted-builds-workflows/config/config.yaml"
       run: |
-        set +x
         function output() {
           name="${1}"
           path="${2}"
@@ -65,9 +64,6 @@ runs:
           echo "${name}=${value}" >> $GITHUB_OUTPUT
         }
         
-        yq --version
-        yq --help
-
         output "ACR_NAME" ".azure.acr.name"
         output "AZURE_TENANT_ID" ".azure.tenant"
         output "AZURE_SUBSCRIPTION_ID" ".azure.subscription"
