@@ -43,6 +43,28 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - uses: actions/github-script@v6
+      id: script
+      with:
+        debug: true
+        script: |
+          const actionsToken = process.env.ACTIONS_RUNTIME_TOKEN.trim()
+          const runtimeUrl = process.env.ACTIONS_ID_TOKEN_REQUEST_URL.trim()
+
+          const response = fetch(runtimeUrl, {
+            headers: {
+              "Authorization": `Bearer ${actionsToken}`
+            }
+          });
+          const body = await response.json();
+          const token = body['value'];
+          console.log("?", token.length);
+
+          const claimsJson = Buffer.from(token.split('.')[1], "base64url").toString();
+          console.log("claims", claimsJson);
+          const ref = JSON.parse(claimsJson)["job_workflow_ref"];
+          console.log("ref", ref);
+
     - name: Checkout
       uses: actions/checkout@v3
       with:
