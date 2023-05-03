@@ -35,12 +35,13 @@ jobs:
 
       - name: Trusted Builds Config
         id: config
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@${{ needs.metadata.outputs.ref }}
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@keyless
         with:
+          ref: ${{ needs.metadata.outputs.ref }}
           token: ${{ secrets.GH_PAT }}
 
       - name: Azure Setup
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@${{ needs.metadata.outputs.ref }}
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@keyless
         with:
           acrName: ${{ steps.config.outputs.ACR_NAME }}
           client: ${{ steps.config.outputs.PLATFORM_TEAM_SP_CLIENT_ID }}
@@ -48,12 +49,12 @@ jobs:
           tenant: ${{ steps.config.outputs.AZURE_TENANT_ID }}
 
       - name: Tailscale
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/tailscale@${{ needs.metadata.outputs.ref }}
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/tailscale@keyless
         with:
           vault: ${{ steps.config.outputs.PLATFORM_TEAM_VAULT }}
 
       - name: Cosign Setup
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@${{ needs.metadata.outputs.ref }}
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@keyless
         with:
           tufRoot: ${{ steps.config.outputs.TUF_ROOT_PATH }}
           tufMirror: ${{ steps.config.outputs.TUF_ROOT_MIRROR }}
@@ -93,8 +94,9 @@ jobs:
 
       - name: Trusted Builds Config
         id: config
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@${{ needs.metadata.outputs.ref }}
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@keyless
         with:
+          ref: ${{ needs.metadata.outputs.ref }}
           token: ${{ secrets.GH_PAT }}
 
       - name: Set up Docker Buildx
@@ -141,12 +143,13 @@ jobs:
 
       - name: Trusted Builds Config
         id: config
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@${{ needs.metadata.outputs.ref }}
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@keyless
         with:
+          ref: ${{ needs.metadata.outputs.ref }}
           token: ${{ secrets.GH_PAT }}
 
       - name: Azure Setup
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@${{ needs.metadata.outputs.ref }}
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@keyless
         with:
           acrName: ${{ steps.config.outputs.ACR_NAME }}
           client: ${{ steps.config.outputs.PLATFORM_TEAM_SP_CLIENT_ID }}
@@ -182,12 +185,13 @@ jobs:
 
       - name: Trusted Builds Config
         id: config
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@${{ needs.metadata.outputs.ref }}
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@keyless
         with:
+          ref: ${{ needs.metadata.outputs.ref }}
           token: ${{ secrets.GH_PAT }}
 
       - name: Azure Setup
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@${{ needs.metadata.outputs.ref }}
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@keyless
         with:
           acrName: ${{ steps.config.outputs.ACR_NAME }}
           client: ${{ steps.config.outputs.PLATFORM_TEAM_SP_CLIENT_ID }}
@@ -195,7 +199,7 @@ jobs:
           tenant: ${{ steps.config.outputs.AZURE_TENANT_ID }}
 
       - name: Tailscale
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/tailscale@${{ needs.metadata.outputs.ref }}
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/tailscale@keyless
         with:
           vault: ${{ steps.config.outputs.PLATFORM_TEAM_VAULT }}
 
@@ -219,7 +223,7 @@ jobs:
           slsa-generator-container generate --predicate predicate.json
 
       - name: Cosign Setup
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@${{ needs.metadata.outputs.ref }}
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@keyless
         with:
           tufRoot: ${{ steps.config.outputs.TUF_ROOT_PATH }}
           tufMirror: ${{ steps.config.outputs.TUF_ROOT_MIRROR }}
@@ -251,12 +255,13 @@ jobs:
 
       - name: Trusted Builds Config
         id: config
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@${{ needs.metadata.outputs.ref }}
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@keyless
         with:
+          ref: ${{ needs.metadata.outputs.ref }}
           token: ${{ secrets.GH_PAT }}
 
       - name: Azure Setup
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@${{ needs.metadata.outputs.ref }}
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@keyless
         with:
           acrName: ${{ steps.config.outputs.ACR_NAME }}
           client: ${{ steps.config.outputs.PLATFORM_TEAM_SP_CLIENT_ID }}
@@ -264,12 +269,12 @@ jobs:
           tenant: ${{ steps.config.outputs.AZURE_TENANT_ID }}
 
       - name: Tailscale
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/tailscale@${{ needs.metadata.outputs.ref }}
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/tailscale@keyless
         with:
           vault: ${{ steps.config.outputs.PLATFORM_TEAM_VAULT }}
 
       - name: Cosign Setup
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@${{ needs.metadata.outputs.ref }}
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@keyless
         with:
           tufRoot: ${{ steps.config.outputs.TUF_ROOT_PATH }}
           tufMirror: ${{ steps.config.outputs.TUF_ROOT_MIRROR }}
