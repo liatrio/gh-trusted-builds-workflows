@@ -70,7 +70,7 @@ jobs:
         run: |
           cosign initialize --mirror ${TUF_ROOT_MIRROR} --root root.json          
 
-      - name: Verify Platform Team Signature
+      - name: Verify Image Built From Platform Team Workflow
         run: |
           cosign verify \
               --rekor-url "https://${REKOR_HOST}" \
@@ -80,7 +80,7 @@ jobs:
               -a liatr.io/signed-off-by=platform-team \
               ${{ env.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
 
-      - name: Verify Security Team Signature
+      - name: Verify Image Passed Security Team Policy
         run: |
           cosign verify \
             --rekor-url "https://${REKOR_HOST}" \

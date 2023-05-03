@@ -1,0 +1,18 @@
+azure:
+  tenant: "1b4a4fed-fed8-4823-a8a0-3d5cea83d122"
+  subscription: "3e16852e-8399-4c16-b246-16bf46bc3747"
+  acr:
+    name: "agplatformrnim"
+fulcio:
+  url: "https://fulcio.sec-guild-dev.private.northcentralus.azmk8s.io"
+rekor:
+  url: "https://rekor.sec-guild-dev.private.northcentralus.azmk8s.io"
+teams:
+  security:
+    clientId: "58162388-16a0-4c7c-91f4-bdfc1ce2cd69"
+    vault: "ag-poc-security-OtfL"
+  platform:
+    clientId: "48fbd2e1-8375-4c05-9957-f5c6c702181f"
+    vault: "ag-poc-platform-c2wn"
+tuf:
+  mirror: "https://agtufrootcrml.blob.core.windows.net/tuf-root"

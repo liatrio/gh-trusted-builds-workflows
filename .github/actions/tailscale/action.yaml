@@ -1,0 +1,25 @@
+name: "tailscale"
+description: "Setups a tailscale connection"
+
+inputs:
+  vault:
+    description: "Azure KeyVault name"
+  secretName:
+    default: "tailscale-authkey"
+    description: "Tailscale auth key secret name"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Retrieve Tailscale Key
+      shell: bash
+      id: tailscale-auth
+      run: |
+        authKey=$(az keyvault secret show --name ${{ inputs.secretName }} --vault-name ${{ inputs.vault }} --query value -o tsv)
+        echo "::add-mask::${authKey}"
+        echo "authkey=${authKey}" >> $GITHUB_OUTPUT
+
+    - name: Setup Tailscale
+      uses: tailscale/github-action@main
+      with:
+        authkey: ${{ steps.tailscale-auth.outputs.authkey }}

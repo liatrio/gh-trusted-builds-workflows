@@ -1,0 +1,30 @@
+name: "config"
+description: "Loads liatrio/gh-trusted-builds-workflows configuration"
+
+inputs:
+  acrName:
+    description: "Azure container registry instance name"
+  clientId:
+    description: "Service principal client id"
+  tenantId:
+    description: "Azure tenant id"
+  subscriptionId:
+    description: "Azure subscription id"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        client-id: ${{ inputs.client }}
+        tenant-id: ${{ inputs.tenantId }}
+        subscription-id: ${{ inputs.suscriptionId }}
+
+    - name: Azure Account
+      shell: bash
+      run: az account show
+
+    - name: Authenticate to ACR
+      shell: bash
+      run: az acr login -n ${{ inputs.acrName }}
