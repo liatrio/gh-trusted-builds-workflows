@@ -2,6 +2,8 @@ name: "config"
 description: "Loads liatrio/gh-trusted-builds-workflows configuration"
 
 inputs:
+  ref:
+    description: "Git reference to use when checking out the workflows repo"
   token:
     description: "GitHub PAT with permission to read liatrio/gh-trusted-builds-workflows"
 
@@ -48,7 +50,7 @@ runs:
       with:
         repository: liatrio/gh-trusted-builds-workflows
         token: ${{ inputs.token }}
-        ref: 'keyless' # TODO: pull this from the job token
+        ref: ${{ inputs.ref }}
         path: gh-trusted-builds-workflows
     - name: Map Configuration
       shell: bash
