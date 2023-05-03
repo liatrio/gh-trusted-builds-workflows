@@ -60,9 +60,12 @@ runs:
           name="${1}"
           path="${2}"
 
-          value=$(yq e "${path}" "${CONFIG_FILE_PATH}")
+          value=$(yq eval "${path}" "${CONFIG_FILE_PATH}")
           echo "${name}=${value}" >> $GITHUB_OUTPUT
         }
+        
+        yq --version
+        yq --help
 
         output "ACR_NAME" ".azure.acr.name"
         output "AZURE_TENANT_ID" ".azure.tenant"
