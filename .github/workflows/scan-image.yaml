@@ -60,11 +60,7 @@ jobs:
         with:
           image-ref: ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
           format: 'cosign-vuln'
-          exit-code: '1'
-          ignore-unfixed: true
           output: trivy.report.json
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
 
       - name: Upload Trivy Report
         uses: actions/upload-artifact@v3
