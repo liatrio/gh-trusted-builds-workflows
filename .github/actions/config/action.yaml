@@ -35,7 +35,7 @@ outputs:
     value: "${{ steps.config.outputs.REKOR_URL }}"
   TUF_ROOT_PATH:
     description: "Trusted TUF root path on disk"
-    value: "${{ steps.config.outputs.TUF_ROOT_PATH }}"
+    value: "gh-trusted-builds-workflows/config/tuf/root.json"
   TUF_ROOT_MIRROR:
     description: "URL to a TUF root mirror"
     value: "${{ steps.config.outputs.TUF_ROOT_MIRROR }}"
@@ -56,6 +56,7 @@ runs:
       env:
         CONFIG_FILE_PATH: "./gh-trusted-builds-workflows/config/config.yaml"
       run: |
+        set +x
         function output() {
           name="${1}"
           path="${2}"
@@ -76,7 +77,6 @@ runs:
         output "SECURITY_TEAM_SP_CLIENT_ID" ".teams.security.clientId"
         output "SECURITY_TEAM_VAULT" ".teams.security.vault"
         output "REKOR_URL" ".rekor.url"
-        output "TUF_ROOT_PATH" "gh-trusted-builds-workflows/config/tuf/root.json"
         output "TUF_ROOT_MIRROR" ".tuf.mirror"
     - name: Trust Ingress CA Certificate
       shell: bash
