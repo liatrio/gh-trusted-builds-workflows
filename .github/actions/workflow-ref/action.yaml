@@ -2,7 +2,7 @@ name: "workflow-ref"
 description: "Determine workflow ref from branch"
 
 outputs:
-  workflow_ref:
+  ref:
     description: "Reusable workflow ref"
     value: "${{ steps.script.outputs.ref }}"
 
