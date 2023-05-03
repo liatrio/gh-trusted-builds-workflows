@@ -43,6 +43,7 @@ runs:
       uses: actions/checkout@v3
       with:
         repository: liatrio/gh-trusted-builds-workflows
+        token: ${{ secrets.GH_PAT }}
         ref: 'keyless' # TODO: pull this from the job token
         path: gh-trusted-builds-workflows
     - name: Map Configuration
