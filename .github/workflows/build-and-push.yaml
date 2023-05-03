@@ -7,7 +7,7 @@ on:
         value: ${{ jobs.push.outputs.digest }}
 
 env:
-  CUSTOM_ATTESTOR_VERSION: "0.2.0"
+  CUSTOM_ATTESTOR_VERSION: "0.3.0"
 
 jobs:
   metadata:
@@ -132,7 +132,7 @@ jobs:
       id-token: write
       contents: read
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [build, metadata]
     outputs:
       digest: ${{ steps.push.outputs.digest }}
     steps:
