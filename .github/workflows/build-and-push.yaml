@@ -213,9 +213,9 @@ jobs:
       - name: Attest Provenance
         run: |
           cosign attest --predicate="predicate.json" \
-            --rekor-url "https://${REKOR_HOST}" \
+            --rekor-url ${{ steps.config.outputs.REKOR_URL }} \
             --type slsaprovenance \
-            --fulcio-url "https://${FULCIO_HOST}" \
+            --fulcio-url ${{ steps.config.outputs.FULCIO_URL }} \
             --yes \
             ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
 
@@ -269,6 +269,6 @@ jobs:
               --verbose \
               -a liatr.io/github-actions-run-link='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
               -a liatr.io/signed-off-by=platform-team \
-              --rekor-url "https://${REKOR_HOST}" \
-              --fulcio-url "https://${FULCIO_HOST}" \
+              --rekor-url ${{ steps.config.outputs.REKOR_URL }} \
+              --fulcio-url ${{ steps.config.outputs.FULCIO_URL }} \
               -y ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
