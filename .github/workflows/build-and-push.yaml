@@ -39,6 +39,12 @@ jobs:
         with:
           vault: ${{ steps.config.outputs.PLATFORM_TEAM_VAULT }}
 
+      - name: Cosign Setup
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@keyless
+        with:
+          tufRoot: ${{ steps.config.outputs.TUF_ROOT_PATH }}
+          tufMirror: ${{ steps.config.outputs.TUF_ROOT_MIRROR }}
+
       - name: Download Attestor
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
@@ -201,7 +207,7 @@ jobs:
       - name: Cosign Setup
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@keyless
         with:
-          tufRoot: ${{ steps.config.outputs.TUF_ROOT }}
+          tufRoot: ${{ steps.config.outputs.TUF_ROOT_PATH }}
           tufMirror: ${{ steps.config.outputs.TUF_ROOT_MIRROR }}
 
       - name: Attest Provenance
@@ -251,7 +257,7 @@ jobs:
       - name: Cosign Setup
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@keyless
         with:
-          tufRoot: ${{ steps.config.outputs.TUF_ROOT }}
+          tufRoot: ${{ steps.config.outputs.TUF_ROOT_PATH }}
           tufMirror: ${{ steps.config.outputs.TUF_ROOT_MIRROR }}
 
       - name: Sign
