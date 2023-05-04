@@ -118,7 +118,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
-          gh release download v1.0.1 \
+          gh release download v1.1.0 \
             --repo liatrio/gh-trusted-builds-policy \
             --pattern "bundle.tar.gz"
 
