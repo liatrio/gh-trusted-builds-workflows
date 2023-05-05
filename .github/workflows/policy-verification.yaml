@@ -67,8 +67,6 @@ jobs:
           rekor-cli version
 
       - name: Verify Attestations
-        env:
-          AZURE_AUTH_METHOD: "cli"
         run: |
           cosign tree ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }} 
           
@@ -130,8 +128,6 @@ jobs:
             | jq -e '.result[0].expressions[0].value == true'
 
       - name: Sign Artifact
-        env:
-          AZURE_AUTH_METHOD: "cli"
         run: |
           cosign sign \
             -a liatr.io/github-actions-run-link='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \

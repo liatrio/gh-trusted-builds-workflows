@@ -80,7 +80,6 @@ jobs:
 
       - name: Attest Scan
         env:
-          AZURE_AUTH_METHOD: "cli"
           COSIGN_EXPERIMENTAL: 1
         run: |
           cosign attest \

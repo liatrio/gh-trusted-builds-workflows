@@ -72,7 +72,6 @@ jobs:
 
       - name: Pull Request Attestation
         env:
-          AZURE_AUTH_METHOD: "cli"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           attestor \
@@ -279,7 +278,6 @@ jobs:
 
       - name: Sign
         env:
-          AZURE_AUTH_METHOD: "cli"
           COSIGN_EXPERIMENTAL: 1
         run: |
           cosign sign \
