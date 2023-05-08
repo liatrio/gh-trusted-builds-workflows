@@ -1,0 +1,56 @@
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  deploy:
+    permissions:
+      id-token: write
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Trusted Builds Config
+        id: config
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@main
+        with:
+          ref: ${{ needs.metadata.outputs.ref }}
+          token: ${{ secrets.GH_PAT }}
+
+#      - name: Azure Setup
+#        uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@main
+#        with:
+#          acrName: ${{ steps.config.outputs.ACR_NAME }}
+#          client: ${{ steps.config.outputs.PLATFORM_TEAM_SP_CLIENT_ID }}
+#          subscription: ${{ steps.config.outputs.AZURE_SUBSCRIPTION_ID }}
+#          tenant: ${{ steps.config.outputs.AZURE_TENANT_ID }}
+
+#      - name: Tailscale
+#        uses: liatrio/gh-trusted-builds-workflows/.github/actions/tailscale@main
+#        with:
+#          vault: ${{ steps.config.outputs.PLATFORM_TEAM_VAULT }}
+
+      - name: Helm Setup
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/helm@main
+
+      - name: Configure GPG Public Keyring
+        run: |
+          cat ${{ steps.config.outputs.PLATFORM_TEAM_GPG_PUBLIC_KEY_PATH }} | gpg --import --batch
+          gpg --export > /home/runner/.gnupg/pubring.gpg
+
+      - name: Verify Helm Chart
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          helm pull \
+              --password $GITHUB_TOKEN \
+              --version 0.1.0 \
+              gh-trusted-builds-helm/go-web-app
+          
+          ls -lh
+          
+          helm sigstore verify \
+            --keyring /home/runner/.gnupg/pubring.gpg \
+            --rekor-server ${{ steps.config.outputs.REKOR_URL }} "./go-web-app-0.1.0.tar.gz"

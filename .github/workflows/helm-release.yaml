@@ -3,7 +3,6 @@ on:
   workflow_call:
 
 env:
-  SIGSTORE_HELM_PLUGIN_VERSION: "v0.2.0"
   GPG_KEY_NAME: "Liatrio Platform Team"
   GPG_KEYRING_PATH: "/home/runner/.gnupg/secring.gpg"
 
@@ -44,14 +43,8 @@ jobs:
         with:
           vault: ${{ steps.config.outputs.PLATFORM_TEAM_VAULT }}
 
-      - name: Install Helm
-        uses: azure/setup-helm@v3
-        with:
-          version: 3.11.3
-
-      - name: Install Sigstore Helm Plugin
-        run: |
-          helm plugin install --version "${SIGSTORE_HELM_PLUGIN_VERSION}" https://github.com/sigstore/helm-sigstore
+      - name: Helm Setup
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/helm@main
 
       - name: Configure GPG Key
         run: |
@@ -60,13 +53,7 @@ jobs:
             --vault-name ${{ steps.config.outputs.PLATFORM_TEAM_VAULT }} \
             --query value -o tsv | gpg --import --batch
           
-          gpg --version
-          gpg --list-secret-keys --keyid-format=long
-          
-          echo "exporting public keys"
           gpg --export > /home/runner/.gnupg/pubring.gpg
-          
-          echo "exporting secret keys"
           gpg --export-secret-keys "${GPG_KEY_NAME}" > "${GPG_KEYRING_PATH}"
 
       - name: Run Chart Releaser
