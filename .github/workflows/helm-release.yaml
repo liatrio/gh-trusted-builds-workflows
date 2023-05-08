@@ -61,6 +61,10 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
 
+      - name: Configure Helm Repo
+        run: |
+          helm repo index --url https://raw.githubusercontent.com/liatrio/gh-trusted-builds-helm/gh-pages .
+
       - name: Configure GPG Key
         run: |
           az keyvault secret show \
