@@ -68,6 +68,8 @@ jobs:
             --query value -o tsv | gpg --import --batch
           
           export GPG_TTY=$(tty)
+          echo "tty: $GPG_TTY"
+          gpg --list-secret-keys --keyid-format=long
           gpg --export-secret-keys "${GPG_KEY_NAME}" > "${GPG_KEYRING_PATH}"
 
       - name: Run Chart Releaser
