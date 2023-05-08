@@ -71,7 +71,6 @@ jobs:
         uses: helm/chart-releaser-action@v1.5.0
         env:
           CR_KEY: ${{ env.GPG_KEY_NAME }}
-          CR_KEYRING: ${{ env.GPG_KEYRING_PATH }}
           CR_SIGN: "true"
           CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
