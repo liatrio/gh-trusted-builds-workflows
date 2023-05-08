@@ -105,8 +105,12 @@ jobs:
         run: |
           helm push "${{ inputs.chart }}-${{ steps.version.outputs.version }}.tgz" \
             oci://${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }} | tee helm-push.log
+          
+          echo "helm push log"
+          cat helm-push.log
 
           digest=$(cat helm-push.log | awk -F "[, ]+" '/Digest/{print $NF}')
+          echo "digest: ${digest}"
           cosign sign -y \
               -a liatr.io/github-actions-run-link='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
               -a liatr.io/signed-off-by=platform-team \
