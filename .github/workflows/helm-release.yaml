@@ -23,7 +23,7 @@ jobs:
         id: config
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@main
         with:
-          ref: ${{needs.metadata.outputs.ref}}
+          ref: ${{ needs.metadata.outputs.ref }}
           token: ${{ secrets.GH_PAT }}
 
       - name: Azure Setup
@@ -62,7 +62,7 @@ jobs:
             --vault-name ${{ steps.config.outputs.PLATFORM_TEAM_VAULT }} \
             --query value -o tsv | gpg --import --batch
 
-          gpg --export > /home/runner.gnupg/pubring.gpg
+          gpg --export > /home/runner/.gnupg/pubring.gpg
           gpg --export-secret-keys > "${GPG_KEYRING_PATH}"
 
       - name: Run Chart Releaser
