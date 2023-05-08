@@ -90,5 +90,5 @@ jobs:
           ls -lha .cr-release-packages/
 
           for chart in $(find .cr-release-packages -name '*.tgz' -print); do
-            helm sigstore --keyring ${GPG_KEYRING_PATH} --rekor-server ${{ steps.config.outputs.REKOR_URL }} ${chart}
+            helm sigstore upload --keyring ${GPG_KEYRING_PATH} --rekor-server ${{ steps.config.outputs.REKOR_URL }} ${chart}
           done
