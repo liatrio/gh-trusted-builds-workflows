@@ -99,4 +99,4 @@ jobs:
           ls -lah
           
           helm push "${{ inputs.chart }}-${{ steps.version.outputs.version }}.tgz" \
-            oci://${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}/${{ inputs.chart }}
+            oci://${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}
