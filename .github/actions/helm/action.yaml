@@ -33,5 +33,5 @@ runs:
     - name: Setup Helm Repo
       shell: bash
       run: |
-        helm repo add ${{ inputs.helmRepoName }} ${{ inputs.helmRepo }}
+        helm repo add ${{ inputs.helmRepo }} ${{ inputs.helmRepoUrl }}
         helm repo update
