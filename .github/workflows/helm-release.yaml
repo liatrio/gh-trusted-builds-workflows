@@ -92,7 +92,7 @@ jobs:
       - name: Check Release
         id: check
         run: |
-          if [ $(git tag -l "${{ steps.version.outputs.version }}") ]; then
+          if [ $(git tag -l "${{ steps.version.outputs.tag }}") ]; then
             echo "Found existing version"
             echo "released=true" >> $GITHUB_OUTPUT
           else
