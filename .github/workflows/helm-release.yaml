@@ -112,4 +112,4 @@ jobs:
               -a liatr.io/signed-off-by=platform-team \
               --rekor-url ${{ steps.config.outputs.REKOR_URL }} \
               --fulcio-url ${{ steps.config.outputs.FULCIO_URL }} \
-              ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}/${{ inputs.chart }}
+              ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}/${{ inputs.chart }}@${digest}
