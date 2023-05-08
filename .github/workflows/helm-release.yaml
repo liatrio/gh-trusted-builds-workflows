@@ -81,10 +81,10 @@ jobs:
       - name: Helm Package
         run: |
           helm package \
-            --version ${{ steps.version.outputs.version }} \
-            --key ${GPG_KEY_NAME} \
-            --keyring ${GPG_KEYRING_PATH} \
-            --sign ./charts/${{ inputs.chart }}
+            --version "${{ steps.version.outputs.version }}" \
+            --key "${GPG_KEY_NAME}" \
+            --keyring "${GPG_KEYRING_PATH}" \
+            --sign "./charts/${{ inputs.chart }}"
 
       - name: Upload Helm Provenance
         run: |
