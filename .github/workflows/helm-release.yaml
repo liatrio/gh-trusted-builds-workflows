@@ -58,6 +58,8 @@ jobs:
 
       - name: Helm Setup
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/helm@deploy # TODO: point at main
+        with:
+          token: ${{ secrets.GH_PAT }}
 
       - name: Configure GPG Key
         run: |
