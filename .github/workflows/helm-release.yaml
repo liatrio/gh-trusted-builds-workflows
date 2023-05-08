@@ -67,10 +67,13 @@ jobs:
             --vault-name ${{ steps.config.outputs.PLATFORM_TEAM_VAULT }} \
             --query value -o tsv | gpg --import --batch
 
+          gpg --export-secret-keys > "${GPG_KEYRING_PATH}"
+
       - name: Run Chart Releaser
         uses: helm/chart-releaser-action@v1.5.0
         env:
           CR_KEY: ${{ env.GPG_KEY_NAME }}
+          CR_KEYRING: ${{ env.GPG_KEYRING_PATH }}
           CR_SIGN: "true"
           CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
