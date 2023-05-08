@@ -62,8 +62,8 @@ jobs:
             --vault-name ${{ steps.config.outputs.PLATFORM_TEAM_VAULT }} \
             --query value -o tsv | gpg --import --batch
 
-          gpg --export > /home/runner/.gnupg/pubring.gpg
-          gpg --export-secret-keys > "${GPG_KEYRING_PATH}"
+          export GPG_TTY=$(tty) gpg --export > /home/runner/.gnupg/pubring.gpg
+          export GPG_TTY=$(tty) gpg --export-secret-keys > "${GPG_KEYRING_PATH}"
 
       - name: Run Chart Releaser
         uses: helm/chart-releaser-action@v1.5.0
