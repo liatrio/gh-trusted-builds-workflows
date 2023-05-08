@@ -5,18 +5,9 @@ inputs:
   helmVersion:
     description: "Helm version"
     default: "3.11.3"
-  helmRepo:
-    description: "Helm chart repo name"
-    default: "gh-trusted-builds-helm"
-  helmRepoUrl:
-    description: "Helm chart repo URL"
-    default: "https://raw.githubusercontent.com/liatrio/gh-trusted-builds-helm/gh-pages"
-#    default: "https://liatrio.github.io/gh-trusted-builds-helm"
   sigstorePluginVersion:
     description: "Helm Sigstore plugin version"
     default: "v0.2.0"
-  token:
-    description: "GitHub PAT with permission to read liatrio/gh-trusted-builds-helm contents"
 
 runs:
   using: "composite"
@@ -32,9 +23,3 @@ runs:
         helm plugin install \
           --version ${{ inputs.sigstorePluginVersion }} \
           https://github.com/sigstore/helm-sigstore
-
-    - name: Setup Helm Repo
-      shell: bash
-      run: |
-        helm repo add --username github --password ${{ inputs.token }} ${{ inputs.helmRepo }} ${{ inputs.helmRepoUrl }}
-        helm repo update

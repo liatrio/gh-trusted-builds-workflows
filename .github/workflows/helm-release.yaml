@@ -1,6 +1,11 @@
 on:
   workflow_dispatch:
   workflow_call:
+    inputs:
+      chart:
+        description: "Helm chart name."
+        type: string
+        required: true
 
 env:
   GPG_KEY_NAME: "Liatrio Platform Team"
@@ -28,8 +33,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
       - name: Git User Config
         run: |
@@ -61,10 +64,6 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
 
-      - name: Configure Helm Repo
-        run: |
-          helm repo index --url https://raw.githubusercontent.com/liatrio/gh-trusted-builds-helm/gh-pages .
-
       - name: Configure GPG Key
         run: |
           az keyvault secret show \
@@ -75,17 +74,31 @@ jobs:
           gpg --export > /home/runner/.gnupg/pubring.gpg
           gpg --export-secret-keys "${GPG_KEY_NAME}" > "${GPG_KEYRING_PATH}"
 
-      - name: Run Chart Releaser
-        uses: helm/chart-releaser-action@v1.5.0
-        env:
-          CR_KEY: ${{ env.GPG_KEY_NAME }}
-          CR_KEYRING: ${{ env.GPG_KEYRING_PATH }}
-          CR_SIGN: "true"
-          CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get Chart Version
+        id: version
+        run: |
+          version=$(yq e '.version' ./charts/${{ inputs.chart }}/Chart.yaml)
+          echo "version=${version}" >> $GITHUB_OUTPUT
 
-      # https://github.com/sigstore/helm-charts/blob/5c098c80b90d6ce1f1cb6f54d0c16cd03654dabd/.github/workflows/release.yml#L57-L61
+      - name: Helm Package
+        run: |
+          helm package \
+            --version ${{ steps.version.outputs.version }} \
+            --key ${GPG_KEY_NAME} \
+            --keyring ${GPG_KEYRING_PATH}
+            --sign ./charts/${{ inputs.chart }}
+
       - name: Upload Helm Provenance
         run: |
-          for chart in $(find .cr-release-packages -name '*.tgz' -print); do
-            helm sigstore upload --keyring ${GPG_KEYRING_PATH} --rekor-server ${{ steps.config.outputs.REKOR_URL }} ${chart}
-          done
+          helm sigstore upload \
+            --keyring ${GPG_KEYRING_PATH} \
+            --rekor-server ${{ steps.config.outputs.REKOR_URL }} \
+            "${{ inputs.chart }}-${{ steps.version.outputs.version }}.tar.gz"
+
+      # TODO: sign
+      - name: Push Charts
+        run: |
+          ls -lah
+          
+          helm push "${{ inputs.chart }}-${{ steps.version.outputs.version }}.tar.gz" \
+            oci://${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}/${{ inputs.chart }}
