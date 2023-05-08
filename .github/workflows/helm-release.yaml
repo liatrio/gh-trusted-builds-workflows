@@ -61,8 +61,6 @@ jobs:
 
       - name: Helm Setup
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/helm@deploy # TODO: point at main
-        with:
-          token: ${{ secrets.GH_PAT }}
 
       - name: Configure GPG Key
         run: |
@@ -85,7 +83,7 @@ jobs:
           helm package \
             --version ${{ steps.version.outputs.version }} \
             --key ${GPG_KEY_NAME} \
-            --keyring ${GPG_KEYRING_PATH}
+            --keyring ${GPG_KEYRING_PATH} \
             --sign ./charts/${{ inputs.chart }}
 
       - name: Upload Helm Provenance
@@ -95,7 +93,7 @@ jobs:
             --rekor-server ${{ steps.config.outputs.REKOR_URL }} \
             "${{ inputs.chart }}-${{ steps.version.outputs.version }}.tar.gz"
 
-      # TODO: sign
+      # TODO: push tag and sign
       - name: Push Charts
         run: |
           ls -lah
