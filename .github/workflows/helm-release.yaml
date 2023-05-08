@@ -7,7 +7,20 @@ env:
   GPG_KEYRING_PATH: "/home/runner/.gnupg/secring.gpg"
 
 jobs:
+  metadata:
+    permissions:
+      id-token: write
+      contents: read
+    runs-on: ubuntu-latest
+    outputs:
+      ref: ${{ steps.workflow.outputs.ref }}
+    steps:
+      - name: Determine Workflow Ref
+        id: workflow
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/workflow-ref@main
+
   release:
+    needs: [metadata]
     permissions:
       id-token: write
       contents: write
