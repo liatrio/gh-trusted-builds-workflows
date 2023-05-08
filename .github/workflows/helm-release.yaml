@@ -93,10 +93,17 @@ jobs:
             --rekor-server ${{ steps.config.outputs.REKOR_URL }} \
             "${{ inputs.chart }}-${{ steps.version.outputs.version }}.tgz"
 
-      # TODO: push tag and sign
+      # TODO: push Git tag
+      # https://github.com/sigstore/helm-charts/blob/5c098c80b90d6ce1f1cb6f54d0c16cd03654dabd/.github/workflows/release.yml#L73-L81
       - name: Push Charts
         run: |
-          ls -lah
-          
           helm push "${{ inputs.chart }}-${{ steps.version.outputs.version }}.tgz" \
-            oci://${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}
+            oci://${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }} | tee helm-push.log
+
+          digest=$(cat helm-push.log | awk -F "[, ]+" '/Digest/{print $NF}')
+          cosign sign -y \
+              -a liatr.io/github-actions-run-link='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
+              -a liatr.io/signed-off-by=platform-team \
+              --rekor-url ${{ steps.config.outputs.REKOR_URL }} \
+              --fulcio-url ${{ steps.config.outputs.FULCIO_URL }} \
+              ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}/${{ inputs.chart }}
