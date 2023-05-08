@@ -104,7 +104,7 @@ jobs:
       - name: Push Charts
         run: |
           helm push "${{ inputs.chart }}-${{ steps.version.outputs.version }}.tgz" \
-            oci://${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }} | tee helm-push.log
+            oci://${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }} |& tee helm-push.log
           
           echo "helm push log"
           cat helm-push.log
