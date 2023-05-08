@@ -89,16 +89,13 @@ jobs:
       - name: Check Release
         id: check
         run: |
-          released=false
-          
           if [ $(git tag -l "v${{ steps.version.outputs.version }}") ]; then
             echo "Found existing version"
-            released=true
+            echo "released=true" >> $GITHUB_OUTPUT
           else
             echo "No Git tag found"
+            echo "released=false" >> $GITHUB_OUTPUT
           fi
-          
-          echo "released=${released}" >> $GITHUB_OUTPUT
 
       - name: Helm Package
         if: ${{ steps.check.outputs.released == false }}
