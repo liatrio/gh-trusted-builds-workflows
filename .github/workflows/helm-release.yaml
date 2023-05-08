@@ -91,12 +91,12 @@ jobs:
           helm sigstore upload \
             --keyring ${GPG_KEYRING_PATH} \
             --rekor-server ${{ steps.config.outputs.REKOR_URL }} \
-            "${{ inputs.chart }}-${{ steps.version.outputs.version }}.tar.gz"
+            "${{ inputs.chart }}-${{ steps.version.outputs.version }}.tgz"
 
       # TODO: push tag and sign
       - name: Push Charts
         run: |
           ls -lah
           
-          helm push "${{ inputs.chart }}-${{ steps.version.outputs.version }}.tar.gz" \
+          helm push "${{ inputs.chart }}-${{ steps.version.outputs.version }}.tgz" \
             oci://${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}/${{ inputs.chart }}
