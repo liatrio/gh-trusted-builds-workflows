@@ -44,13 +44,6 @@ jobs:
         with:
           vault: ${{ steps.config.outputs.PLATFORM_TEAM_VAULT }}
 
-# TODO: use sign-blob on tar file?
-#      - name: Cosign Setup
-#        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@main
-#        with:
-#          tufRoot: ${{ steps.config.outputs.TUF_ROOT_PATH }}
-#          tufMirror: ${{ steps.config.outputs.TUF_ROOT_MIRROR }}
-
       - name: Install Helm
         uses: azure/setup-helm@v3
         with:
@@ -87,8 +80,6 @@ jobs:
       # https://github.com/sigstore/helm-charts/blob/5c098c80b90d6ce1f1cb6f54d0c16cd03654dabd/.github/workflows/release.yml#L57-L61
       - name: Upload Helm Provenance
         run: |
-          ls -lha .cr-release-packages/
-
           for chart in $(find .cr-release-packages -name '*.tgz' -print); do
             helm sigstore upload --keyring ${GPG_KEYRING_PATH} --rekor-server ${{ steps.config.outputs.REKOR_URL }} ${chart}
           done
