@@ -68,7 +68,7 @@ jobs:
             --query value -o tsv | gpg --import --batch
           
           export GPG_TTY=$(tty)
-          gpg --export-secret-keys > "${GPG_KEYRING_PATH}"
+          gpg --export-secret-keys "${GPG_KEY_NAME}" > "${GPG_KEYRING_PATH}"
 
       - name: Run Chart Releaser
         uses: helm/chart-releaser-action@v1.5.0
