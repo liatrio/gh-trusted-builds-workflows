@@ -19,6 +19,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Git User Config
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
       - name: Trusted Builds Config
         id: config
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@main
