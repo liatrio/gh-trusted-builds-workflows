@@ -90,7 +90,13 @@ jobs:
           helm pull \
               --prov \
               --version ${{ inputs.version }} \
-              oci://${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${HELM_CHARTS_IMAGE_REPO}/${{ inputs.chart }}
+              oci://${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${HELM_CHARTS_IMAGE_REPO}/${{ inputs.chart }} |& tee helm-pull.log
+
+          digest=$(cat helm-pull.log | awk -F "[, ]+" '/Digest/{print $NF}')
+          if [ digest != "${{ inputs.digest }}" ]; then
+            echo "Expected chart digest to be '${{ inputs.digest }}' but was '${digest}'"
+            exit 1
+          fi
           
           helm sigstore verify \
             --keyring /home/runner/.gnupg/pubring.gpg \
