@@ -32,18 +32,18 @@ jobs:
           ref: ${{ needs.metadata.outputs.ref }}
           token: ${{ secrets.GH_PAT }}
 
-#      - name: Azure Setup
-#        uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@main
-#        with:
-#          acrName: ${{ steps.config.outputs.ACR_NAME }}
-#          client: ${{ steps.config.outputs.PLATFORM_TEAM_SP_CLIENT_ID }}
-#          subscription: ${{ steps.config.outputs.AZURE_SUBSCRIPTION_ID }}
-#          tenant: ${{ steps.config.outputs.AZURE_TENANT_ID }}
+      - name: Azure Setup
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@main
+        with:
+          acrName: ${{ steps.config.outputs.ACR_NAME }}
+          client: ${{ steps.config.outputs.PLATFORM_TEAM_SP_CLIENT_ID }}
+          subscription: ${{ steps.config.outputs.AZURE_SUBSCRIPTION_ID }}
+          tenant: ${{ steps.config.outputs.AZURE_TENANT_ID }}
 
-#      - name: Tailscale
-#        uses: liatrio/gh-trusted-builds-workflows/.github/actions/tailscale@main
-#        with:
-#          vault: ${{ steps.config.outputs.PLATFORM_TEAM_VAULT }}
+      - name: Tailscale
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/tailscale@main
+        with:
+          vault: ${{ steps.config.outputs.PLATFORM_TEAM_VAULT }}
 
       - name: Helm Setup
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/helm@deploy # TODO: point at main
