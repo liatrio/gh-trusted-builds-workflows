@@ -1,6 +1,19 @@
 on:
   workflow_dispatch:
   workflow_call:
+    inputs:
+      chart:
+        description: "Helm chart name"
+        type: string
+        required: true
+      version:
+        description: "Chart semantic version"
+        type: string
+        required: true
+      digest:
+        description: "Chart digest"
+        type: string
+        required: true
 
 jobs:
   metadata:
@@ -57,11 +70,12 @@ jobs:
       - name: Verify Helm Chart
         run: |
           helm pull \
-              --version 0.1.0 \
-              oci://${{ steps.config.outputs.ACR_NAME }}.azurecr.io/liatrio/gh-trusted-builds-helm/go-web-app
+              --prov \
+              --version ${{ inputs.version }} \
+              oci://${{ steps.config.outputs.ACR_NAME }}.azurecr.io/liatrio/gh-trusted-builds-helm/${{ inputs.chart }}
           
           ls -lh
           
           helm sigstore verify \
             --keyring /home/runner/.gnupg/pubring.gpg \
-            --rekor-server ${{ steps.config.outputs.REKOR_URL }} "./go-web-app-0.1.0.tgz"
+            --rekor-server ${{ steps.config.outputs.REKOR_URL }} "./${{ inputs.chart }}-${{ inputs.version }}.tgz"
