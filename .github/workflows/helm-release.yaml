@@ -1,0 +1,139 @@
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      chart:
+        description: "Helm chart name"
+        type: string
+        required: true
+
+env:
+  GPG_KEY_NAME: "Liatrio Platform Team"
+  GPG_KEYRING_PATH: "/home/runner/.gnupg/secring.gpg"
+
+jobs:
+  metadata:
+    permissions:
+      id-token: write
+      contents: read
+    runs-on: ubuntu-latest
+    outputs:
+      ref: ${{ steps.workflow.outputs.ref }}
+    steps:
+      - name: Determine Workflow Ref
+        id: workflow
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/workflow-ref@main
+
+  release:
+    needs: [metadata]
+    permissions:
+      id-token: write
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Git User Config
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Trusted Builds Config
+        id: config
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@main
+        with:
+          ref: ${{ needs.metadata.outputs.ref }}
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Azure Setup
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@main
+        with:
+          acrName: ${{ steps.config.outputs.ACR_NAME }}
+          client: ${{ steps.config.outputs.PLATFORM_TEAM_SP_CLIENT_ID }}
+          subscription: ${{ steps.config.outputs.AZURE_SUBSCRIPTION_ID }}
+          tenant: ${{ steps.config.outputs.AZURE_TENANT_ID }}
+
+      - name: Tailscale
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/tailscale@main
+        with:
+          vault: ${{ steps.config.outputs.PLATFORM_TEAM_VAULT }}
+
+      - name: Helm Setup
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/helm@main
+
+      - name: Cosign Setup
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@main
+        with:
+          tufRoot: ${{ steps.config.outputs.TUF_ROOT_PATH }}
+          tufMirror: ${{ steps.config.outputs.TUF_ROOT_MIRROR }}
+
+      - name: Configure GPG Key
+        run: |
+          az keyvault secret show \
+            --name platform-gpg-key \
+            --vault-name ${{ steps.config.outputs.PLATFORM_TEAM_VAULT }} \
+            --query value -o tsv | gpg --import --batch
+          
+          gpg --export > /home/runner/.gnupg/pubring.gpg
+          gpg --export-secret-keys "${GPG_KEY_NAME}" > "${GPG_KEYRING_PATH}"
+
+      - name: Get Chart Version
+        id: version
+        run: |
+          version=$(yq e '.version' ./charts/${{ inputs.chart }}/Chart.yaml)
+          tag="${{ inputs.chart }}-${version}"
+          
+          echo "version=${version}" >> $GITHUB_OUTPUT
+          echo "tag=${tag}" >> $GITHUB_OUTPUT
+
+      - name: Check Release
+        id: check
+        run: |
+          if [ $(git tag -l "${{ steps.version.outputs.tag }}") ]; then
+            echo "Found existing version"
+            echo "release=false" >> $GITHUB_OUTPUT
+          else
+            echo "No Git tag found"
+            echo "release=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Helm Package
+        if: steps.check.outputs.release == 'true'
+        run: |
+          helm package \
+            --version "${{ steps.version.outputs.version }}" \
+            --key "${GPG_KEY_NAME}" \
+            --keyring "${GPG_KEYRING_PATH}" \
+            --sign "./charts/${{ inputs.chart }}"
+
+      - name: Upload Helm Provenance
+        if: steps.check.outputs.release == 'true'
+        run: |
+          helm sigstore upload \
+            --keyring ${GPG_KEYRING_PATH} \
+            --rekor-server ${{ steps.config.outputs.REKOR_URL }} \
+            "${{ inputs.chart }}-${{ steps.version.outputs.version }}.tgz"
+
+      # https://github.com/sigstore/helm-charts/blob/5c098c80b90d6ce1f1cb6f54d0c16cd03654dabd/.github/workflows/release.yml#L73-L81
+      - name: Push Charts
+        if: steps.check.outputs.release == 'true'
+        run: |
+          helm push "${{ inputs.chart }}-${{ steps.version.outputs.version }}.tgz" \
+            oci://${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }} |& tee helm-push.log
+          
+          digest=$(cat helm-push.log | awk -F "[, ]+" '/Digest/{print $NF}')
+          cosign sign -y \
+              -a liatr.io/github-actions-run-link='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
+              -a liatr.io/signed-off-by=platform-team \
+              --rekor-url ${{ steps.config.outputs.REKOR_URL }} \
+              --fulcio-url ${{ steps.config.outputs.FULCIO_URL }} \
+              ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}/${{ inputs.chart }}@${digest}
+
+      - name: Git Tag
+        if: steps.check.outputs.release == 'true'
+        run: |
+          git tag -a "${{ steps.version.outputs.tag }}" -m "${{ inputs.chart }} v${{ steps.version.outputs.version }}" 
+          git push --follow-tags origin

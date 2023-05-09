@@ -20,6 +20,9 @@ outputs:
   FULCIO_URL:
     description: "Fulcio CA URL"
     value: "${{ steps.config.outputs.FULCIO_URL }}"
+  PLATFORM_TEAM_GPG_PUBLIC_KEY_PATH:
+    description: "Path to the platform team's public key"
+    value: "gh-trusted-builds-workflows/config/platform.pgp"
   PLATFORM_TEAM_SP_CLIENT_ID:
     description: "The platform team's service principal client id"
     value: "${{ steps.config.outputs.PLATFORM_TEAM_SP_CLIENT_ID }}"
