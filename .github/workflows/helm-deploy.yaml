@@ -122,6 +122,7 @@ jobs:
             --docker-password="${imagePullerPassword}"
 
       - name: Deploy
+        run: |
           helm install -n demo-app --wait -f "${{ inputs.values }}" demo "./${{ inputs.chart }}-${{ inputs.version }}.tgz"
 
           kubectl -n demo-app get all
