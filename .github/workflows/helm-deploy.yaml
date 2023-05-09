@@ -64,4 +64,4 @@ jobs:
           
           helm sigstore verify \
             --keyring /home/runner/.gnupg/pubring.gpg \
-            --rekor-server ${{ steps.config.outputs.REKOR_URL }} "./go-web-app-0.1.0.tar.gz"
+            --rekor-server ${{ steps.config.outputs.REKOR_URL }} "./go-web-app-0.1.0.tgz"
