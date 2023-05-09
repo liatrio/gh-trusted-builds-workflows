@@ -6,6 +6,10 @@ on:
         description: "Helm chart name"
         type: string
         required: true
+      values:
+        description: "Path to Helm values file"
+        type: string
+        required: true
       version:
         description: "Chart semantic version"
         type: string
@@ -76,7 +80,6 @@ jobs:
           tufRoot: ${{ steps.config.outputs.TUF_ROOT_PATH }}
           tufMirror: ${{ steps.config.outputs.TUF_ROOT_MIRROR }}
 
-      # TODO: assert expected digest
       - name: Verify Helm Chart
         run: |
           cosign verify \
@@ -101,3 +104,14 @@ jobs:
           helm sigstore verify \
             --keyring /home/runner/.gnupg/pubring.gpg \
             --rekor-server ${{ steps.config.outputs.REKOR_URL }} "./${{ inputs.chart }}-${{ inputs.version }}.tgz"
+
+      - name: Create Cluster
+        uses: helm/kind-action@v1.5.0
+
+      - name: Cluster Setup
+        run: |
+          kubectl create ns demo-app
+
+          helm install -n demo-app --wait -f "${{ inputs.values }}" demo "./${{ inputs.chart }}-${{ inputs.version }}.tgz"
+
+          kubectl -n demo-app get all
