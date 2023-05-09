@@ -93,7 +93,7 @@ jobs:
               oci://${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${HELM_CHARTS_IMAGE_REPO}/${{ inputs.chart }} |& tee helm-pull.log
 
           digest=$(cat helm-pull.log | awk -F "[, ]+" '/Digest/{print $NF;exit;}')
-          if [ digest != "${{ inputs.digest }}" ]; then
+          if [ "${digest}" != "${{ inputs.digest }}" ]; then
             echo "Expected chart digest to be '${{ inputs.digest }}' but was '${digest}'"
             exit 1
           fi
