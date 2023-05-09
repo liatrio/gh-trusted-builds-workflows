@@ -112,6 +112,15 @@ jobs:
         run: |
           kubectl create ns demo-app
 
+          imagePullerId=$(az keyvault secret show --name image-puller-id --vault-name ${{ steps.config.outputs.PLATFORM_TEAM_VAULT }} --query value -o tsv) 
+          imagePullerPassword=$(az keyvault secret show --name image-puller-secret --vault-name ${{ steps.config.outputs.PLATFORM_TEAM_VAULT }} --query value -o tsv) 
+
+          kubectl create secret docker-registry acr \
+            --namespace demo-app \
+            --docker-server='${{ steps.config.outputs.ACR_NAME }}.azurecr.io' \
+            --docker-username="${imagePullerId}" \
+            --docker-password="${imagePullerPassword}"
+
           helm install -n demo-app  -f "${{ inputs.values }}" demo "./${{ inputs.chart }}-${{ inputs.version }}.tgz"
 
           sleep 10
