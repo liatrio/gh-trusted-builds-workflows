@@ -48,7 +48,7 @@ jobs:
 
       - name: Trusted Builds Config
         id: config
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@deploy # TODO: point at main
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@main
         with:
           ref: ${{ needs.metadata.outputs.ref }}
           token: ${{ secrets.GH_PAT }}
@@ -67,7 +67,7 @@ jobs:
           vault: ${{ steps.config.outputs.PLATFORM_TEAM_VAULT }}
 
       - name: Helm Setup
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/helm@deploy # TODO: point at main
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/helm@main
 
       - name: Configure GPG Public Keyring
         run: |
