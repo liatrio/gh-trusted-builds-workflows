@@ -112,6 +112,9 @@ jobs:
         run: |
           kubectl create ns demo-app
 
-          helm install -n demo-app --wait -f "${{ inputs.values }}" demo "./${{ inputs.chart }}-${{ inputs.version }}.tgz"
+          helm install -n demo-app  -f "${{ inputs.values }}" demo "./${{ inputs.chart }}-${{ inputs.version }}.tgz"
 
+          sleep 10
+          
           kubectl -n demo-app get all
+          kubectl -n demo-app get events
