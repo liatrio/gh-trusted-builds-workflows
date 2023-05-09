@@ -70,6 +70,12 @@ jobs:
           cat ${{ steps.config.outputs.PLATFORM_TEAM_GPG_PUBLIC_KEY_PATH }} | gpg --import --batch
           gpg --export > /home/runner/.gnupg/pubring.gpg
 
+      - name: Cosign Setup
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@main
+        with:
+          tufRoot: ${{ steps.config.outputs.TUF_ROOT_PATH }}
+          tufMirror: ${{ steps.config.outputs.TUF_ROOT_MIRROR }}
+
       # TODO: assert expected digest
       - name: Verify Helm Chart
         run: |
