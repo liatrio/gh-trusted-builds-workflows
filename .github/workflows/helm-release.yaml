@@ -94,14 +94,14 @@ jobs:
         run: |
           if [ $(git tag -l "${{ steps.version.outputs.tag }}") ]; then
             echo "Found existing version"
-            echo "released=true" >> $GITHUB_OUTPUT
+            echo "release=false" >> $GITHUB_OUTPUT
           else
             echo "No Git tag found"
-            echo "released=false" >> $GITHUB_OUTPUT
+            echo "release=true" >> $GITHUB_OUTPUT
           fi
 
       - name: Helm Package
-        if: steps.check.outputs.released == "false"
+        if: steps.check.outputs.release
         run: |
           helm package \
             --version "${{ steps.version.outputs.version }}" \
@@ -110,17 +110,16 @@ jobs:
             --sign "./charts/${{ inputs.chart }}"
 
       - name: Upload Helm Provenance
-        if: steps.check.outputs.released == "false"
+        if: steps.check.outputs.release
         run: |
           helm sigstore upload \
             --keyring ${GPG_KEYRING_PATH} \
             --rekor-server ${{ steps.config.outputs.REKOR_URL }} \
             "${{ inputs.chart }}-${{ steps.version.outputs.version }}.tgz"
 
-      # TODO: push Git tag
       # https://github.com/sigstore/helm-charts/blob/5c098c80b90d6ce1f1cb6f54d0c16cd03654dabd/.github/workflows/release.yml#L73-L81
       - name: Push Charts
-        if: steps.check.outputs.released == "false"
+        if: steps.check.outputs.release
         run: |
           helm push "${{ inputs.chart }}-${{ steps.version.outputs.version }}.tgz" \
             oci://${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }} |& tee helm-push.log
@@ -135,7 +134,7 @@ jobs:
               ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}/${{ inputs.chart }}@${digest}
 
       - name: Git Tag
-        if: steps.check.outputs.released == "false"
+        if: steps.check.outputs.release
         run: |
           git tag -a "${{ steps.version.outputs.tag }}" -m "${{ inputs.chart }} v${{ steps.version.outputs.version }}" 
           git push --follow-tags origin
