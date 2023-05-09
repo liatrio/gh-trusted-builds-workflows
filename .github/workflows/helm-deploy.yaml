@@ -121,9 +121,8 @@ jobs:
             --docker-username="${imagePullerId}" \
             --docker-password="${imagePullerPassword}"
 
-          helm install -n demo-app  -f "${{ inputs.values }}" demo "./${{ inputs.chart }}-${{ inputs.version }}.tgz"
+      - name: Deploy
+          helm install -n demo-app --wait -f "${{ inputs.values }}" demo "./${{ inputs.chart }}-${{ inputs.version }}.tgz"
 
-          sleep 10
-          
           kubectl -n demo-app get all
           kubectl -n demo-app get events
