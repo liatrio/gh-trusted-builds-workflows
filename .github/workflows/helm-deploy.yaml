@@ -58,7 +58,7 @@ jobs:
         run: |
           helm pull \
               --version 0.1.0 \
-              oci://${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}/${{ inputs.chart }}
+              oci://${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}/go-web-app
           
           ls -lh
           
