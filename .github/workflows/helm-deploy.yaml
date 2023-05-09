@@ -53,11 +53,12 @@ jobs:
           cat ${{ steps.config.outputs.PLATFORM_TEAM_GPG_PUBLIC_KEY_PATH }} | gpg --import --batch
           gpg --export > /home/runner/.gnupg/pubring.gpg
 
+      # TODO: cosign verify, assert expected digest
       - name: Verify Helm Chart
         run: |
           helm pull \
               --version 0.1.0 \
-              gh-trusted-builds-helm/go-web-app
+              oci://gh-trusted-builds-helm/go-web-app
           
           ls -lh
           
