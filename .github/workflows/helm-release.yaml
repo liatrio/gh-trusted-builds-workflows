@@ -3,7 +3,7 @@ on:
   workflow_call:
     inputs:
       chart:
-        description: "Helm chart name."
+        description: "Helm chart name"
         type: string
         required: true
 
@@ -125,7 +125,6 @@ jobs:
             oci://${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }} |& tee helm-push.log
           
           digest=$(cat helm-push.log | awk -F "[, ]+" '/Digest/{print $NF}')
-          echo "digest: ${digest}"
           cosign sign -y \
               -a liatr.io/github-actions-run-link='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
               -a liatr.io/signed-off-by=platform-team \

@@ -15,6 +15,10 @@ on:
         type: string
         required: true
 
+env:
+  HELM_CHARTS_IMAGE_REPO: "liatrio/gh-trusted-builds-helm"
+  GITHUB_ACTIONS_ISSUER: "https://token.actions.githubusercontent.com"
+
 jobs:
   metadata:
     permissions:
@@ -66,15 +70,21 @@ jobs:
           cat ${{ steps.config.outputs.PLATFORM_TEAM_GPG_PUBLIC_KEY_PATH }} | gpg --import --batch
           gpg --export > /home/runner/.gnupg/pubring.gpg
 
-      # TODO: cosign verify, assert expected digest
+      # TODO: assert expected digest
       - name: Verify Helm Chart
         run: |
+          cosign verify \
+            --rekor-url ${{ steps.config.outputs.REKOR_URL }} \
+            --certificate-oidc-issuer "${GITHUB_ACTIONS_ISSUER}" \
+            --certificate-github-workflow-repository ${{ github.repository }} \
+            --certificate-identity https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/helm-release.yaml@${{ needs.metadata.outputs.ref }} \
+            -a liatr.io/signed-off-by=platform-team \
+            ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${HELM_CHARTS_IMAGE_REPO}/${{ inputs.chart }}@${{ inputs.digest }}
+
           helm pull \
               --prov \
               --version ${{ inputs.version }} \
-              oci://${{ steps.config.outputs.ACR_NAME }}.azurecr.io/liatrio/gh-trusted-builds-helm/${{ inputs.chart }}
-          
-          ls -lh
+              oci://${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${HELM_CHARTS_IMAGE_REPO}/${{ inputs.chart }}
           
           helm sigstore verify \
             --keyring /home/runner/.gnupg/pubring.gpg \
