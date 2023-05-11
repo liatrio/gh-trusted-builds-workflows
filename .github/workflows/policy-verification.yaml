@@ -9,6 +9,7 @@ on:
 
 env:
   GITHUB_ACTIONS_ISSUER: "https://token.actions.githubusercontent.com"
+  VSA_APP_VERSION: "1.0.0"
 
 jobs:
   metadata:
