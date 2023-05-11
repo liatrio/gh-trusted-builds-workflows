@@ -9,6 +9,7 @@ on:
 
 env:
   GITHUB_ACTIONS_ISSUER: "https://token.actions.githubusercontent.com"
+  VSA_APP_VERSION: "1.0.0"
 
 jobs:
   metadata:
@@ -59,12 +60,16 @@ jobs:
           tufRoot: ${{ steps.config.outputs.TUF_ROOT_PATH }}
           tufMirror: ${{ steps.config.outputs.TUF_ROOT_MIRROR }}
 
-      - name: Install Rekor CLI
+      - name: Install VSA Application
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         run: |
-          curl -Lo rekor-cli https://github.com/sigstore/rekor/releases/download/v1.1.0/rekor-cli-linux-amd64
-          chmod +x rekor-cli
-          sudo cp rekor-cli /usr/local/bin/.
-          rekor-cli version
+          gh release download \
+            --repo liatrio/gh-trusted-builds-vsa \
+            --pattern "gh-trusted-builds-vsa_${VSA_APP_VERSION}_linux_amd64.tar.gz" "v${VSA_APP_VERSION}"
+          tar xvf "gh-trusted-builds-vsa_${VSA_APP_VERSION}_linux_amd64.tar.gz"
+          sudo cp ./vsa /usr/local/bin/vsa
+          vsa --help
 
       - name: Verify Attestations
         run: |
@@ -78,68 +83,14 @@ jobs:
             --type vuln \
             ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
 
-      - name: Collect Attestations
+      - name: Create Verification Summary Attestation
         run: |
-          echo "collect artifact attestation uuids"
-          rekor-cli search \
-            --rekor_server ${{ steps.config.outputs.REKOR_URL }} \
-            --sha ${{ inputs.digest }} \
-            --format json > artifact.json
-          cat artifact.json
-          
-          echo "collect source attestation uuids"
-          rekor-cli search \
-            --rekor_server ${{ steps.config.outputs.REKOR_URL }} \
-            --sha ${GITHUB_SHA} \
-            --format json > source.json
-          cat source.json
-          
-          echo '[]' > attestations.json
-          
-          echo "collect attestations"
-          for uuid in $(jq -rn 'inputs.UUIDs[]' artifact.json source.json); do
-          attestation=$(rekor-cli get \
-          --rekor_server ${{ steps.config.outputs.REKOR_URL }} \
-          --uuid "$uuid" \
-          --format json)
-          cat << EOF > attestations.json
-          $(jq -c --argjson new "$attestation" '. += [$new]' attestations.json)
-          EOF
-          done
-
-      - name: Setup OPA
-        uses: open-policy-agent/setup-opa@v2
-        with:
-          version: 0.52.0
-
-      - name: Download Governance OPA Bundle
+          vsa \
+          --artifact-uri ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }} \
+          --artifact-digest ${{ inputs.digest }} \
+          --commit-sha ${{ github.sha }} \
+          --policy-version "v1.1.1" \
+          --verifier-id ${{ github.workflow_ref }} \
+          --fulcio-url ${{ steps.config.outputs.FULCIO_URL }}
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
-        run: |
-          gh release download v1.1.0 \
-            --repo liatrio/gh-trusted-builds-policy \
-            --pattern "bundle.tar.gz"
-
-      - name: Check Governance Policy
-        run: |
-          opa eval 'data.governance.allow' \
-            --bundle bundle.tar.gz \
-            --input attestations.json \
-            | jq -e '.result[0].expressions[0].value == true'
-
-      - name: Sign Artifact
-        run: |
-          cosign sign \
-            -a liatr.io/github-actions-run-link='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
-            -a liatr.io/signed-off-by=security-team \
-            --output-signature image.sig \
-            --rekor-url ${{ steps.config.outputs.REKOR_URL }} \
-            --fulcio-url ${{ steps.config.outputs.FULCIO_URL }} \
-            -y ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
-
-      - name: Upload Signatures
-        uses: actions/upload-artifact@v3
-        with:
-          name: security.sig
-          path: |
-            image.sig
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
