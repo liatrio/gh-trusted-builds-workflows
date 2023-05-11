@@ -92,3 +92,5 @@ jobs:
           --policy-version "v1.1.1" \
           --verifier-id ${{ github.workflow_ref }} \
           --fulcio-url ${{ steps.config.outputs.FULCIO_URL }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
