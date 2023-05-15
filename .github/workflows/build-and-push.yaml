@@ -58,7 +58,7 @@ jobs:
           gh release download \
             --repo liatrio/custom-attestations-poc \
             --pattern "custom-attestations-poc_${{ inputs.attestorVersion }}_linux_amd64.tar.gz" "v${{ inputs.attestorVersion }}"
-          tar xvf "custom-attestations-poc_${ inputs.attestorVersion }}_linux_amd64.tar.gz"
+          tar xvf "custom-attestations-poc_${{ inputs.attestorVersion }}_linux_amd64.tar.gz"
           sudo cp ./attestor /usr/local/bin/attestor
           attestor --help
 
