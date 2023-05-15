@@ -1,74 +1,78 @@
+name: Build & Push
+
 on:
-  workflow_dispatch:
   workflow_call:
+    inputs:
+      attestorVersion:
+        description: "liatrio/custom-attestation-poc attestor version"
+        default: "0.4.0"
+        type: string
+      cosignVersion:
+        description: "Sigstore cosign version"
+        default: "v2.0.2"
+        type: string
+      fulcioUrl:
+        description: "Sigstore Fulcio URL. Defaults to the production public good instance"
+        default: "https://fulcio.sigstore.dev"
+        type: string
+      rekorUrl:
+        description: "Sigstore Rekor URL. Defaults to the production public good instance"
+        default: "https://rekor.sigstore.dev"
+        type: string
+      slsaGeneratorVersion:
+        description: "SLSA container provenance generator version"
+        default: "1.6.0"
+        type: string
+      tufMirror:
+        description: "cosign TUF root mirror URL. If not specified, cosign initialize will not be invoked"
+        default: ""
+        type: string
+      tufRoot:
+        description: "cosign TUF initial trusted root. If not specified, cosign initialize will not be invoked"
+        default: ""
+        type: string
+    secrets:
+      token:
+        description: "GitHub token - used to download release assets"
     outputs:
       digest:
         description: "Docker image digest"
         value: ${{ jobs.push.outputs.digest }}
 
-env:
-  CUSTOM_ATTESTOR_VERSION: "0.3.1"
-
 jobs:
-  metadata:
-    permissions:
-      id-token: write
-      contents: read
-    runs-on: ubuntu-latest
-    outputs:
-      ref: ${{ steps.workflow.outputs.ref }}
-    steps:
-      - name: Determine Workflow Ref
-        id: workflow
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/workflow-ref@main
-
   source-attestations:
     permissions:
       id-token: write
       contents: read
       pull-requests: read
     runs-on: ubuntu-latest
-    needs: [metadata]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Trusted Builds Config
-        id: config
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@main
-        with:
-          ref: ${{needs.metadata.outputs.ref}}
-          token: ${{ secrets.GH_PAT }}
-
-      - name: Azure Setup
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@main
-        with:
-          acrName: ${{ steps.config.outputs.ACR_NAME }}
-          client: ${{ steps.config.outputs.PLATFORM_TEAM_SP_CLIENT_ID }}
-          subscription: ${{ steps.config.outputs.AZURE_SUBSCRIPTION_ID }}
-          tenant: ${{ steps.config.outputs.AZURE_TENANT_ID }}
-
-      - name: Tailscale
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/tailscale@main
-        with:
-          vault: ${{ steps.config.outputs.PLATFORM_TEAM_VAULT }}
-
       - name: Cosign Setup
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@main
         with:
-          tufRoot: ${{ steps.config.outputs.TUF_ROOT_PATH }}
-          tufMirror: ${{ steps.config.outputs.TUF_ROOT_MIRROR }}
+          tufRoot: ${{ inputs.tufRoot }}
+          tufMirror: ${{ inputs.tufMirror }}
+          version: ${{ inputs.cosignVersion }}
 
       - name: Download Attestor
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          GITHUB_TOKEN: ${{ secrets.token }}
         run: |
           gh release download \
             --repo liatrio/custom-attestations-poc \
-            --pattern "custom-attestations-poc_${CUSTOM_ATTESTOR_VERSION}_linux_amd64.tar.gz" "v${CUSTOM_ATTESTOR_VERSION}"
-          tar xvf "custom-attestations-poc_${CUSTOM_ATTESTOR_VERSION}_linux_amd64.tar.gz"
-          sudo cp ./attestor /usr/local/bin/attestor
-          attestor --help
+            --pattern "custom-attestations-poc_${{ inputs.attestorVersion }}_linux_amd64.tar.gz" "v${{ inputs.attestorVersion }}"
+
+          tar xvf "custom-attestations-poc_${{ inputs.attestorVersion }}_linux_amd64.tar.gz"
+          ./attestor --help
+
+          mkdir -p $HOME/.bin/attestor
+          mv ./attestor $HOME/.bin/attestor
+          rm -rf custom-attestations-poc_${{ inputs.attestorVersion }}_linux_amd64
+          rm "custom-attestations-poc_${{ inputs.attestorVersion }}_linux_amd64.tar.gz"
+          echo "$HOME/.bin/attestor" >> $GITHUB_PATH
 
       - name: Pull Request Attestation
         env:
@@ -76,25 +80,17 @@ jobs:
         run: |
           attestor \
             --attestor "github-pull-request" \
-            --rekor-url ${{ steps.config.outputs.REKOR_URL }} \
-            --fulcio-url ${{ steps.config.outputs.FULCIO_URL }}
+            --rekor-url ${{ inputs.rekorUrl }} \
+            --fulcio-url ${{ inputs.fulcioUrl }}
 
   build:
     permissions:
       id-token: none
       contents: read
     runs-on: ubuntu-latest
-    needs: [metadata]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-
-      - name: Trusted Builds Config
-        id: config
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@main
-        with:
-          ref: ${{ needs.metadata.outputs.ref }}
-          token: ${{ secrets.GH_PAT }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -103,7 +99,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}
+          images: ghcr.io/${{ github.repository }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -130,28 +126,14 @@ jobs:
     permissions:
       id-token: write
       contents: read
+      packages: write
     runs-on: ubuntu-latest
-    needs: [build, metadata]
+    needs: [build]
     outputs:
       digest: ${{ steps.push.outputs.digest }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-
-      - name: Trusted Builds Config
-        id: config
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@main
-        with:
-          ref: ${{ needs.metadata.outputs.ref }}
-          token: ${{ secrets.GH_PAT }}
-
-      - name: Azure Setup
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@main
-        with:
-          acrName: ${{ steps.config.outputs.ACR_NAME }}
-          client: ${{ steps.config.outputs.PLATFORM_TEAM_SP_CLIENT_ID }}
-          subscription: ${{ steps.config.outputs.AZURE_SUBSCRIPTION_ID }}
-          tenant: ${{ steps.config.outputs.AZURE_TENANT_ID }}
 
       - name: Download Image Archive
         uses: actions/download-artifact@v3
@@ -159,11 +141,18 @@ jobs:
           name: image
           path: /tmp
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Load & Push Image
         id: push
         run: |
           docker load --input /tmp/image.tar
-          image='${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}'
+          image='ghcr.io/${{ github.repository }}'
           docker push -a $image
           digest=$(docker inspect --format='{{index .RepoDigests 0}}' "${image}" | awk -F "${image}@" '{print $2}')
           echo "image digest: ${digest}"
@@ -174,44 +163,27 @@ jobs:
       actions: read
       id-token: write
       contents: read
+      packages: write
     runs-on: ubuntu-latest
-    needs: [metadata, push]
+    needs: [push]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Trusted Builds Config
-        id: config
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@main
-        with:
-          ref: ${{ needs.metadata.outputs.ref }}
-          token: ${{ secrets.GH_PAT }}
-
-      - name: Azure Setup
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@main
-        with:
-          acrName: ${{ steps.config.outputs.ACR_NAME }}
-          client: ${{ steps.config.outputs.PLATFORM_TEAM_SP_CLIENT_ID }}
-          subscription: ${{ steps.config.outputs.AZURE_SUBSCRIPTION_ID }}
-          tenant: ${{ steps.config.outputs.AZURE_TENANT_ID }}
-
-      - name: Tailscale
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/tailscale@main
-        with:
-          vault: ${{ steps.config.outputs.PLATFORM_TEAM_VAULT }}
-
       - name: Download SLSA Generator
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.token }}
         run: |
           gh release download \
             --repo slsa-framework/slsa-github-generator \
-            --pattern slsa-generator-container-linux-amd64
+            --pattern slsa-generator-container-linux-amd64 "v${{ inputs.slsaGeneratorVersion }}"
 
           chmod +x slsa-generator-container-linux-amd64
-          sudo mv slsa-generator-container-linux-amd64 /usr/local/bin/slsa-generator-container
+          ./slsa-generator-container-linux-amd64 --help
 
-          slsa-generator-container version
+          mkdir -p $HOME/.bin/slsa-generator-container
+          mv ./slsa-generator-container-linux-amd64 $HOME/.bin/slsa-generator-container/slsa-generator-container
+          echo "$HOME/.bin/slsa-generator-container" >> $GITHUB_PATH
 
       - name: Generate Provenance
         env:
@@ -222,68 +194,56 @@ jobs:
       - name: Cosign Setup
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@main
         with:
-          tufRoot: ${{ steps.config.outputs.TUF_ROOT_PATH }}
-          tufMirror: ${{ steps.config.outputs.TUF_ROOT_MIRROR }}
+          tufRoot: ${{ inputs.tufRoot }}
+          tufMirror: ${{ inputs.tufMirror }}
+          version: ${{ inputs.cosignVersion }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Attest Provenance
         run: |
           cosign attest --predicate="predicate.json" \
-            --rekor-url ${{ steps.config.outputs.REKOR_URL }} \
+            --rekor-url ${{ inputs.rekorUrl }} \
             --type slsaprovenance \
-            --fulcio-url ${{ steps.config.outputs.FULCIO_URL }} \
+            --fulcio-url ${{ inputs.fulcioUrl }} \
             --yes \
-            ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
-
-      - name: Upload Provenance
-        uses: actions/upload-artifact@v3
-        with:
-          name: provenance
-          path: predicate.json
+            ghcr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
 
   sign:
     permissions:
       id-token: write
       contents: read
+      packages: write
     runs-on: ubuntu-latest
-    needs: [push, metadata]
+    needs: [push]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Trusted Builds Config
-        id: config
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@main
-        with:
-          ref: ${{ needs.metadata.outputs.ref }}
-          token: ${{ secrets.GH_PAT }}
-
-      - name: Azure Setup
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@main
-        with:
-          acrName: ${{ steps.config.outputs.ACR_NAME }}
-          client: ${{ steps.config.outputs.PLATFORM_TEAM_SP_CLIENT_ID }}
-          subscription: ${{ steps.config.outputs.AZURE_SUBSCRIPTION_ID }}
-          tenant: ${{ steps.config.outputs.AZURE_TENANT_ID }}
-
-      - name: Tailscale
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/tailscale@main
-        with:
-          vault: ${{ steps.config.outputs.PLATFORM_TEAM_VAULT }}
-
       - name: Cosign Setup
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@main
         with:
-          tufRoot: ${{ steps.config.outputs.TUF_ROOT_PATH }}
-          tufMirror: ${{ steps.config.outputs.TUF_ROOT_MIRROR }}
+          tufRoot: ${{ inputs.tufRoot }}
+          tufMirror: ${{ inputs.tufMirror }}
+          version: ${{ inputs.cosignVersion }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Sign
-        env:
-          COSIGN_EXPERIMENTAL: 1
         run: |
           cosign sign \
-              --verbose \
-              -a liatr.io/github-actions-run-link='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
-              -a liatr.io/signed-off-by=platform-team \
-              --rekor-url ${{ steps.config.outputs.REKOR_URL }} \
-              --fulcio-url ${{ steps.config.outputs.FULCIO_URL }} \
-              -y ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
+              --annotations liatr.io/github-actions-run-link='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
+              --annotations liatr.io/signed-off-by=platform-team \
+              --rekor-url ${{ inputs.rekorUrl }} \
+              --fulcio-url ${{ inputs.fulcioUrl }} \
+              --yes ghcr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}

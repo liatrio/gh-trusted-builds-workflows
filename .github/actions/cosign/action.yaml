@@ -7,8 +7,10 @@ inputs:
     default: "v2.0.2"
   tufRoot:
     description: "TUF trusted root file"
+    default: ""
   tufMirror:
     description: "TUF Mirror URL"
+    default: ""
 
 runs:
   using: "composite"
@@ -18,6 +20,7 @@ runs:
       with:
         cosign-release: ${{ inputs.version }}
     - name: Initialize Cosign
+      if: inputs.tufMirror != '' && inputs.tufRoot != ''
       shell: bash
       run: |
         cosign initialize --mirror ${{ inputs.tufMirror }} --root ${{ inputs.tufRoot }}
