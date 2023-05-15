@@ -20,7 +20,7 @@ runs:
       with:
         cosign-release: ${{ inputs.version }}
     - name: Initialize Cosign
-      if: inputs.tufMirror != "" && inputs.tufRoot != ""
+      if: inputs.tufMirror != '' && inputs.tufRoot != ''
       shell: bash
       run: |
         echo "tufMirror: '${{ inputs.tufMirror }}'"
