@@ -80,8 +80,16 @@ jobs:
             --repo liatrio/gh-trusted-builds-vsa \
             --pattern "gh-trusted-builds-vsa_${{ inputs.vsaAppVersion }}_linux_amd64.tar.gz" "v${{ inputs.vsaAppVersion }}"
           tar xvf "gh-trusted-builds-vsa_${{ inputs.vsaAppVersion }}_linux_amd64.tar.gz"
-          sudo cp ./vsa /usr/local/bin/vsa
-          vsa --help
+
+          ./vsa --help
+
+          mkdir -p $HOME/.bin/vsa
+          mv ./vsa $HOME/.bin/vsa
+          rm -rf gh-trusted-builds-vsa_${{ inputs.attestorVersion }}_linux_amd64
+          rm "gh-trusted-builds-vsa_${{ inputs.attestorVersion }}_linux_amd64.tar.gz"
+          echo "$HOME/.bin/vsa" >> $GITHUB_PATH
+
+          ls -la
 
       - name: Verify Attestations
         run: |
