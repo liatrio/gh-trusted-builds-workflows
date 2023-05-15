@@ -184,7 +184,7 @@ jobs:
           ./slsa-generator-container-linux-amd64 --help
 
           mkdir -p $HOME/.bin/slsa-generator-container
-          mv ./slsa-generator-container-linux-amd64 $HOME/.bin/slsa-generator-container
+          mv ./slsa-generator-container-linux-amd64 $HOME/.bin/slsa-generator-container/slsa-generator-container
           ls -la $HOME/.bin/slsa-generator-container
           echo "$HOME/.bin/slsa-generator-container" >> $GITHUB_PATH
 
