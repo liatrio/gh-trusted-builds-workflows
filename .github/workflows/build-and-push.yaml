@@ -150,6 +150,7 @@ jobs:
       actions: read
       id-token: write
       contents: read
+      packages: write
     runs-on: ubuntu-latest
     needs: [push]
     steps:
@@ -194,6 +195,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
+      packages: write
     runs-on: ubuntu-latest
     needs: [push]
     steps:
