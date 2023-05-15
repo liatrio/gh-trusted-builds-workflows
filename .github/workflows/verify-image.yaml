@@ -6,15 +6,22 @@ on:
         type: string
         required: true
         description: "Docker image digest"
-
-env:
-  GITHUB_ACTIONS_ISSUER: "https://token.actions.githubusercontent.com"
+      rekorUrl:
+        description: "Sigstore Rekor URL. Defaults ot the production public good instance"
+        default: "https://rekor.sigstore.dev"
+      token:
+        description: "GitHub token - used to push to GitHub Container Registry and download release assets"
+      tufMirror:
+        description: "cosign TUF root mirror URL. If not specified, cosign initialize will not be invoked"
+        default: ""
+      tufRoot:
+        description: "cosign TUF initial trusted root. If not specified, cosign initialize will not be invoked"
+        default: ""
 
 jobs:
   metadata:
     permissions:
       id-token: write
-      contents: read
     runs-on: ubuntu-latest
     outputs:
       ref: ${{ steps.workflow.outputs.ref }}
@@ -33,38 +40,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Trusted Builds Config
-        id: config
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@main
-        with:
-          ref: ${{needs.metadata.outputs.ref}}
-          token: ${{ secrets.GH_PAT }}
-
-      - name: Azure Setup
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@main
-        with:
-          acrName: ${{ steps.config.outputs.ACR_NAME }}
-          client: ${{ steps.config.outputs.PLATFORM_TEAM_SP_CLIENT_ID }}
-          subscription: ${{ steps.config.outputs.AZURE_SUBSCRIPTION_ID }}
-          tenant: ${{ steps.config.outputs.AZURE_TENANT_ID }}
-
-      - name: Tailscale
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/tailscale@main
-        with:
-          vault: ${{ steps.config.outputs.PLATFORM_TEAM_VAULT }}
-
       - name: Cosign Setup
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@main
         with:
-          tufRoot: ${{ steps.config.outputs.TUF_ROOT_PATH }}
-          tufMirror: ${{ steps.config.outputs.TUF_ROOT_MIRROR }}
+          tufRoot: ${{ inputs.tufRoot }}
+          tufMirror: ${{ inputs.tufMirror }}
 
       - name: Verify Image Built From Platform Team Workflow
         run: |
           cosign verify \
-              --rekor-url ${{ steps.config.outputs.REKOR_URL }} \
-              --certificate-oidc-issuer "${GITHUB_ACTIONS_ISSUER}" \
+              --rekor-url ${{ inputs.rekorUrl }} \
+              --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
               --certificate-github-workflow-repository ${{ github.repository }} \
               --certificate-identity https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml@${{ needs.metadata.outputs.ref }} \
-              -a liatr.io/signed-off-by=platform-team \
-              ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
+              --annotations liatr.io/signed-off-by=platform-team \
+              ghcr.io/${{ github.repository }}@${{ inputs.digest }}

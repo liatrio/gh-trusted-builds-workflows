@@ -6,16 +6,31 @@ on:
         type: string
         required: true
         description: "Docker image digest"
+      fulcioUrl:
+        description: "Sigstore Fulcio URL. Defaults to the production public good instance"
+        default: "https://fulcio.sigstore.dev"
+      rekorUrl:
+        description: "Sigstore Rekor URL. Defaults ot the production public good instance"
+        default: "https://rekor.sigstore.dev"
+      token:
+        description: "GitHub token - used to push to GitHub Container Registry and download release assets"
+      tufMirror:
+        description: "cosign TUF root mirror URL. If not specified, cosign initialize will not be invoked"
+        default: ""
+      tufRoot:
+        description: "cosign TUF initial trusted root. If not specified, cosign initialize will not be invoked"
+        default: ""
+      vsaAppVersion:
+        description: "liatrio/gh-trusted-builds-vsa application version"
+        default: "1.0.0"
 
 env:
   GITHUB_ACTIONS_ISSUER: "https://token.actions.githubusercontent.com"
-  VSA_APP_VERSION: "1.0.0"
 
 jobs:
   metadata:
     permissions:
       id-token: write
-      contents: read
     runs-on: ubuntu-latest
     outputs:
       ref: ${{ steps.workflow.outputs.ref }}
@@ -34,35 +49,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Trusted Builds Config
-        id: config
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/config@main
-        with:
-          ref: ${{ needs.metadata.outputs.ref }}
-          token: ${{ secrets.GH_PAT }}
-
-      - name: Azure Setup
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/azure@main
-        with:
-          acrName: ${{ steps.config.outputs.ACR_NAME }}
-          client: ${{ steps.config.outputs.SECURITY_TEAM_SP_CLIENT_ID }}
-          subscription: ${{ steps.config.outputs.AZURE_SUBSCRIPTION_ID }}
-          tenant: ${{ steps.config.outputs.AZURE_TENANT_ID }}
-
-      - name: Tailscale
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/tailscale@main
-        with:
-          vault: ${{ steps.config.outputs.SECURITY_TEAM_VAULT }}
-
       - name: Cosign Setup
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@main
         with:
-          tufRoot: ${{ steps.config.outputs.TUF_ROOT_PATH }}
-          tufMirror: ${{ steps.config.outputs.TUF_ROOT_MIRROR }}
+          tufRoot: ${{ inputs.tufRoot }}
+          tufMirror: ${{ inputs.tufMirror }}
 
       - name: Install VSA Application
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          GITHUB_TOKEN: ${{ inputs.token }}
         run: |
           gh release download \
             --repo liatrio/gh-trusted-builds-vsa \
@@ -73,24 +68,24 @@ jobs:
 
       - name: Verify Attestations
         run: |
-          cosign tree ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }} 
+          cosign tree ghcr.io/${{ github.repository }}@${{ inputs.digest }}@${{ inputs.digest }} 
           
           cosign verify-attestation \
-            --rekor-url ${{ steps.config.outputs.REKOR_URL }} \
-            --certificate-oidc-issuer "${GITHUB_ACTIONS_ISSUER}" \
+            --rekor-url ${{ inputs.rekorUrl }} \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
             --certificate-github-workflow-repository ${{ github.repository }} \
             --certificate-identity https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/scan-image.yaml@${{ needs.metadata.outputs.ref }} \
             --type vuln \
-            ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }}@${{ inputs.digest }}
+            ghcr.io/${{ github.repository }}@${{ inputs.digest }}
 
       - name: Create Verification Summary Attestation
         run: |
           vsa \
-          --artifact-uri ${{ steps.config.outputs.ACR_NAME }}.azurecr.io/${{ github.repository }} \
+          --artifact-uri ghcr.io/${{ github.repository }}@${{ inputs.digest }} \
           --artifact-digest ${{ inputs.digest }} \
           --commit-sha ${{ github.sha }} \
           --policy-version "v1.1.1" \
           --verifier-id ${{ github.workflow_ref }} \
-          --fulcio-url ${{ steps.config.outputs.FULCIO_URL }}
+          --fulcio-url ${{ inputs.fulcioUrl }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          GITHUB_TOKEN: ${{ inputs.token }}
