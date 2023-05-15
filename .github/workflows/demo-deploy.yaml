@@ -10,7 +10,7 @@ on:
       helmVersion:
         type: string
         description: "Helm version"
-        default: "v3.11.3"
+        default: "v3.10.3"
       k3dVersion:
         type: string
         description: "k3s version"
