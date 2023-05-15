@@ -65,7 +65,8 @@ jobs:
 
       - name: Create Cluster
         run: |
-          k3d cluster create --agents 1 --no-lb --wait demo          
+          k3d cluster create --agents 1 --no-lb --wait demo
+          docker pull ghcr.io/${{ github.repository }}@${{ inputs.digest }}
           k3d image import --cluster demo ghcr.io/${{ github.repository }}@${{ inputs.digest }}
 
       - name: Add Sigstore Helm Repo
