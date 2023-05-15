@@ -9,7 +9,7 @@ on:
         type: string
       cosignVersion:
         description: "Sigstore cosign version"
-        default: ""
+        default: "v2.0.2"
         type: string
       fulcioUrl:
         description: "Sigstore Fulcio URL. Defaults to the production public good instance"

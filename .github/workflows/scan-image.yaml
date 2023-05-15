@@ -5,7 +5,7 @@ on:
     inputs:
       cosignVersion:
         description: "Sigstore cosign version"
-        default: ""
+        default: "v2.0.2"
         type: string
       digest:
         type: string
