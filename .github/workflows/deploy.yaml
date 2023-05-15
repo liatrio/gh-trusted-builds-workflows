@@ -1,0 +1,58 @@
+name: Deploy
+
+on:
+  workflow_call:
+    inputs:
+      digest:
+        type: string
+        required: true
+        description: "Docker image digest"
+      k3dVersion:
+        type: string
+        description: "k3s version"
+        default: "v5.4.9"
+      fulcioUrl:
+        description: "Sigstore Fulcio URL. Defaults to the production public good instance"
+        default: "https://fulcio.sigstore.dev"
+        type: string
+      rekorUrl:
+        description: "Sigstore Rekor URL. Defaults to the production public good instance"
+        default: "https://rekor.sigstore.dev"
+        type: string
+      tufMirror:
+        description: "cosign TUF root mirror URL. If not specified, cosign initialize will not be invoked"
+        default: ""
+        type: string
+      tufRoot:
+        description: "cosign TUF initial trusted root. If not specified, cosign initialize will not be invoked"
+        default: ""
+        type: string
+
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download k3s
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          kubectl --version
+
+          gh release download --repo k3d-io/k3d \
+            --pattern k3d-linux-amd64 \
+            ${{ inputs.k3dVersion }}
+          chmod +x k3d-linux-amd64
+          mkdir -p $HOME/.bin/k3d
+          mv k3d-linux-amd64 $HOME/.bin/k3d/k3d
+          echo "$HOME/.bin/k3d" >> $GITHUB_PATH
+
+      - name: Create Cluster
+        run: |
+          k3d create cluster --agents 1 --no-lb --wait
+
+      - name: Deploy Policy Controller
+        run: |
+          kubectl get nodes
+          kubectl get ns
+          kubectl get po -A
