@@ -23,4 +23,6 @@ runs:
       if: inputs.tufMirror != "" && inputs.tufRoot != ""
       shell: bash
       run: |
+        echo "tufMirror: '${{ inputs.tufMirror }}'"
+        echo "tufRoot: '${{ inputs.tufRoot }}'"
         cosign initialize --mirror ${{ inputs.tufMirror }} --root ${{ inputs.tufRoot }}
