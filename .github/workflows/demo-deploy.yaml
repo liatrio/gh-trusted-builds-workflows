@@ -11,6 +11,10 @@ on:
         type: string
         description: "k3s version"
         default: "v5.4.9"
+      policyControllerVersion:
+        type: string
+        description: "Policy controller Helm chart version"
+        default: "0.5.7"
       fulcioUrl:
         description: "Sigstore Fulcio URL. Defaults to the production public good instance"
         default: "https://fulcio.sigstore.dev"
@@ -31,14 +35,19 @@ on:
 
 jobs:
   deploy:
+    permissions:
+      packages: read
     runs-on: ubuntu-latest
     steps:
-      - name: Download k3s
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+         version: v3.12.0
+
+      - name: Install k3s
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          kubectl version --client=true
-
           gh release download --repo k3d-io/k3d \
             --pattern k3d-linux-amd64 \
             ${{ inputs.k3dVersion }}
@@ -47,13 +56,33 @@ jobs:
           mv k3d-linux-amd64 $HOME/.bin/k3d/k3d
           echo "$HOME/.bin/k3d" >> $GITHUB_PATH
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create Cluster
         run: |
-          k3d cluster create --agents 1 --no-lb --wait
+          k3d cluster create --agents 1 --no-lb --wait demo          
+          k3d image import --cluster demo ghcr.io/${{ github.repository }}@${{ inputs.digest }}
+
+      - name: Add Sigstore Helm Repo
+        run: |
+          helm repo add sigstore https://sigstore.github.io/helm-charts
+          helm repo update
 
       - name: Deploy Policy Controller
         run: |
-          kubectl get nodes
+          helm install \
+            --wait \
+            --create-namespace \
+            -n policy-controller \
+            --version ${{ inputs.policyControllerVersion }} \
+            policy-controller sigstore/policy-controller
+
+      - name: Debug
+        run: |
           kubectl get ns
-          kubectl get po -A
-          kubectl cluster-info dump
+          kubectl -n policy-controller get all
