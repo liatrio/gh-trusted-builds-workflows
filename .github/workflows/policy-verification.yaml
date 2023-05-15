@@ -97,6 +97,6 @@ jobs:
           --policy-version "v1.1.1" \
           --verifier-id ${{ github.workflow_ref }} \
           --fulcio-url ${{ inputs.fulcioUrl }} \
-          --rekor-url: ${{ inputs.rekorUrl }}
+          --rekor-url ${{ inputs.rekorUrl }}
         env:
           GITHUB_TOKEN: ${{ secrets.token }}
