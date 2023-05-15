@@ -89,8 +89,6 @@ jobs:
           rm "gh-trusted-builds-vsa_${{ inputs.vsaAppVersion }}_linux_amd64.tar.gz"
           echo "$HOME/.bin/vsa" >> $GITHUB_PATH
 
-          ls -la
-
       - name: Verify Attestations
         run: |
           cosign tree ghcr.io/${{ github.repository }}@${{ inputs.digest }} 
