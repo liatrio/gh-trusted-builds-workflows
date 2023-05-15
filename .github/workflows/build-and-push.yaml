@@ -181,10 +181,11 @@ jobs:
             --pattern slsa-generator-container-linux-amd64 "v${{ inputs.slsaGeneratorVersion }}"
 
           chmod +x slsa-generator-container-linux-amd64
-          ./slsa-generator-container-linux-amd64 version
+          ./slsa-generator-container-linux-amd64 --help
 
           mkdir -p $HOME/.bin/slsa-generator-container
           mv ./slsa-generator-container-linux-amd64 $HOME/.bin/slsa-generator-container
+          ls -la $HOME/.bin/slsa-generator-container
           echo "$HOME/.bin/slsa-generator-container" >> $GITHUB_PATH
 
           ls -la
