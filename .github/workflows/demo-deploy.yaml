@@ -49,7 +49,7 @@ jobs:
 
       - name: Create Cluster
         run: |
-          k3d create cluster --agents 1 --no-lb --wait
+          k3d cluster create --agents 1 --no-lb --wait
 
       - name: Deploy Policy Controller
         run: |
