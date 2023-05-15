@@ -29,9 +29,6 @@ on:
       token:
         description: "GitHub token - used to push to GitHub Container Registry and download release assets"
 
-env:
-  GITHUB_ACTIONS_ISSUER: "https://token.actions.githubusercontent.com"
-
 jobs:
   metadata:
     permissions:
@@ -66,8 +63,8 @@ jobs:
         run: |
           gh release download \
             --repo liatrio/gh-trusted-builds-vsa \
-            --pattern "gh-trusted-builds-vsa_${VSA_APP_VERSION}_linux_amd64.tar.gz" "v${VSA_APP_VERSION}"
-          tar xvf "gh-trusted-builds-vsa_${VSA_APP_VERSION}_linux_amd64.tar.gz"
+            --pattern "gh-trusted-builds-vsa_${{ inputs.vsaAppVersion }}_linux_amd64.tar.gz" "v${{ inputs.vsaAppVersion }}"
+          tar xvf "gh-trusted-builds-vsa_${{ inputs.vsaAppVersion }}_linux_amd64.tar.gz"
           sudo cp ./vsa /usr/local/bin/vsa
           vsa --help
 
