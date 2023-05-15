@@ -1,5 +1,4 @@
 on:
-  workflow_dispatch:
   workflow_call:
     # TODO: cosign version
     inputs:
@@ -15,14 +14,15 @@ on:
       slsaGeneratorVersion:
         description: "SLSA container provenance generator version"
         default: "1.6.0"
-      token:
-        description: "GitHub token - used to push to GitHub Container Registry and download release assets"
       tufMirror:
         description: "cosign TUF root mirror URL. If not specified, cosign initialize will not be invoked"
         default: ""
       tufRoot:
         description: "cosign TUF initial trusted root. If not specified, cosign initialize will not be invoked"
         default: ""
+    secrets:
+      token:
+        description: "GitHub token - used to push to GitHub Container Registry and download release assets"
     outputs:
       digest:
         description: "Docker image digest"
@@ -47,7 +47,7 @@ jobs:
 
       - name: Download Attestor
         env:
-          GITHUB_TOKEN: ${{ inputs.token }}
+          GITHUB_TOKEN: ${{ secrets.token }}
         run: |
           gh release download \
             --repo liatrio/custom-attestations-poc \
@@ -58,7 +58,7 @@ jobs:
 
       - name: Pull Request Attestation
         env:
-          GITHUB_TOKEN: ${{ inputs.token }}
+          GITHUB_TOKEN: ${{ secrets.token }}
         run: |
           attestor \
             --attestor "github-pull-request" \
@@ -127,7 +127,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ inputs.token }}
+          password: ${{ secrets.token }}
 
       - name: Load & Push Image
         id: push
@@ -152,7 +152,7 @@ jobs:
 
       - name: Download SLSA Generator
         env:
-          GITHUB_TOKEN: ${{ inputs.token }}
+          GITHUB_TOKEN: ${{ secrets.token }}
         run: |
           gh release download \
             --repo slsa-framework/slsa-github-generator \

@@ -1,5 +1,4 @@
 on:
-  workflow_dispatch:
   workflow_call:
     inputs:
       digest:
@@ -12,8 +11,6 @@ on:
       rekorUrl:
         description: "Sigstore Rekor URL. Defaults ot the production public good instance"
         default: "https://rekor.sigstore.dev"
-      token:
-        description: "GitHub token - used to push to GitHub Container Registry and download release assets"
       tufMirror:
         description: "cosign TUF root mirror URL. If not specified, cosign initialize will not be invoked"
         default: ""
@@ -23,6 +20,9 @@ on:
       vsaAppVersion:
         description: "liatrio/gh-trusted-builds-vsa application version"
         default: "1.0.0"
+    secrets:
+      token:
+        description: "GitHub token - used to push to GitHub Container Registry and download release assets"
 
 env:
   GITHUB_ACTIONS_ISSUER: "https://token.actions.githubusercontent.com"
@@ -57,7 +57,7 @@ jobs:
 
       - name: Install VSA Application
         env:
-          GITHUB_TOKEN: ${{ inputs.token }}
+          GITHUB_TOKEN: ${{ secrets.token }}
         run: |
           gh release download \
             --repo liatrio/gh-trusted-builds-vsa \
@@ -88,4 +88,4 @@ jobs:
           --verifier-id ${{ github.workflow_ref }} \
           --fulcio-url ${{ inputs.fulcioUrl }}
         env:
-          GITHUB_TOKEN: ${{ inputs.token }}
+          GITHUB_TOKEN: ${{ secrets.token }}

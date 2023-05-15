@@ -1,5 +1,4 @@
 on:
-  workflow_dispatch:
   workflow_call:
     inputs:
       digest:
@@ -9,8 +8,6 @@ on:
       rekorUrl:
         description: "Sigstore Rekor URL. Defaults ot the production public good instance"
         default: "https://rekor.sigstore.dev"
-      token:
-        description: "GitHub token - used to push to GitHub Container Registry and download release assets"
       tufMirror:
         description: "cosign TUF root mirror URL. If not specified, cosign initialize will not be invoked"
         default: ""
