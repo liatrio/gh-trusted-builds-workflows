@@ -11,7 +11,7 @@ on:
         default: "https://fulcio.sigstore.dev"
         type: string
       rekorUrl:
-        description: "Sigstore Rekor URL. Defaults ot the production public good instance"
+        description: "Sigstore Rekor URL. Defaults to the production public good instance"
         default: "https://rekor.sigstore.dev"
         type: string
       slsaGeneratorVersion:
@@ -46,7 +46,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Cosign Setup
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@main
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@open-source
         with:
           tufRoot: ${{ inputs.tufRoot }}
           tufMirror: ${{ inputs.tufMirror }}
@@ -176,7 +176,7 @@ jobs:
           slsa-generator-container generate --predicate predicate.json
 
       - name: Cosign Setup
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@main
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@open-source
         with:
           tufRoot: ${{ inputs.tufRoot }}
           tufMirror: ${{ inputs.tufMirror }}
@@ -201,7 +201,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Cosign Setup
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@main
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@open-source
         with:
           tufRoot: ${{ inputs.tufRoot }}
           tufMirror: ${{ inputs.tufMirror }}

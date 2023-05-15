@@ -6,7 +6,7 @@ on:
         required: true
         description: "Docker image digest"
       rekorUrl:
-        description: "Sigstore Rekor URL. Defaults ot the production public good instance"
+        description: "Sigstore Rekor URL. Defaults to the production public good instance"
         default: "https://rekor.sigstore.dev"
         type: string
       tufMirror:
@@ -28,7 +28,7 @@ jobs:
     steps:
       - name: Determine Workflow Ref
         id: workflow
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/workflow-ref@main
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/workflow-ref@open-source
 
   verify:
     permissions:
@@ -41,7 +41,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Cosign Setup
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@main
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@open-source
         with:
           tufRoot: ${{ inputs.tufRoot }}
           tufMirror: ${{ inputs.tufMirror }}
