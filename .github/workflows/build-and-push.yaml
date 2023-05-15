@@ -226,7 +226,6 @@ jobs:
       - name: Sign
         run: |
           cosign sign \
-              --verbose \
               --annotations liatr.io/github-actions-run-link='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
               --annotations liatr.io/signed-off-by=platform-team \
               --rekor-url ${{ inputs.rekorUrl }} \

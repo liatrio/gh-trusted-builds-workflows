@@ -70,8 +70,8 @@ jobs:
 
       - name: Verify Attestations
         run: |
-          cosign tree ghcr.io/${{ github.repository }}@${{ inputs.digest }}@${{ inputs.digest }} 
-          
+          cosign tree ghcr.io/${{ github.repository }}@${{ inputs.digest }} 
+
           cosign verify-attestation \
             --rekor-url ${{ inputs.rekorUrl }} \
             --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
