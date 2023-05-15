@@ -66,6 +66,10 @@ jobs:
       - name: Create Cluster
         run: |
           k3d cluster create --agents 1 --no-lb --wait demo
+
+      - name: Import Image
+        run: |
+          docker pull ghcr.io/${{ github.repository }}@${{ inputs.digest }}
           docker save -o image.tar ghcr.io/${{ github.repository }}@${{ inputs.digest }}
           k3d image import --cluster demo image.tar
           ls -la
