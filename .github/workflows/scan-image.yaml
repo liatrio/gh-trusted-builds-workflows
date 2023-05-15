@@ -56,7 +56,7 @@ jobs:
           path: trivy.report.json
 
       - name: Cosign Setup
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@open-source
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@main
         with:
           tufRoot: ${{ inputs.tufRoot }}
           tufMirror: ${{ inputs.tufMirror }}
