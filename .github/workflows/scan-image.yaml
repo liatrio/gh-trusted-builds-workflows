@@ -21,9 +21,6 @@ on:
         description: "cosign TUF initial trusted root. If not specified, cosign initialize will not be invoked"
         default: ""
         type: string
-    secrets:
-      token:
-        description: "GitHub token - used to push to GitHub Container Registry and download release assets"
 
 jobs:
   scan:
@@ -40,7 +37,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.token }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Trivy Scan
         uses: aquasecurity/trivy-action@0.9.2

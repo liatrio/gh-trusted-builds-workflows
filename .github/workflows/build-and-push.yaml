@@ -28,7 +28,7 @@ on:
         type: string
     secrets:
       token:
-        description: "GitHub token - used to push to GitHub Container Registry and download release assets"
+        description: "GitHub token - used to download release assets"
     outputs:
       digest:
         description: "Docker image digest"
@@ -64,7 +64,7 @@ jobs:
 
       - name: Pull Request Attestation
         env:
-          GITHUB_TOKEN: ${{ secrets.token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           attestor \
             --attestor "github-pull-request" \
@@ -133,7 +133,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.token }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Load & Push Image
         id: push
