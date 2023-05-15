@@ -76,7 +76,7 @@ jobs:
 
       - name: Add Sigstore Helm Repo
         run: |
-          helm --version
+          helm version
           helm repo add sigstore https://sigstore.github.io/helm-charts
           helm repo update
 
