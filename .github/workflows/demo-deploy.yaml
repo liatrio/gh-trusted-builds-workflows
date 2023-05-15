@@ -37,7 +37,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          kubectl --version
+          kubectl version --client=true
 
           gh release download --repo k3d-io/k3d \
             --pattern k3d-linux-amd64 \
@@ -56,3 +56,4 @@ jobs:
           kubectl get nodes
           kubectl get ns
           kubectl get po -A
+          kubectl cluster-info dump
