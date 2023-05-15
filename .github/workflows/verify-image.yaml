@@ -8,12 +8,15 @@ on:
       rekorUrl:
         description: "Sigstore Rekor URL. Defaults ot the production public good instance"
         default: "https://rekor.sigstore.dev"
+        type: string
       tufMirror:
         description: "cosign TUF root mirror URL. If not specified, cosign initialize will not be invoked"
         default: ""
+        type: string
       tufRoot:
         description: "cosign TUF initial trusted root. If not specified, cosign initialize will not be invoked"
         default: ""
+        type: string
 
 jobs:
   metadata:

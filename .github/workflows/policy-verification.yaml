@@ -8,18 +8,23 @@ on:
       fulcioUrl:
         description: "Sigstore Fulcio URL. Defaults to the production public good instance"
         default: "https://fulcio.sigstore.dev"
+        type: string
       rekorUrl:
         description: "Sigstore Rekor URL. Defaults ot the production public good instance"
         default: "https://rekor.sigstore.dev"
+        type: string
       tufMirror:
         description: "cosign TUF root mirror URL. If not specified, cosign initialize will not be invoked"
         default: ""
+        type: string
       tufRoot:
         description: "cosign TUF initial trusted root. If not specified, cosign initialize will not be invoked"
         default: ""
+        type: string
       vsaAppVersion:
         description: "liatrio/gh-trusted-builds-vsa application version"
         default: "1.0.0"
+        type: string
     secrets:
       token:
         description: "GitHub token - used to push to GitHub Container Registry and download release assets"

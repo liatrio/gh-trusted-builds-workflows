@@ -4,22 +4,28 @@ on:
     inputs:
       attestorVersion:
         description: "liatrio/custom-attestation-poc attestor version"
-        defaults: "0.4.0"
+        default: "0.4.0"
+        type: string
       fulcioUrl:
         description: "Sigstore Fulcio URL. Defaults to the production public good instance"
         default: "https://fulcio.sigstore.dev"
+        type: string
       rekorUrl:
         description: "Sigstore Rekor URL. Defaults ot the production public good instance"
         default: "https://rekor.sigstore.dev"
+        type: string
       slsaGeneratorVersion:
         description: "SLSA container provenance generator version"
         default: "1.6.0"
+        type: string
       tufMirror:
         description: "cosign TUF root mirror URL. If not specified, cosign initialize will not be invoked"
         default: ""
+        type: string
       tufRoot:
         description: "cosign TUF initial trusted root. If not specified, cosign initialize will not be invoked"
         default: ""
+        type: string
     secrets:
       token:
         description: "GitHub token - used to push to GitHub Container Registry and download release assets"
