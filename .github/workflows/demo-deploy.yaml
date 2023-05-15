@@ -7,6 +7,10 @@ on:
         type: string
         required: true
         description: "Docker image digest"
+      helmVersion:
+        type: string
+        description: "Helm version"
+        default: "v3.11.3"
       k3dVersion:
         type: string
         description: "k3s version"
@@ -42,7 +46,7 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v3
         with:
-         version: v3.12.0
+         version: ${{ inputs.helmVersion }}
 
       - name: Install k3s
         env:
