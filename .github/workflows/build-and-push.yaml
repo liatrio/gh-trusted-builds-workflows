@@ -1,10 +1,15 @@
+name: Build & Push
+
 on:
   workflow_call:
-    # TODO: cosign version
     inputs:
       attestorVersion:
         description: "liatrio/custom-attestation-poc attestor version"
         default: "0.4.0"
+        type: string
+      cosignVersion:
+        description: "Sigstore cosign version"
+        default: ""
         type: string
       fulcioUrl:
         description: "Sigstore Fulcio URL. Defaults to the production public good instance"
@@ -50,6 +55,7 @@ jobs:
         with:
           tufRoot: ${{ inputs.tufRoot }}
           tufMirror: ${{ inputs.tufMirror }}
+          version: ${{ inputs.cosignVersion }}
 
       - name: Download Attestor
         env:
@@ -182,6 +188,7 @@ jobs:
         with:
           tufRoot: ${{ inputs.tufRoot }}
           tufMirror: ${{ inputs.tufMirror }}
+          version: ${{ inputs.cosignVersion }}
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
@@ -215,6 +222,7 @@ jobs:
         with:
           tufRoot: ${{ inputs.tufRoot }}
           tufMirror: ${{ inputs.tufMirror }}
+          version: ${{ inputs.cosignVersion }}
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2

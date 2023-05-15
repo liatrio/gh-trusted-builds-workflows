@@ -1,6 +1,12 @@
+name: Scan Image
+
 on:
   workflow_call:
     inputs:
+      cosignVersion:
+        description: "Sigstore cosign version"
+        default: ""
+        type: string
       digest:
         type: string
         required: true
@@ -49,15 +55,12 @@ jobs:
           name: trivy.report.json
           path: trivy.report.json
 
-      - name: Show Report
-        run: |
-          cat trivy.report.json
-
       - name: Cosign Setup
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@open-source
         with:
           tufRoot: ${{ inputs.tufRoot }}
           tufMirror: ${{ inputs.tufMirror }}
+          version: ${{ inputs.cosignVersion }}
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
