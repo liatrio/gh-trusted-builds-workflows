@@ -85,8 +85,8 @@ jobs:
 
           mkdir -p $HOME/.bin/vsa
           mv ./vsa $HOME/.bin/vsa
-          rm -rf gh-trusted-builds-vsa_${{ inputs.attestorVersion }}_linux_amd64
-          rm "gh-trusted-builds-vsa_${{ inputs.attestorVersion }}_linux_amd64.tar.gz"
+          rm -rf gh-trusted-builds-vsa_${{ inputs.vsaAppVersion }}_linux_amd64
+          rm "gh-trusted-builds-vsa_${{ inputs.vsaAppVersion }}_linux_amd64.tar.gz"
           echo "$HOME/.bin/vsa" >> $GITHUB_PATH
 
           ls -la
