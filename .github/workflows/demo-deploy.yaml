@@ -52,7 +52,7 @@ env:
             trustRootRef: ${TRUST_ROOT_NAME}
             identities:
               - issuerRegExp: https://token.actions.githubusercontent.com
-                subjectRegExp: https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml@refs/heads/main
+                subjectRegExp: https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml@.*
           ctlog:
             url: ${REKOR_URL}
             trustRootRef: ${TRUST_ROOT_NAME}
@@ -65,7 +65,7 @@ env:
                     package sigstore
                     default isCompliant = false
                     isCompliant {
-                      input.predicate.builder.id == "https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml@refs/heads/main"
+                      startswith(input.predicate.builder.id, "https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml@")
                       input.predicate.buildType == "https://github.com/slsa-framework/slsa-github-generator/container@v1"
                     }
   TRUST_ROOT: |
@@ -77,8 +77,6 @@ env:
       remote:
         mirror: ${TUF_MIRROR}
         root: ${TUF_ROOT}
-
-
 jobs:
   deploy:
     permissions:

@@ -46,7 +46,7 @@ jobs:
     steps:
       - name: Determine Workflow Ref
         id: workflow
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/workflow-ref@demo-deploy
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/workflow-ref@main
 
   verify:
     runs-on: ubuntu-latest
