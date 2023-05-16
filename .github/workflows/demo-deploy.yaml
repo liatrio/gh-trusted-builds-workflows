@@ -101,14 +101,6 @@ jobs:
         run: |
           k3d cluster create --agents 1 --no-lb --wait demo
 
-      # TODO: remove this
-      - name: Import Image
-        run: |
-          docker pull ghcr.io/${{ github.repository }}@${{ inputs.digest }}
-          docker save -o image.tar ghcr.io/${{ github.repository }}@${{ inputs.digest }}
-          k3d image import --cluster demo image.tar
-          rm image.tar
-
       - name: Add Sigstore Helm Repo
         run: |
           helm version
