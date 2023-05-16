@@ -37,7 +37,7 @@ on:
         type: string
 
 env:
-  DEFAULT_IMAGE_POLICY: |
+  DEMO_IMAGE_POLICY: |
     apiVersion: policy.sigstore.dev/v1alpha1
     kind: ClusterImagePolicy
     metadata:
@@ -152,12 +152,14 @@ jobs:
             export TUF_ROOT=$(base64 < "${tufRoot}")
             export TRUST_ROOT_NAME="custom-root"
 
+            echo "Creating trust root:"
             echo "${TRUST_ROOT}" | envsubst | tee /dev/fd/2 | kubectl apply -f -
           else
             echo "Using production public good Sigstore root"
           fi
 
-          echo "${DEFAULT_IMAGE_POLICY}" | envsubst | tee /dev/fd/2 | kubectl apply -f -
+          echo "Creating policy:"
+          echo "${DEMO_IMAGE_POLICY}" | envsubst | tee /dev/fd/2 | kubectl apply -f -
 
       - name: Deploy App
         run: |
