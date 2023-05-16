@@ -51,21 +51,21 @@ env:
             url: ${FULCIO_URL}
             identities:
               - issuerRegExp: https://token.actions.githubusercontent.com
-                subjectRegExp: https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/policy-verification.yaml@refs/heads/main
+                subjectRegExp: https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml@refs/heads/main
           ctlog:
             url: ${REKOR_URL}
           attestations:
               - name: passed-vsa
-                predicateType: "https://slsa.dev/verification_summary/v0.2"
+                predicateType: "https://slsa.dev/provenance/v0.2"
                 policy:
                   type: rego
                   data: |
                     package sigstore
                     default isCompliant = false
                     isCompliant {
-                      input.predicate.verification_result == "PASSED"
+                      input.predicate.builder.id == "https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml@refs/heads/main"
+                      input.predicate.buildType == "https://github.com/slsa-framework/slsa-github-generator/container@v1"
                     }
-
 
 jobs:
   deploy:
