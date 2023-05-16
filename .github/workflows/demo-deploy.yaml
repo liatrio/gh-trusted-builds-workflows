@@ -131,6 +131,7 @@ jobs:
             policy-controller sigstore/policy-controller
 
           kubectl -n policy-controller patch role policy-controller-policy-webhook \
+            --type json \
             -p='[{"op": "add", "path": "/rules/-", "value": {"apiGroups": [""],"resources": ["configmaps"], "resourceNames": ["config-sigstore-keys"], "verbs": ["get", "list", "create", "update", "patch", "watch"]}}]'
 
       - name: App Setup
