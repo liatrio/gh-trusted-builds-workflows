@@ -154,7 +154,7 @@ jobs:
             echo "Using custom TUF root"
             ls -la
             export TUF_MIRROR="${tufMirror}"
-            export TUF_ROOT=$(base64 < "${tufRoot}")
+            export TUF_ROOT=$(base64 -w 0 < "${tufRoot}")
             export TRUST_ROOT_NAME="custom-root"
 
             echo "TUF_MIRROR: ${TUF_MIRROR}"
