@@ -149,7 +149,7 @@ jobs:
           tufRoot="${{ inputs.tufRoot }}"
           tufMirror=${{ inputs.tufMirror}}"
 
-          if [[ ${tufRoot}" && "${tufMirror}"]]; then
+          if [ ${tufRoot}" && "${tufMirror}" ]; then
             echo "Using custom TUF root"
             export TUF_MIRROR="${tufMirror}"
             export TUF_ROOT=$(base64 < "${tufRoot}")
