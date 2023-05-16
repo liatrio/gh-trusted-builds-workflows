@@ -108,18 +108,6 @@ jobs:
           k3d image import --cluster demo image.tar
           rm image.tar
 
-      - name: Create Policy
-        env:
-          IMAGE_REPO: ${{ github.repository }}
-          FULCIO_URL: ${{ inputs.fulcioUrl }}
-          REKOR_URL: ${{ inputs.rekorUrl }}
-        run: |
-          echo "${DEFAULT_IMAGE_POLICY}" | envsubst > policy.yaml
-          cat policy.yaml
-          
-          kubectl apply -f policy.yaml
-          rm policy.yaml
-
       - name: Add Sigstore Helm Repo
         run: |
           helm version
@@ -135,6 +123,17 @@ jobs:
             --version ${{ inputs.policyControllerVersion }} \
             policy-controller sigstore/policy-controller
 
+      - name: Create Policy
+        env:
+          IMAGE_REPO: ${{ github.repository }}
+          FULCIO_URL: ${{ inputs.fulcioUrl }}
+          REKOR_URL: ${{ inputs.rekorUrl }}
+        run: |
+          echo "${DEFAULT_IMAGE_POLICY}" | envsubst > policy.yaml
+          cat policy.yaml
+
+          kubectl apply -f policy.yaml
+          rm policy.yaml
 
       - name: Deploy App
         run: |
