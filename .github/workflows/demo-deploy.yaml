@@ -151,6 +151,7 @@ jobs:
         run: |
           kubectl -n demo create deploy \
             --image=ghcr.io/${{ github.repository }}@${{ inputs.digest }} demo
+          kubectl -n demo rollout status deploy demo
 
       - name: Debug
         run: |
