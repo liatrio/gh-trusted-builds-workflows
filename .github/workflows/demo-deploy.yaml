@@ -101,6 +101,7 @@ jobs:
         run: |
           k3d cluster create --agents 1 --no-lb --wait demo
 
+      # TODO: remove this
       - name: Import Image
         run: |
           docker pull ghcr.io/${{ github.repository }}@${{ inputs.digest }}
@@ -123,6 +124,17 @@ jobs:
             --version ${{ inputs.policyControllerVersion }} \
             policy-controller sigstore/policy-controller
 
+      - name: App Setup
+        run: |
+          kubectl create ns demo
+          kubectl label ns demo policy.sigstore.dev/include=true
+
+          kubectl -n demo create secret docker-registry ghcr \
+            --docker-server=ghcr.io \
+            --docker-username=github --docker-password=${{ secrets.GITHUB_TOKEN }}
+
+          kubectl -n demo patch serviceaccount default -p '{"imagePullSecrets": [{"name": "ghcr"}]}'
+
       - name: Create Policy
         env:
           IMAGE_REPO: ${{ github.repository }}
@@ -131,14 +143,12 @@ jobs:
         run: |
           echo "${DEFAULT_IMAGE_POLICY}" | envsubst > policy.yaml
           cat policy.yaml
-
+  
           kubectl apply -f policy.yaml
           rm policy.yaml
 
       - name: Deploy App
         run: |
-          kubectl create ns demo
-          kubectl label ns demo policy.sigstore.dev/include=true
           kubectl -n demo create deploy \
             --image=ghcr.io/${{ github.repository }}@${{ inputs.digest }} demo
 
