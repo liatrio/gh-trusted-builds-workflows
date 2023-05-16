@@ -130,6 +130,9 @@ jobs:
             --version ${{ inputs.policyControllerVersion }} \
             policy-controller sigstore/policy-controller
 
+          kubectl -n policy-controller patch role policy-controller-policy-webhook \
+            -p='[{"op": "add", "path": "/rules/-", "value": {"apiGroups": [""],"resources": ["configmaps"], "resourceNames": ["config-sigstore-keys"], "verbs": ["get", "list", "create", "update", "patch", "watch"]}}]'
+
       - name: App Setup
         run: |
           kubectl create ns demo
