@@ -163,6 +163,9 @@ jobs:
 
             echo "Creating trust root:"
             echo "${TRUST_ROOT}" | envsubst | tee /dev/fd/2 | kubectl apply -f -
+
+            echo "Waiting for controller to reconcile"
+            sleep 10
           else
             echo "Using production public good Sigstore root"
           fi
