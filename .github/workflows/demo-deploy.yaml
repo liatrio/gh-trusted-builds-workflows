@@ -163,11 +163,7 @@ jobs:
             echo "Using production public good Sigstore root"
           fi
 
-          echo "${DEFAULT_IMAGE_POLICY}" | envsubst > policy.yaml
-          cat policy.yaml
-  
-          kubectl apply -f policy.yaml
-          rm policy.yaml
+          echo "${DEFAULT_IMAGE_POLICY}" | envsubst | tee /dev/fd/2 | kubectl apply -f -
 
       - name: Deploy App
         run: |
