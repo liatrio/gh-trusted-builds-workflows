@@ -168,6 +168,7 @@ jobs:
 
           kubectl get trustroots
           kubectl get trustroot custom-root -oyaml
+          sleep 30
           echo "logs..."
           kubectl -n policy-controller logs -l 'app.kubernetes.io/name=policy-controller'
 
