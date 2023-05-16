@@ -36,7 +36,6 @@ on:
         default: ""
         type: string
 
-
 jobs:
   deploy:
     permissions:
@@ -52,6 +51,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          envsubst --version
+          
           gh release download --repo k3d-io/k3d \
             --pattern k3d-linux-amd64 \
             ${{ inputs.k3dVersion }}
