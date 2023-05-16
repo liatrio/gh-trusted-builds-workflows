@@ -148,9 +148,13 @@ jobs:
 
           if [[ "${tufRoot}" && "${tufMirror}" ]]; then
             echo "Using custom TUF root"
+            ls -la
             export TUF_MIRROR="${tufMirror}"
             export TUF_ROOT=$(base64 < "${tufRoot}")
             export TRUST_ROOT_NAME="custom-root"
+
+            echo "TUF_MIRROR: ${TUF_MIRROR}"
+            echo "TUF_ROOT: ${TUF_ROOT}"
 
             echo "Creating trust root:"
             echo "${TRUST_ROOT}" | envsubst | tee /dev/fd/2 | kubectl apply -f -
