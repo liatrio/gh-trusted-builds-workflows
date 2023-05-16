@@ -18,7 +18,7 @@ on:
       policyControllerVersion:
         type: string
         description: "Policy controller Helm chart version"
-        default: "0.5.7"
+        default: "0.5.8"
       fulcioUrl:
         description: "Sigstore Fulcio URL. Defaults to the production public good instance"
         default: "https://fulcio.sigstore.dev"
@@ -129,10 +129,6 @@ jobs:
             -n policy-controller \
             --version ${{ inputs.policyControllerVersion }} \
             policy-controller sigstore/policy-controller
-
-          kubectl -n policy-controller patch role policy-controller-policy-webhook \
-            --type json \
-            -p='[{"op": "add", "path": "/rules/-", "value": {"apiGroups": [""],"resources": ["configmaps"], "resourceNames": ["config-sigstore-keys"], "verbs": ["get", "list", "create", "update", "patch", "watch"]}}]'
 
       - name: App Setup
         run: |
