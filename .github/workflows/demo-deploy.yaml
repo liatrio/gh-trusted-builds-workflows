@@ -157,17 +157,17 @@ jobs:
             export TUF_ROOT=$(base64 -w 0 < "${tufRoot}")
             export TRUST_ROOT_NAME="custom-root"
 
-            echo "TUF_MIRROR: ${TUF_MIRROR}"
-            echo "TUF_ROOT: ${TUF_ROOT}"
-
             echo "Creating trust root:"
-            echo "${TRUST_ROOT}" | envsubst | tee /dev/fd/2 | kubectl apply -n policy-controller -f -
+            echo "${TRUST_ROOT}" | envsubst | tee /dev/fd/2 | kubectl apply -f -
           else
             echo "Using production public good Sigstore root"
           fi
 
           echo "Creating policy:"
           echo "${DEMO_IMAGE_POLICY}" | envsubst | tee /dev/fd/2 | kubectl apply -f -
+
+          kubectl get trustroots
+          kubectl get trustroot custom-root -oyaml
 
       - name: Deploy App
         run: |
