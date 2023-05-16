@@ -147,7 +147,7 @@ jobs:
           REKOR_URL: ${{ inputs.rekorUrl }}
         run: |
           tufRoot="${{ inputs.tufRoot }}"
-          tufMirror=${{ inputs.tufMirror}}"
+          tufMirror="${{ inputs.tufMirror}}"
 
           if [ "${tufRoot}" && "${tufMirror}" ]; then
             echo "Using custom TUF root"
