@@ -45,7 +45,7 @@ jobs:
     steps:
       - name: Determine Workflow Ref
         id: workflow
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/workflow-ref@main
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/workflow-ref@demo-deploy
 
   verify:
     runs-on: ubuntu-latest
@@ -110,6 +110,6 @@ jobs:
           --artifact-digest ${{ inputs.digest }} \
           --commit-sha ${{ github.sha }} \
           --policy-version "v1.1.1" \
-          --verifier-id ${{ github.workflow_ref }} \
+          --verifier-id ${{ needs.metadata.outputs.jobWorkflowRef }} \
           --fulcio-url ${{ inputs.fulcioUrl }} \
           --rekor-url ${{ inputs.rekorUrl }}

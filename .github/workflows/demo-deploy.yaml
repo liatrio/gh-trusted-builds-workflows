@@ -66,12 +66,47 @@ env:
                       input.predicate.verification_result == "PASSED"
                     }
 
+
 jobs:
   deploy:
     permissions:
       packages: read
     runs-on: ubuntu-latest
     steps:
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+         version: ${{ inputs.helmVersion }}
+
+      - name: Install k3s
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download --repo k3d-io/k3d \
+            --pattern k3d-linux-amd64 \
+            ${{ inputs.k3dVersion }}
+          chmod +x k3d-linux-amd64
+          mkdir -p $HOME/.bin/k3d
+          mv k3d-linux-amd64 $HOME/.bin/k3d/k3d
+          echo "$HOME/.bin/k3d" >> $GITHUB_PATH
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Cluster
+        run: |
+          k3d cluster create --agents 1 --no-lb --wait demo
+
+      - name: Import Image
+        run: |
+          docker pull ghcr.io/${{ github.repository }}@${{ inputs.digest }}
+          docker save -o image.tar ghcr.io/${{ github.repository }}@${{ inputs.digest }}
+          k3d image import --cluster demo image.tar
+          rm image.tar
 
       - name: Create Policy
         env:
@@ -81,68 +116,35 @@ jobs:
         run: |
           echo "${DEFAULT_IMAGE_POLICY}" | envsubst > policy.yaml
           cat policy.yaml
-#      - name: Install Helm
-#        uses: azure/setup-helm@v3
-#        with:
-#         version: ${{ inputs.helmVersion }}
-#
-#      - name: Install k3s
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        run: |
-#          envsubst --version
-#
-#          gh release download --repo k3d-io/k3d \
-#            --pattern k3d-linux-amd64 \
-#            ${{ inputs.k3dVersion }}
-#          chmod +x k3d-linux-amd64
-#          mkdir -p $HOME/.bin/k3d
-#          mv k3d-linux-amd64 $HOME/.bin/k3d/k3d
-#          echo "$HOME/.bin/k3d" >> $GITHUB_PATH
-#
-#      - name: Login to GitHub Container Registry
-#        uses: docker/login-action@v2
-#        with:
-#          registry: ghcr.io
-#          username: ${{ github.actor }}
-#          password: ${{ secrets.GITHUB_TOKEN }}
-#
-#      - name: Create Cluster
-#        run: |
-#          k3d cluster create --agents 1 --no-lb --wait demo
-#
-#      - name: Import Image
-#        run: |
-#          docker pull ghcr.io/${{ github.repository }}@${{ inputs.digest }}
-#          docker save -o image.tar ghcr.io/${{ github.repository }}@${{ inputs.digest }}
-#          k3d image import --cluster demo image.tar
-#          rm image.tar
-#
-#      - name: Add Sigstore Helm Repo
-#        run: |
-#          helm version
-#          helm repo add sigstore https://sigstore.github.io/helm-charts
-#          helm repo update
-#
-#      - name: Deploy Policy Controller
-#        run: |
-#          helm install \
-#            --wait \
-#            --create-namespace \
-#            -n policy-controller \
-#            --version ${{ inputs.policyControllerVersion }} \
-#            policy-controller sigstore/policy-controller
+          
+          kubectl apply -f policy.yaml
+          rm policy.yaml
+
+      - name: Add Sigstore Helm Repo
+        run: |
+          helm version
+          helm repo add sigstore https://sigstore.github.io/helm-charts
+          helm repo update
+
+      - name: Deploy Policy Controller
+        run: |
+          helm install \
+            --wait \
+            --create-namespace \
+            -n policy-controller \
+            --version ${{ inputs.policyControllerVersion }} \
+            policy-controller sigstore/policy-controller
 
 
-#      - name: Deploy App
-#        run: |
-#          kubectl create ns demo
-#          kubectl label ns demo policy.sigstore.dev/include=true
-#          kubectl -n demo create deploy \
-#            --image=ghcr.io/${{ github.repository }}@${{ inputs.digest }} demo
-#
-#      - name: Debug
-#        run: |
-#          kubectl get ns
-#          kubectl -n policy-controller get all
-#          kubectl -n demo get all
+      - name: Deploy App
+        run: |
+          kubectl create ns demo
+          kubectl label ns demo policy.sigstore.dev/include=true
+          kubectl -n demo create deploy \
+            --image=ghcr.io/${{ github.repository }}@${{ inputs.digest }} demo
+
+      - name: Debug
+        run: |
+          kubectl get ns
+          kubectl -n policy-controller get all
+          kubectl -n demo get all
