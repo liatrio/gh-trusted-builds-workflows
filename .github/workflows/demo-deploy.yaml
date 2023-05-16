@@ -161,7 +161,7 @@ jobs:
             echo "TUF_ROOT: ${TUF_ROOT}"
 
             echo "Creating trust root:"
-            echo "${TRUST_ROOT}" | envsubst | tee /dev/fd/2 | kubectl apply -f -
+            echo "${TRUST_ROOT}" | envsubst | tee /dev/fd/2 | kubectl apply -n policy-controller -f -
           else
             echo "Using production public good Sigstore root"
           fi
