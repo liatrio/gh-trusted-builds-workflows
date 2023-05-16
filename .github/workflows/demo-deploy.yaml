@@ -139,7 +139,6 @@ jobs:
 
           kubectl -n demo patch serviceaccount default -p '{"imagePullSecrets": [{"name": "ghcr"}]}'
 
-      # TODO: pipe to kubectl directly
       - name: Create Policy
         env:
           IMAGE_REPO: ${{ github.repository }}
@@ -155,10 +154,7 @@ jobs:
             export TUF_ROOT=$(base64 < "${tufRoot}")
             export TRUST_ROOT_NAME="custom-root"
 
-            echo "${TRUST_ROOT}" | envsubst > root.yaml
-            cat root.yaml
-            kubectl apply -f root.yaml
-            rm root.yaml
+            echo "${TRUST_ROOT}" | envsubst | tee /dev/fd/2 | kubectl apply -f -
           else
             echo "Using production public good Sigstore root"
           fi
