@@ -79,7 +79,7 @@ jobs:
           FULCIO_URL: ${{ inputs.fulcioUrl }}
           REKOR_URL: ${{ inputs.rekorUrl }}
         run: |
-          echo ${DEFAULT_IMAGE_POLICY} | envsubst > policy.yaml
+          echo "${DEFAULT_IMAGE_POLICY}" | envsubst > policy.yaml
           cat policy.yaml
 #      - name: Install Helm
 #        uses: azure/setup-helm@v3
