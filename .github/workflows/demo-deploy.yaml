@@ -49,11 +49,13 @@ env:
         - name: attestation
           keyless:
             url: ${FULCIO_URL}
+            trustRootRef: ${TRUST_ROOT_NAME}
             identities:
               - issuerRegExp: https://token.actions.githubusercontent.com
                 subjectRegExp: https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml@refs/heads/main
           ctlog:
             url: ${REKOR_URL}
+            trustRootRef: ${TRUST_ROOT_NAME}
           attestations:
               - name: passed-vsa
                 predicateType: "https://slsa.dev/provenance/v0.2"
@@ -66,6 +68,16 @@ env:
                       input.predicate.builder.id == "https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml@refs/heads/main"
                       input.predicate.buildType == "https://github.com/slsa-framework/slsa-github-generator/container@v1"
                     }
+  TRUST_ROOT: |
+    apiVersion: policy.sigstore.dev/v1alpha1
+    kind: TrustRoot
+    metadata:
+      name: custom-root
+    spec:
+      remote:
+        mirror: ${TUF_MIRROR}
+        root: ${TUF_ROOT}
+
 
 jobs:
   deploy:
@@ -127,12 +139,28 @@ jobs:
 
           kubectl -n demo patch serviceaccount default -p '{"imagePullSecrets": [{"name": "ghcr"}]}'
 
+      # TODO: pipe to kubectl directly
       - name: Create Policy
         env:
           IMAGE_REPO: ${{ github.repository }}
           FULCIO_URL: ${{ inputs.fulcioUrl }}
           REKOR_URL: ${{ inputs.rekorUrl }}
         run: |
+          tufRoot="${{ inputs.tufRoot }}"
+          tufMirror=${{ inputs.tufMirror}}"
+
+          if [[ ${tufRoot}" && "${tufMirror}"]]; then
+            echo "Using custom TUF root"
+            export TUF_MIRROR="${tufMirror}"
+            export TUF_ROOT=$(base64 < "${tufRoot}")
+            export TRUST_ROOT_NAME="custom-root"
+
+            echo "${TRUST_ROOT}" | envsubst > root.yaml
+            cat root.yaml
+            kubectl apply -f root.yaml
+            rm root.yaml
+          fi
+
           echo "${DEFAULT_IMAGE_POLICY}" | envsubst > policy.yaml
           cat policy.yaml
   
@@ -145,8 +173,6 @@ jobs:
             --image=ghcr.io/${{ github.repository }}@${{ inputs.digest }} demo
           kubectl -n demo rollout status deploy demo
 
-      - name: Debug
+      - name: Show Deployment
         run: |
-          kubectl get ns
-          kubectl -n policy-controller get all
           kubectl -n demo get all
