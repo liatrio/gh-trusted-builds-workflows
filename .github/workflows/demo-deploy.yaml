@@ -75,8 +75,8 @@ jobs:
         run: |
           docker pull ghcr.io/${{ github.repository }}@${{ inputs.digest }}
           docker save -o image.tar ghcr.io/${{ github.repository }}@${{ inputs.digest }}
-          k3d image import --keep-tarball=false --cluster demo image.tar
-          ls -la
+          k3d image import --cluster demo image.tar
+          rm image.tar
 
       - name: Add Sigstore Helm Repo
         run: |
@@ -93,7 +93,15 @@ jobs:
             --version ${{ inputs.policyControllerVersion }} \
             policy-controller sigstore/policy-controller
 
+      - name: Deploy App
+        run: |
+          kubectl create ns demo
+          kubectl label ns demo policy.sigstore.dev/include=true
+          kubectl -n demo create deploy \
+            --image=ghcr.io/${{ github.repository }}@${{ inputs.digest }} demo
+
       - name: Debug
         run: |
           kubectl get ns
           kubectl -n policy-controller get all
+          kubectl -n demo get all
