@@ -63,7 +63,9 @@ env:
                     package sigstore
                     default isCompliant = false
                     isCompliant {
+                      print("checking builder id")
                       input.predicate.builder.id == "https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml@refs/heads/main"
+                      print("checking builder type")
                       input.predicate.buildType == "https://github.com/slsa-framework/slsa-github-generator/container@v2"
                     }
 
