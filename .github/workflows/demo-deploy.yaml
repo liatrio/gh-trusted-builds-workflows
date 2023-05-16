@@ -170,12 +170,6 @@ jobs:
           echo "Creating policy:"
           echo "${DEMO_IMAGE_POLICY}" | envsubst | tee /dev/fd/2 | kubectl apply -f -
 
-          kubectl get trustroots
-          kubectl get trustroot custom-root -oyaml
-          sleep 30
-          echo "logs..."
-          kubectl -n policy-controller logs -l 'app.kubernetes.io/name=policy-controller'
-
       - name: Deploy App
         run: |
           kubectl -n demo create deploy \
