@@ -149,7 +149,7 @@ jobs:
           tufRoot="${{ inputs.tufRoot }}"
           tufMirror="${{ inputs.tufMirror}}"
 
-          if [ "${tufRoot}" && "${tufMirror}" ]; then
+          if [[ "${tufRoot}" && "${tufMirror}" ]]; then
             echo "Using custom TUF root"
             export TUF_MIRROR="${tufMirror}"
             export TUF_ROOT=$(base64 < "${tufRoot}")
@@ -159,6 +159,8 @@ jobs:
             cat root.yaml
             kubectl apply -f root.yaml
             rm root.yaml
+          else
+            echo "Using production public good Sigstore root"
           fi
 
           echo "${DEFAULT_IMAGE_POLICY}" | envsubst > policy.yaml
