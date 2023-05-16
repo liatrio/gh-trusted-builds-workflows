@@ -42,6 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       ref: ${{ steps.workflow.outputs.ref }}
+      jobWorkflowRef: ${{ steps.workflow.outputs.jobWorkflowRef }}
     steps:
       - name: Determine Workflow Ref
         id: workflow
@@ -106,10 +107,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.token }}
         run: |
           vsa \
-          --artifact-uri ghcr.io/${{ github.repository }}@${{ inputs.digest }} \
+          --artifact-uri ghcr.io/${{ github.repository }} \
           --artifact-digest ${{ inputs.digest }} \
           --commit-sha ${{ github.sha }} \
           --policy-version "v1.1.1" \
-          --verifier-id ${{ needs.metadata.outputs.jobWorkflowRef }} \
+          --verifier-id ${{ github.server_url }}/${{ needs.metadata.outputs.jobWorkflowRef }} \
           --fulcio-url ${{ inputs.fulcioUrl }} \
           --rekor-url ${{ inputs.rekorUrl }}
