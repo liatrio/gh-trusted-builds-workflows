@@ -82,7 +82,6 @@ jobs:
             --pattern "gh-trusted-builds-attestations_${{ inputs.attestorVersion }}_linux_amd64.tar.gz" "v${{ inputs.attestorVersion }}"
 
           tar xvf "gh-trusted-builds-attestations_${{ inputs.attestorVersion }}_linux_amd64.tar.gz"
-          ./attestation --help
 
           mkdir -p $HOME/.bin/attestation
           mv ./attestation $HOME/.bin/attestation
