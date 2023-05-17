@@ -52,7 +52,7 @@ env:
             trustRootRef: ${TRUST_ROOT_NAME}
             identities:
               - issuerRegExp: https://token.actions.githubusercontent.com
-                subjectRegExp: https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml@.*
+                subjectRegExp: https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/policy-verification.yaml@.*
           ctlog:
             url: ${REKOR_URL}
             trustRootRef: ${TRUST_ROOT_NAME}
