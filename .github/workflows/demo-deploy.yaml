@@ -57,16 +57,16 @@ env:
             url: ${REKOR_URL}
             trustRootRef: ${TRUST_ROOT_NAME}
           attestations:
-              - name: has-build-provenance
-                predicateType: "https://slsa.dev/provenance/v0.2"
+              - name: has-passing-vsa
+                predicateType: "https://slsa.dev/verification_summary/v0.2"
                 policy:
                   type: rego
                   data: |
                     package sigstore
                     default isCompliant = false
                     isCompliant {
-                      startswith(input.predicate.builder.id, "https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml@")
-                      input.predicate.buildType == "https://github.com/slsa-framework/slsa-github-generator/container@v1"
+                      startswith(input.predicate.verifier.id, "https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/policy-verification.yaml@")
+                      input.predicate.verification_result == "PASSED"
                     }
   TRUST_ROOT: |
     apiVersion: policy.sigstore.dev/v1alpha1
