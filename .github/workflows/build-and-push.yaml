@@ -4,8 +4,8 @@ on:
   workflow_call:
     inputs:
       attestorVersion:
-        description: "liatrio/custom-attestation-poc attestor version"
-        default: "0.4.0"
+        description: "liatrio/gh-trusted-builds-attestations version"
+        default: "0.1.0"
         type: string
       cosignVersion:
         description: "Sigstore cosign version"
@@ -57,29 +57,28 @@ jobs:
           tufMirror: ${{ inputs.tufMirror }}
           version: ${{ inputs.cosignVersion }}
 
-      - name: Download Attestor
+      - name: Download Build Attestations
         env:
           GITHUB_TOKEN: ${{ secrets.token }}
         run: |
           gh release download \
-            --repo liatrio/custom-attestations-poc \
-            --pattern "custom-attestations-poc_${{ inputs.attestorVersion }}_linux_amd64.tar.gz" "v${{ inputs.attestorVersion }}"
+            --repo liatrio/gh-trusted-builds-attestations \
+            --pattern "gh-trusted-builds-attestations_${{ inputs.attestorVersion }}_linux_amd64.tar.gz" "v${{ inputs.attestorVersion }}"
 
-          tar xvf "custom-attestations-poc_${{ inputs.attestorVersion }}_linux_amd64.tar.gz"
-          ./attestor --help
+          tar xvf "gh-trusted-builds-attestations_${{ inputs.attestorVersion }}_linux_amd64.tar.gz"
+          ./attestation --help
 
-          mkdir -p $HOME/.bin/attestor
-          mv ./attestor $HOME/.bin/attestor
-          rm -rf custom-attestations-poc_${{ inputs.attestorVersion }}_linux_amd64
-          rm "custom-attestations-poc_${{ inputs.attestorVersion }}_linux_amd64.tar.gz"
-          echo "$HOME/.bin/attestor" >> $GITHUB_PATH
+          mkdir -p $HOME/.bin/attestation
+          mv ./attestation $HOME/.bin/attestation
+          rm -rf gh-trusted-builds-attestations_${{ inputs.attestorVersion }}_linux_amd64
+          rm "gh-trusted-builds-attestations_${{ inputs.attestorVersion }}_linux_amd64.tar.gz"
+          echo "$HOME/.bin/attestation" >> $GITHUB_PATH
 
       - name: Pull Request Attestation
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          attestor \
-            --attestor "github-pull-request" \
+          attestation github-pull-request \
             --rekor-url ${{ inputs.rekorUrl }} \
             --fulcio-url ${{ inputs.fulcioUrl }}
 

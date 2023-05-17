@@ -3,6 +3,10 @@ name: Policy Verification
 on:
   workflow_call:
     inputs:
+      attestorVersion:
+        description: "liatrio/gh-trusted-builds-attestations version"
+        default: "0.1.0"
+        type: string
       cosignVersion:
         description: "Sigstore cosign version"
         default: "v2.0.2"
@@ -27,13 +31,9 @@ on:
         description: "cosign TUF initial trusted root. If not specified, cosign initialize will not be invoked"
         default: ""
         type: string
-      vsaAppVersion:
-        description: "liatrio/gh-trusted-builds-vsa application version"
-        default: "1.0.0"
-        type: string
     secrets:
       token:
-        description: "GitHub token - used to push to GitHub Container Registry and download release assets"
+        description: "GitHub token used to download release assets"
 
 jobs:
   metadata:
@@ -73,22 +73,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install VSA Application
+      - name: Download Build Attestations
         env:
           GITHUB_TOKEN: ${{ secrets.token }}
         run: |
           gh release download \
-            --repo liatrio/gh-trusted-builds-vsa \
-            --pattern "gh-trusted-builds-vsa_${{ inputs.vsaAppVersion }}_linux_amd64.tar.gz" "v${{ inputs.vsaAppVersion }}"
-          tar xvf "gh-trusted-builds-vsa_${{ inputs.vsaAppVersion }}_linux_amd64.tar.gz"
+            --repo liatrio/gh-trusted-builds-attestations \
+            --pattern "gh-trusted-builds-attestations_${{ inputs.attestorVersion }}_linux_amd64.tar.gz" "v${{ inputs.attestorVersion }}"
 
-          ./vsa --help
+          tar xvf "gh-trusted-builds-attestations_${{ inputs.attestorVersion }}_linux_amd64.tar.gz"
+          ./attestation --help
 
-          mkdir -p $HOME/.bin/vsa
-          mv ./vsa $HOME/.bin/vsa
-          rm -rf gh-trusted-builds-vsa_${{ inputs.vsaAppVersion }}_linux_amd64
-          rm "gh-trusted-builds-vsa_${{ inputs.vsaAppVersion }}_linux_amd64.tar.gz"
-          echo "$HOME/.bin/vsa" >> $GITHUB_PATH
+          mkdir -p $HOME/.bin/attestation
+          mv ./attestation $HOME/.bin/attestation
+          rm -rf gh-trusted-builds-attestations_${{ inputs.attestorVersion }}_linux_amd64
+          rm "gh-trusted-builds-attestations_${{ inputs.attestorVersion }}_linux_amd64.tar.gz"
+          echo "$HOME/.bin/attestation" >> $GITHUB_PATH
 
       - name: Verify Attestations
         run: |
@@ -106,7 +106,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.token }}
         run: |
-          vsa \
+          attestation vsa \
           --artifact-uri ghcr.io/${{ github.repository }} \
           --artifact-digest ${{ inputs.digest }} \
           --commit-sha ${{ github.sha }} \
