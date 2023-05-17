@@ -119,4 +119,4 @@ jobs:
             --type "https://slsa.dev/verification_summary/v0.2" \
             --fulcio-url ${{ inputs.fulcioUrl }} \
             --yes \
-            ghcr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
+            ghcr.io/${{ github.repository }}@${{ inputs.digest }}
