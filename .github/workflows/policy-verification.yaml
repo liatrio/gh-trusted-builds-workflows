@@ -5,7 +5,7 @@ on:
     inputs:
       attestorVersion:
         description: "liatrio/gh-trusted-builds-attestations version"
-        default: "0.1.0"
+        default: "0.2.0"
         type: string
       cosignVersion:
         description: "Sigstore cosign version"
@@ -106,10 +106,17 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.token }}
         run: |
           attestation vsa \
-          --artifact-uri ghcr.io/${{ github.repository }} \
-          --artifact-digest ${{ inputs.digest }} \
-          --commit-sha ${{ github.sha }} \
-          --policy-version "v1.1.1" \
-          --verifier-id ${{ github.server_url }}/${{ needs.metadata.outputs.jobWorkflowRef }} \
-          --fulcio-url ${{ inputs.fulcioUrl }} \
-          --rekor-url ${{ inputs.rekorUrl }}
+            --artifact-uri ghcr.io/${{ github.repository }} \
+            --artifact-digest ${{ inputs.digest }} \
+            --commit-sha ${{ github.sha }} \
+            --policy-version "v1.1.1" \
+            --verifier-id ${{ github.server_url }}/${{ needs.metadata.outputs.jobWorkflowRef }} \
+            --fulcio-url ${{ inputs.fulcioUrl }} \
+            --rekor-url ${{ inputs.rekorUrl }}
+
+          cosign attest --predicate="vsa.predicate.json" \
+            --rekor-url ${{ inputs.rekorUrl }} \
+            --type "https://slsa.dev/verification_summary/v0.2" \
+            --fulcio-url ${{ inputs.fulcioUrl }} \
+            --yes \
+            ghcr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
