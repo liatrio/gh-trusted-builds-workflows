@@ -57,21 +57,11 @@ jobs:
           tufMirror: ${{ inputs.tufMirror }}
           version: ${{ inputs.cosignVersion }}
 
-      - name: Download Build Attestations
-        env:
-          GITHUB_TOKEN: ${{ secrets.token }}
-        run: |
-          gh release download \
-            --repo liatrio/gh-trusted-builds-attestations \
-            --pattern "gh-trusted-builds-attestations_${{ inputs.attestorVersion }}_linux_amd64.tar.gz" "v${{ inputs.attestorVersion }}"
-
-          tar xvf "gh-trusted-builds-attestations_${{ inputs.attestorVersion }}_linux_amd64.tar.gz"
-
-          mkdir -p $HOME/.bin/attestation
-          mv ./attestation $HOME/.bin/attestation
-          rm -rf gh-trusted-builds-attestations_${{ inputs.attestorVersion }}_linux_amd64
-          rm "gh-trusted-builds-attestations_${{ inputs.attestorVersion }}_linux_amd64.tar.gz"
-          echo "$HOME/.bin/attestation" >> $GITHUB_PATH
+      - name: Attestor Install
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/attestor@demo-deploy
+        with:
+          version: ${{ inputs.attestorVersion }}
+          token: ${{ secrets.token }}
 
       - name: Pull Request Attestation
         env:
