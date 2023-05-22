@@ -1,0 +1,94 @@
+name: Policy Verification
+
+on:
+  workflow_call:
+    inputs:
+      attestorVersion:
+        description: "liatrio/gh-trusted-builds-attestations version"
+        default: "0.4.1"
+        type: string
+      cosignVersion:
+        description: "Sigstore cosign version"
+        default: "v2.0.2"
+        type: string
+      digest:
+        type: string
+        required: true
+        description: "Docker image digest"
+      fulcioUrl:
+        description: "Sigstore Fulcio URL. Defaults to the production public good instance"
+        default: "https://fulcio.sigstore.dev"
+        type: string
+      rekorUrl:
+        description: "Sigstore Rekor URL. Defaults to the production public good instance"
+        default: "https://rekor.sigstore.dev"
+        type: string
+      tufMirror:
+        description: "cosign TUF root mirror URL. If not specified, cosign initialize will not be invoked"
+        default: ""
+        type: string
+      tufRoot:
+        description: "cosign TUF initial trusted root. If not specified, cosign initialize will not be invoked"
+        default: ""
+        type: string
+
+jobs:
+  metadata:
+    permissions:
+      id-token: write
+    runs-on: ubuntu-latest
+    outputs:
+      ref: ${{ steps.workflow.outputs.ref }}
+      jobWorkflowRef: ${{ steps.workflow.outputs.jobWorkflowRef }}
+    steps:
+      - name: Determine Workflow Ref
+        id: workflow
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/workflow-ref@main
+
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      packages: write
+    needs: [metadata]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Cosign Setup
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@main
+        with:
+          tufRoot: ${{ inputs.tufRoot }}
+          tufMirror: ${{ inputs.tufMirror }}
+          version: ${{ inputs.cosignVersion }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Show Attestations
+        run: |
+          cosign tree ghcr.io/${{ github.repository }}@${{ inputs.digest }}
+
+      - name: Attestor Install
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/attestor@main
+        with:
+          version: ${{ inputs.attestorVersion }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Verification Summary Attestation
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          attestation vsa \
+            --artifact-uri ghcr.io/${{ github.repository }} \
+            --artifact-digest ${{ inputs.digest }} \
+            --commit-sha ${{ github.sha }} \
+            --policy-version "v1.1.1" \
+            --verifier-id ${{ github.server_url }}/${{ needs.metadata.outputs.jobWorkflowRef }} \
+            --fulcio-url ${{ inputs.fulcioUrl }} \
+            --rekor-url ${{ inputs.rekorUrl }}

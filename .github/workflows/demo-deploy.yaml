@@ -1,0 +1,180 @@
+name: Demo Deploy
+
+on:
+  workflow_call:
+    inputs:
+      digest:
+        type: string
+        required: true
+        description: "Docker image digest"
+      helmVersion:
+        type: string
+        description: "Helm version"
+        default: "v3.10.3"
+      k3dVersion:
+        type: string
+        description: "k3s version"
+        default: "v5.4.9"
+      policyControllerVersion:
+        type: string
+        description: "Policy controller Helm chart version"
+        default: "0.5.8"
+      fulcioUrl:
+        description: "Sigstore Fulcio URL. Defaults to the production public good instance"
+        default: "https://fulcio.sigstore.dev"
+        type: string
+      rekorUrl:
+        description: "Sigstore Rekor URL. Defaults to the production public good instance"
+        default: "https://rekor.sigstore.dev"
+        type: string
+      tufMirror:
+        description: "cosign TUF root mirror URL. If not specified, cosign initialize will not be invoked"
+        default: ""
+        type: string
+      tufRoot:
+        description: "cosign TUF initial trusted root. If not specified, cosign initialize will not be invoked"
+        default: ""
+        type: string
+
+env:
+  DEMO_IMAGE_POLICY: |
+    apiVersion: policy.sigstore.dev/v1alpha1
+    kind: ClusterImagePolicy
+    metadata:
+      name: demo
+    spec:
+      images:
+        - glob: "ghcr.io/${IMAGE_REPO}**"
+      authorities:
+        - name: attestation
+          keyless:
+            url: ${FULCIO_URL}
+            trustRootRef: ${TRUST_ROOT_NAME}
+            identities:
+              - issuer: https://token.actions.githubusercontent.com
+                subject: https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/policy-verification.yaml@refs/heads/main
+          ctlog:
+            url: ${REKOR_URL}
+            trustRootRef: ${TRUST_ROOT_NAME}
+          attestations:
+              - name: has-passing-vsa
+                predicateType: "https://slsa.dev/verification_summary/v0.2"
+                policy:
+                  type: rego
+                  data: |
+                    package sigstore
+                    default isCompliant = false
+                    isCompliant {
+                      input.predicate.verifier.id == "https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/policy-verification.yaml@refs/heads/main"
+                      input.predicate.verification_result == "PASSED"
+                    }
+  TRUST_ROOT: |
+    apiVersion: policy.sigstore.dev/v1alpha1
+    kind: TrustRoot
+    metadata:
+      name: custom-root
+    spec:
+      remote:
+        mirror: ${TUF_MIRROR}
+        root: ${TUF_ROOT}
+jobs:
+  deploy:
+    permissions:
+      packages: read
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+         version: ${{ inputs.helmVersion }}
+
+      - name: Install k3s
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download --repo k3d-io/k3d \
+            --pattern k3d-linux-amd64 \
+            ${{ inputs.k3dVersion }}
+          chmod +x k3d-linux-amd64
+          mkdir -p $HOME/.bin/k3d
+          mv k3d-linux-amd64 $HOME/.bin/k3d/k3d
+          echo "$HOME/.bin/k3d" >> $GITHUB_PATH
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Cluster
+        run: |
+          k3d cluster create --agents 1 --no-lb --wait demo
+
+      - name: Add Sigstore Helm Repo
+        run: |
+          helm version
+          helm repo add sigstore https://sigstore.github.io/helm-charts
+          helm repo update
+
+      - name: Deploy Policy Controller
+        run: |
+          helm install \
+            --wait \
+            --create-namespace \
+            -n policy-controller \
+            --version ${{ inputs.policyControllerVersion }} \
+            policy-controller sigstore/policy-controller
+
+      - name: App Setup
+        run: |
+          kubectl create ns demo
+          kubectl label ns demo policy.sigstore.dev/include=true
+
+          kubectl -n demo create secret docker-registry ghcr \
+            --docker-server=ghcr.io \
+            --docker-username=github --docker-password=${{ secrets.GITHUB_TOKEN }}
+
+          kubectl -n demo patch serviceaccount default -p '{"imagePullSecrets": [{"name": "ghcr"}]}'
+
+      - name: Create Policy
+        env:
+          IMAGE_REPO: ${{ github.repository }}
+          FULCIO_URL: ${{ inputs.fulcioUrl }}
+          REKOR_URL: ${{ inputs.rekorUrl }}
+        run: |
+          tufRoot="${{ inputs.tufRoot }}"
+          tufMirror="${{ inputs.tufMirror}}"
+
+          if [[ "${tufRoot}" && "${tufMirror}" ]]; then
+            echo "Using custom TUF root"
+            ls -la
+            export TUF_MIRROR="${tufMirror}"
+            export TUF_ROOT=$(base64 -w 0 < "${tufRoot}")
+            export TRUST_ROOT_NAME="custom-root"
+
+            echo "Creating trust root:"
+            echo "${TRUST_ROOT}" | envsubst | tee /dev/fd/2 | kubectl apply -f -
+
+            echo "Waiting for controller to reconcile"
+            sleep 10
+          else
+            echo "Using production public good Sigstore root"
+          fi
+
+          echo "Creating policy:"
+          echo "${DEMO_IMAGE_POLICY}" | envsubst | tee /dev/fd/2 | kubectl apply -f -
+
+      - name: Deploy App
+        run: |
+          kubectl -n demo create deploy \
+            --image=ghcr.io/${{ github.repository }}@${{ inputs.digest }} demo
+          kubectl -n demo rollout status deploy demo
+
+      - name: Show Deployment
+        run: |
+          kubectl -n demo get all

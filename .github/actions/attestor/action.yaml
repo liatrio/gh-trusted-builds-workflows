@@ -1,0 +1,29 @@
+name: "attestor"
+description: "Installs liatrio/gh-trusted-builds-attestations tool"
+
+inputs:
+  version:
+    description: "Version of the attestor to install"
+  token:
+    description: "GitHub token - used to download release assets"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Download Build Attestations
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+      run: |
+        gh release download \
+          --repo liatrio/gh-trusted-builds-attestations \
+          --pattern "gh-trusted-builds-attestations_${{ inputs.version }}_linux_amd64.tar.gz" "v${{ inputs.version }}"
+
+        tar xvf "gh-trusted-builds-attestations_${{ inputs.version }}_linux_amd64.tar.gz"
+
+        mkdir -p $HOME/.bin/attestation
+        mv ./attestation $HOME/.bin/attestation
+        rm -rf gh-trusted-builds-attestations_${{ inputs.version }}_linux_amd64
+        rm "gh-trusted-builds-attestations_${{ inputs.version }}_linux_amd64.tar.gz"
+        
+        echo "$HOME/.bin/attestation" >> $GITHUB_PATH
