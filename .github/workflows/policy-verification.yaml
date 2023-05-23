@@ -35,7 +35,7 @@ on:
 jobs:
   metadata:
     permissions:
-      id-token: write
+      id-token: write # needed by the workflow ref action
     runs-on: ubuntu-latest
     outputs:
       ref: ${{ steps.workflow.outputs.ref }}
@@ -48,9 +48,9 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
-      contents: read
-      packages: write
+      id-token: write # required to sign attestations
+      contents: read # for reading local TUF root.json file
+      packages: write # required to upload attestations to GHCR
     needs: [metadata]
     steps:
       - name: Checkout

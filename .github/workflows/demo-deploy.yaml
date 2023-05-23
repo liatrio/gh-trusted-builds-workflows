@@ -80,8 +80,8 @@ env:
 jobs:
   deploy:
     permissions:
-      packages: read
-      contents: read
+      packages: read # needed to pull images from GHCR
+      contents: read # for reading local TUF root.json file
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

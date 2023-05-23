@@ -32,9 +32,9 @@ jobs:
   scan:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
-      contents: read
-      packages: write
+      id-token: write # required to sign attestations
+      contents: read # for reading local TUF root.json file
+      packages: write # required to upload attestations to GHCR
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -48,12 +48,6 @@ jobs:
         env:
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Trivy Report
-        uses: actions/upload-artifact@v3
-        with:
-          name: trivy.report.json
-          path: trivy.report.json
 
       - name: Cosign Setup
         uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@main
