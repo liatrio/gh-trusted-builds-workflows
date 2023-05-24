@@ -116,7 +116,7 @@ jobs:
 
       - name: Generate SBOM
         run: |
-          syft attest -o spdx-json ghcr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
+          syft ghcr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
 
   build:
     permissions:
