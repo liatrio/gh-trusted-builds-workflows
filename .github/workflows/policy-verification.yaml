@@ -75,7 +75,7 @@ jobs:
           cosign tree ghcr.io/${{ github.repository }}@${{ inputs.digest }}
 
       - name: Attestor Install
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/attestor@main
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/attestor@attestation-v1.0.0
         with:
           version: ${{ inputs.attestorVersion }}
           token: ${{ secrets.GITHUB_TOKEN }}
