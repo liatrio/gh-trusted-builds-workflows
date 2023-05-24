@@ -64,7 +64,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Attestor Install
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/attestor@attestation-v1.0.0
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/attestor@main
         with:
           version: ${{ inputs.attestorVersion }}
           token: ${{ secrets.GITHUB_TOKEN }}
