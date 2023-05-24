@@ -28,4 +28,4 @@ runs:
         rm "gh-trusted-builds-attestations_${{ inputs.version }}_linux_amd64.tar.gz"
         
         echo "$HOME/.bin/attestation" >> $GITHUB_PATH
-        $HOME/.bin/attestation version
+        $HOME/.bin/attestation/attestation version
