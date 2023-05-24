@@ -110,7 +110,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: anchore/download-syft@v0
+      - uses: anchore/sbom-action/download-syft@v0
         with:
           syft-version: ${{ inputs.syftVersion }}
 
