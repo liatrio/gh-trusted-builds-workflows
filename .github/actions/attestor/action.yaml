@@ -15,7 +15,6 @@ runs:
       env:
         GITHUB_TOKEN: ${{ inputs.token }}
       run: |
-        set -e
         gh release download \
           --repo liatrio/gh-trusted-builds-attestations \
           --pattern "gh-trusted-builds-attestations_${{ inputs.version }}_linux_amd64.tar.gz" "v${{ inputs.version }}"
