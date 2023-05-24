@@ -23,6 +23,10 @@ on:
         description: "SLSA container provenance generator version"
         default: "1.6.0"
         type: string
+      syftVersion:
+        description: "Anchore syft version"
+        default: "v0.82.0"
+        type: string
       tufMirror:
         description: "cosign TUF root mirror URL. If not specified, cosign initialize will not be invoked"
         default: ""
@@ -79,6 +83,40 @@ jobs:
             --artifact-digest ${{ needs.push.outputs.digest }} \
             --rekor-url ${{ inputs.rekorUrl }} \
             --fulcio-url ${{ inputs.fulcioUrl }}
+
+  sbom:
+    permissions:
+      id-token: write # used to sign attestations
+      contents: read # for reading local TUF root.json file
+      packages: write # used to push attestations to GHCR
+    concurrency: attestations-${{ github.ref }}
+    runs-on: ubuntu-latest
+    needs: [push]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Cosign Setup
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@main
+        with:
+          tufRoot: ${{ inputs.tufRoot }}
+          tufMirror: ${{ inputs.tufMirror }}
+          version: ${{ inputs.cosignVersion }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: anchore/download-syft@v0
+        with:
+          syft-version: ${{ inputs.syftVersion }}
+
+      - name: Generate SBOM
+        run: |
+          syft attest -o spdx-json ghcr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
 
   build:
     permissions:
