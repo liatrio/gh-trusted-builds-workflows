@@ -114,7 +114,7 @@ jobs:
         with:
           syft-version: ${{ inputs.syftVersion }}
 
-      - name: Generate SBOM
+      - name: Generate SPDX SBOM
         env:
           SYFT_FILE_METADATA_CATALOGER_ENABLED: true
           SYFT_FILE_METADATA_DIGESTS: sha256
@@ -129,6 +129,23 @@ jobs:
             ghcr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
 
           rm sbom.spdx.json
+
+      - name: Generate CycloneDX SBOM
+        env:
+          SYFT_FILE_METADATA_CATALOGER_ENABLED: true
+          SYFT_FILE_METADATA_DIGESTS: sha256
+        run: |
+          syft -o cyclonedx-json --file sbom.json ghcr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
+
+          cosign attest --predicate="sbom.json" \
+            --rekor-url ${{ inputs.rekorUrl }} \
+            --type cyclonedx \
+            --fulcio-url ${{ inputs.fulcioUrl }} \
+            --yes \
+            ghcr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
+
+          rm sbom.json
+
 
   build:
     permissions:
