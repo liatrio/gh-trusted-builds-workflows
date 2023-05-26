@@ -33,17 +33,18 @@ on:
         type: string
 
 jobs:
-  metadata:
-    permissions:
-      id-token: write # needed by the workflow ref action
+  detect-workflow:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write # needed to grab job_workflow_ref information
     outputs:
-      ref: ${{ steps.workflow.outputs.ref }}
-      jobWorkflowRef: ${{ steps.workflow.outputs.jobWorkflowRef }}
+      repository: ${{ steps.detect.outputs.repository }}
+      ref: ${{ steps.detect.outputs.ref }}
+      workflow: ${{ steps.detect.outputs.workflow }}
     steps:
-      - name: Determine Workflow Ref
-        id: workflow
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/workflow-ref@main
+      - name: Detect the repository and ref
+        id: detect
+        uses: slsa-framework/slsa-github-generator/.github/actions/detect-workflow-js@4c58bbb748c404a00c25e1b8350312b723f9989b # v1.6.0
 
   verify:
     runs-on: ubuntu-latest
@@ -51,13 +52,26 @@ jobs:
       id-token: write # required to sign attestations
       contents: read # for reading local TUF root.json file
       packages: write # required to upload attestations to GHCR
-    needs: [metadata]
+    needs: [detect-workflow]
+    defaults:
+      run:
+        working-directory: ./app
     steps:
-      - name: Checkout
+      - name: Checkout App Repo
         uses: actions/checkout@v3
+        with:
+          path: app
+
+      - name: Checkout Workflows Repo
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ needs.detect-workflow.outputs.repository }}
+          ref: ${{ needs.detect-workflow.outputs.ref }}
+          path: gh-trusted-builds-workflows
+          persist-credentials: false
 
       - name: Cosign Setup
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@main
+        uses: ./gh-trusted-builds-workflows/.github/actions/cosign
         with:
           tufRoot: ${{ inputs.tufRoot }}
           tufMirror: ${{ inputs.tufMirror }}
@@ -75,7 +89,7 @@ jobs:
           cosign tree ghcr.io/${{ github.repository }}@${{ inputs.digest }}
 
       - name: Attestor Install
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/attestor@main
+        uses: ./gh-trusted-builds-workflows/.github/actions/attestor
         with:
           version: ${{ inputs.attestorVersion }}
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -88,6 +102,6 @@ jobs:
             --artifact-uri ghcr.io/${{ github.repository }} \
             --artifact-digest ${{ inputs.digest }} \
             --policy-url "https://github.com/liatrio/gh-trusted-builds-policy/releases/download/v1.2.0/bundle.tar.gz" \
-            --verifier-id ${{ github.server_url }}/${{ needs.metadata.outputs.jobWorkflowRef }} \
+            --verifier-id ${{ github.server_url }}/${{ needs.detect-workflow.outputs.repository }}/${{ needs.detect-workflow.outputs.workflow }}@${{ needs.detect-workflow.outputs.ref }} \
             --fulcio-url ${{ inputs.fulcioUrl }} \
             --rekor-url ${{ inputs.rekorUrl }}
