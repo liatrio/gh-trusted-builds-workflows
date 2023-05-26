@@ -1,9 +1,6 @@
 name: Rekor Monitor
 
 on:
-  push:
-    branches:
-      - monitor
   schedule:
     - cron: '0 * * * *' # hourly
 
