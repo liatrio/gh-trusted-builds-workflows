@@ -1,6 +1,9 @@
 name: Rekor Monitor
 
 on:
+  push:
+    branches:
+      - monitor
   schedule:
     - cron: '0 * * * *' # hourly
 
@@ -8,16 +11,48 @@ env:
   GITHUB_ACTIONS_ISSUER: "https://token.actions.githubusercontent.com"
 
 jobs:
+  identities:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    outputs:
+      identities: ${{ steps.workflow.outputs.workflow-identities }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Get Workflow Identities
+        id: workflow
+        env:
+          GITHUB_ACTIONS_ISSUER: "https://token.actions.githubusercontent.com"
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          REPO: ${{ github.repository }}
+        run: |
+          workflows=$(find ./.github/workflows -type f -name '*.yaml' -not \( -name rekor-monitor.yaml \))
+
+          echo 'workflow-identities<<EOF' >> $GITHUB_OUTPUT
+          while read workflow; do
+            workflowName=$(basename "${workflow}")
+            echo "${GITHUB_SERVER_URL}/${REPO}/.github/workflows/${workflowName}@refs/heads/main ${GITHUB_ACTIONS_ISSUER}" >> $GITHUB_OUTPUT
+          done <<< "${workflows}"
+
+          echo 'EOF' >> $GITHUB_OUTPUT
+
+  debug:
+    runs-on: ubuntu-latest
+    needs: [identities]
+    steps:
+      - run: |
+          echo "${{ needs.identities.outputs.identities }}"
+
   run-consistency-proof:
     permissions:
       contents: read
       issues: write
       id-token: write
+    needs: [debug]
     uses: sigstore/rekor-monitor/.github/workflows/reusable_monitoring.yaml@main
     with:
       file_issue: true
       artifact_retention_days: 14
       identities: |
-        https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml@refs/heads/main $GITHUB_ACTIONS_ISSUER
-        https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/scan-image.yaml@refs/heads/main $GITHUB_ACTIONS_ISSUER
-        https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/policy-verification.yaml@refs/heads/main $GITHUB_ACTIONS_ISSUER
+        ${{ needs.identities.outputs.identities }}
