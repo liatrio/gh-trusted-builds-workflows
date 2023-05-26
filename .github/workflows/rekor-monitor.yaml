@@ -1,0 +1,20 @@
+name: Rekor Monitor
+
+on:
+  schedule:
+    - cron: '0 * * * *' # hourly
+
+jobs:
+  consistency-proof:
+    permissions:
+      contents: read
+      issues: write
+      id-token: write
+    uses: sigstore/rekor-monitor/.github/workflows/reusable_monitoring.yaml@main
+    with:
+      file_issue: true
+      artifact_retention_days: 14
+      identities: |
+        https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml@refs/heads/main https://token.actions.githubusercontent.com
+        https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/scan-image.yaml@refs/heads/main https://token.actions.githubusercontent.com
+        https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/policy-verification.yaml@refs/heads/main https://token.actions.githubusercontent.com
