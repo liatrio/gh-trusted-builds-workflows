@@ -38,7 +38,7 @@ on:
     outputs:
       digest:
         description: "Docker image digest"
-        value: ${{ jobs.push.outputs.digest }}
+        value: ${{ jobs.build.outputs.digest }}
 
 jobs:
   source-attestations:
@@ -48,7 +48,7 @@ jobs:
       packages: write # used to push attestations to GHCR
       pull-requests: read # used to populate attestation fields
     runs-on: ubuntu-latest
-    needs: [push]
+    needs: [build]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -83,25 +83,80 @@ jobs:
             --rekor-url ${{ inputs.rekorUrl }} \
             --fulcio-url ${{ inputs.fulcioUrl }}
 
-  sbom:
+#  sbom:
+#    permissions:
+#      id-token: write # used to sign attestations
+#      contents: read # for reading local TUF root.json file
+#      packages: write # used to push attestations to GHCR
+#    runs-on: ubuntu-latest
+#    needs:
+#      - build
+#      - provenance # prevent race conditions when updating attestation tag
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v3
+#
+#      - name: Cosign Setup
+#        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@main
+#        with:
+#          tufRoot: ${{ inputs.tufRoot }}
+#          tufMirror: ${{ inputs.tufMirror }}
+#          version: ${{ inputs.cosignVersion }}
+#
+#      - name: Login to GitHub Container Registry
+#        uses: docker/login-action@v2
+#        with:
+#          registry: ghcr.io
+#          username: ${{ github.actor }}
+#          password: ${{ secrets.GITHUB_TOKEN }}
+#
+#      - uses: anchore/sbom-action/download-syft@v0
+#        with:
+#          syft-version: ${{ inputs.syftVersion }}
+#
+#      - name: Generate SPDX SBOM
+#        env:
+#          SYFT_FILE_METADATA_CATALOGER_ENABLED: true
+#          SYFT_FILE_METADATA_DIGESTS: sha256
+#        run: |
+#          syft -o spdx-json --file sbom.spdx.json ghcr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
+#
+#          cosign attest --predicate="sbom.spdx.json" \
+#            --rekor-url ${{ inputs.rekorUrl }} \
+#            --type spdxjson \
+#            --fulcio-url ${{ inputs.fulcioUrl }} \
+#            --yes \
+#            ghcr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
+#
+#          rm sbom.spdx.json
+#
+#      - name: Generate CycloneDX SBOM
+#        env:
+#          SYFT_FILE_METADATA_CATALOGER_ENABLED: true
+#          SYFT_FILE_METADATA_DIGESTS: sha256
+#        run: |
+#          syft -o cyclonedx-json --file sbom.json ghcr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
+#
+#          cosign attest --predicate="sbom.json" \
+#            --rekor-url ${{ inputs.rekorUrl }} \
+#            --type cyclonedx \
+#            --fulcio-url ${{ inputs.fulcioUrl }} \
+#            --yes \
+#            ghcr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
+#
+#          rm sbom.json
+
+
+  build:
     permissions:
-      id-token: write # used to sign attestations
-      contents: read # for reading local TUF root.json file
-      packages: write # used to push attestations to GHCR
+      contents: read # required to build the container image
+      packages: write # required to push the image to GHCR
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
     runs-on: ubuntu-latest
-    needs:
-      - push
-      - provenance # prevent race conditions when updating attestation tag
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-
-      - name: Cosign Setup
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@main
-        with:
-          tufRoot: ${{ inputs.tufRoot }}
-          tufMirror: ${{ inputs.tufMirror }}
-          version: ${{ inputs.cosignVersion }}
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
@@ -109,51 +164,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: anchore/sbom-action/download-syft@v0
-        with:
-          syft-version: ${{ inputs.syftVersion }}
-
-      - name: Generate SPDX SBOM
-        env:
-          SYFT_FILE_METADATA_CATALOGER_ENABLED: true
-          SYFT_FILE_METADATA_DIGESTS: sha256
-        run: |
-          syft -o spdx-json --file sbom.spdx.json ghcr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
-
-          cosign attest --predicate="sbom.spdx.json" \
-            --rekor-url ${{ inputs.rekorUrl }} \
-            --type spdxjson \
-            --fulcio-url ${{ inputs.fulcioUrl }} \
-            --yes \
-            ghcr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
-
-          rm sbom.spdx.json
-
-      - name: Generate CycloneDX SBOM
-        env:
-          SYFT_FILE_METADATA_CATALOGER_ENABLED: true
-          SYFT_FILE_METADATA_DIGESTS: sha256
-        run: |
-          syft -o cyclonedx-json --file sbom.json ghcr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
-
-          cosign attest --predicate="sbom.json" \
-            --rekor-url ${{ inputs.rekorUrl }} \
-            --type cyclonedx \
-            --fulcio-url ${{ inputs.fulcioUrl }} \
-            --yes \
-            ghcr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
-
-          rm sbom.json
-
-
-  build:
-    permissions:
-      contents: read # required to build the container image
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -174,51 +184,51 @@ jobs:
         id: build
         with:
           context: .
-          push: false
+          push: true
           sbom: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=oci,dest=/tmp/image.tar
+#          outputs: type=oci,dest=/tmp/image.tar
 
-      - name: Upload Image Archive
-        uses: actions/upload-artifact@v3
-        with:
-          name: image
-          path: /tmp/image.tar
+#      - name: Upload Image Archive
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: image
+#          path: /tmp/image.tar
 
-  push:
-    permissions:
-      packages: write # required to push the image to GHCR
-    runs-on: ubuntu-latest
-    needs: [build]
-    outputs:
-      digest: ${{ steps.push.outputs.digest }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Download Image Archive
-        uses: actions/download-artifact@v3
-        with:
-          name: image
-          path: /tmp
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Load & Push Image
-        id: push
-        run: |
-          docker load --input /tmp/image.tar
-          image='ghcr.io/${{ github.repository }}'
-          docker push -a $image
-          digest=$(docker inspect --format='{{index .RepoDigests 0}}' "${image}" | awk -F "${image}@" '{print $2}')
-          echo "image digest: ${digest}"
-          echo "digest=${digest}" >> $GITHUB_OUTPUT
+#  push:
+#    permissions:
+#      packages: write # required to push the image to GHCR
+#    runs-on: ubuntu-latest
+#    needs: [build]
+#    outputs:
+#      digest: ${{ steps.push.outputs.digest }}
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v3
+#
+#      - name: Download Image Archive
+#        uses: actions/download-artifact@v3
+#        with:
+#          name: image
+#          path: /tmp
+#
+#      - name: Login to GitHub Container Registry
+#        uses: docker/login-action@v2
+#        with:
+#          registry: ghcr.io
+#          username: ${{ github.actor }}
+#          password: ${{ secrets.GITHUB_TOKEN }}
+#
+#      - name: Load & Push Image
+#        id: push
+#        run: |
+#          docker load --input /tmp/image.tar
+#          image='ghcr.io/${{ github.repository }}'
+#          docker push -a $image
+#          digest=$(docker inspect --format='{{index .RepoDigests 0}}' "${image}" | awk -F "${image}@" '{print $2}')
+#          echo "image digest: ${digest}"
+#          echo "digest=${digest}" >> $GITHUB_OUTPUT
 
   provenance:
     permissions:
@@ -229,7 +239,7 @@ jobs:
     concurrency: attestations-${{ github.ref }}
     runs-on: ubuntu-latest
     needs:
-     - push
+     - build
      - source-attestations # prevent race conditions when updating attestation tag
     steps:
       - name: Checkout
@@ -285,7 +295,7 @@ jobs:
       contents: read # for reading local TUF root.json file
       packages: write # required to upload signature to GHCR
     runs-on: ubuntu-latest
-    needs: [push]
+    needs: [build]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
