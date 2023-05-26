@@ -112,7 +112,7 @@ jobs:
         with:
           repository: ${{ needs.detect-workflow.outputs.repository }}
           ref: ${{ needs.detect-workflow.outputs.ref }}
-          path: ../${{ needs.detect-workflow.outputs.repository }}
+          path: /home/runner/work/${{ needs.detect-workflow.outputs.repository }}
           persist-credentials: false
 
       - name: Debug
@@ -120,10 +120,10 @@ jobs:
           pwd
           ls -la
           ls -la $GITHUB_WORKSPACE
-          ls -la ../
+          ls -la /home/runner/work
 
       - name: Cosign Setup
-        uses: ../liatrio/gh-trusted-builds-workflows/.github/actions/cosign
+        uses: /home/runner/work/liatrio/gh-trusted-builds-workflows/.github/actions/cosign
         with:
           tufRoot: ${{ inputs.tufRoot }}
           tufMirror: ${{ inputs.tufMirror }}
