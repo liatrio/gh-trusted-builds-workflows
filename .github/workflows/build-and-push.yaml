@@ -103,9 +103,14 @@ jobs:
       pull-requests: read # used to populate attestation fields
     runs-on: ubuntu-latest
     needs: [build, detect-workflow]
+    defaults:
+      run:
+        working-directory: ./app
     steps:
       - name: Checkout App Repo
         uses: actions/checkout@v3
+        with:
+          path: app
 
       - name: Checkout Workflows Repo
         uses: actions/checkout@v3
@@ -119,8 +124,7 @@ jobs:
         run: |
           pwd
           ls -la
-          ls -la $GITHUB_WORKSPACE
-          ls -la /home/runner/work
+          ls -la "$GITHUB_WORKSPACE"
 
       - name: Cosign Setup
         uses: ./gh-trusted-builds-workflows/.github/actions/cosign
@@ -137,7 +141,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Attestor Install
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/attestor@main
+        uses: ./gh-trusted-builds-workflows/.github/actions/attestor
         with:
           version: ${{ inputs.attestorVersion }}
           token: ${{ secrets.GITHUB_TOKEN }}
