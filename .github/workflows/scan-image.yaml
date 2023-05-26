@@ -71,7 +71,7 @@ jobs:
         with:
           image-ref: ghcr.io/${{ github.repository }}@${{ inputs.digest }}
           format: 'cosign-vuln'
-          output: trivy.report.json
+          output: ./app/trivy.report.json
         env:
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
