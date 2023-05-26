@@ -167,7 +167,7 @@ jobs:
             --type spdxjson \
             --fulcio-url ${{ inputs.fulcioUrl }} \
             --yes \
-            ghcr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
+            ghcr.io/${{ github.repository }}@${{ needs.build.outputs.digest }}
 
           rm sbom.spdx.json
 
