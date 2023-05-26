@@ -42,14 +42,15 @@ jobs:
     needs: [identities]
     steps:
       - run: |
-          echo "${{ needs.identities.outputs.identities }}"
+          printf "${{ needs.identities.outputs.identities }}" > identities.txt
+          cat identities.txt
 
   run-consistency-proof:
     permissions:
       contents: read
       issues: write
       id-token: write
-    needs: [debug]
+    needs: [identities]
     uses: sigstore/rekor-monitor/.github/workflows/reusable_monitoring.yml@main
     with:
       file_issue: true
