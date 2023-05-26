@@ -41,6 +41,19 @@ on:
         value: ${{ jobs.build.outputs.digest }}
 
 jobs:
+  detect-workflow:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    outputs:
+      repository: ${{ steps.detect.outputs.repository }}
+      ref: ${{ steps.detect.outputs.ref }}
+      workflow: ${{ steps.detect.outputs.workflow }}
+    steps:
+      - name: Detect the repository and ref
+        id: detect
+        uses: slsa-framework/slsa-github-generator/.github/actions/detect-workflow-js@4c58bbb748c404a00c25e1b8350312b723f9989b # v1.6.0
+
   build:
     permissions:
       contents: read # required to build the container image
@@ -89,13 +102,28 @@ jobs:
       packages: write # used to push attestations to GHCR
       pull-requests: read # used to populate attestation fields
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [build, detect-workflow]
     steps:
-      - name: Checkout
+      - name: Checkout App Repo
         uses: actions/checkout@v3
 
+      - name: Checkout Workflows Repo
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ needs.detect-workflow.outputs.repository }}
+          ref: ${{ needs.detect-workflow.outputs.ref }}
+          path: ../${{ needs.detect-workflow.outputs.repository }}
+          persist-credentials: false
+
+      - name: Debug
+        run: |
+          pwd
+          ls -la
+          ls -la $GITHUB_WORKSPACE
+          ls -la ../
+
       - name: Cosign Setup
-        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@main
+        uses: ../liatrio/gh-trusted-builds-workflows/.github/actions/cosign
         with:
           tufRoot: ${{ inputs.tufRoot }}
           tufMirror: ${{ inputs.tufMirror }}
