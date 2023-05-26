@@ -37,14 +37,6 @@ jobs:
 
           echo 'EOF' >> $GITHUB_OUTPUT
 
-  debug:
-    runs-on: ubuntu-latest
-    needs: [identities]
-    steps:
-      - run: |
-          printf "${{ needs.identities.outputs.identities }}" > identities.txt
-          cat identities.txt
-
   run-consistency-proof:
     permissions:
       contents: read
