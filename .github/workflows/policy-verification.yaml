@@ -87,7 +87,7 @@ jobs:
           attestation vsa \
             --artifact-uri ghcr.io/${{ github.repository }} \
             --artifact-digest ${{ inputs.digest }} \
-            --policy-url "https://github.com/liatrio/gh-trusted-builds-policy/releases/download/v1.1.1/bundle.tar.gz" \
+            --policy-url "https://github.com/liatrio/gh-trusted-builds-policy/releases/download/v1.2.0/bundle.tar.gz" \
             --verifier-id ${{ github.server_url }}/${{ needs.metadata.outputs.jobWorkflowRef }} \
             --fulcio-url ${{ inputs.fulcioUrl }} \
             --rekor-url ${{ inputs.rekorUrl }}

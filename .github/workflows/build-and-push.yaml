@@ -23,6 +23,10 @@ on:
         description: "SLSA container provenance generator version"
         default: "1.6.0"
         type: string
+      syftVersion:
+        description: "Anchore syft version"
+        default: "v0.82.0"
+        type: string
       tufMirror:
         description: "cosign TUF root mirror URL. If not specified, cosign initialize will not be invoked"
         default: ""
@@ -34,18 +38,58 @@ on:
     outputs:
       digest:
         description: "Docker image digest"
-        value: ${{ jobs.push.outputs.digest }}
+        value: ${{ jobs.build.outputs.digest }}
 
 jobs:
+  build:
+    permissions:
+      contents: read # required to build the container image
+      packages: write # required to push the image to GHCR
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Image Metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix=
+            latest
+
+      - name: Build Image
+        uses: docker/build-push-action@v4
+        id: build
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
   source-attestations:
     permissions:
       id-token: write # used to sign attestations
       contents: read # necessary for Git history
       packages: write # used to push attestations to GHCR
       pull-requests: read # used to populate attestation fields
-    concurrency: attestations-${{ github.ref }}
     runs-on: ubuntu-latest
-    needs: [push]
+    needs: [build]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -76,64 +120,29 @@ jobs:
         run: |
           attestation github-pull-request \
             --artifact-uri ghcr.io/${{ github.repository }} \
-            --artifact-digest ${{ needs.push.outputs.digest }} \
+            --artifact-digest ${{ needs.build.outputs.digest }} \
             --rekor-url ${{ inputs.rekorUrl }} \
             --fulcio-url ${{ inputs.fulcioUrl }}
 
-  build:
+  sbom:
     permissions:
-      contents: read # required to build the container image
+      id-token: write # used to sign attestations
+      contents: read # for reading local TUF root.json file
+      packages: write # used to push attestations to GHCR
     runs-on: ubuntu-latest
+    needs:
+      - build
+      - provenance # prevent race conditions when updating attestation tag
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Image Metadata
-        id: meta
-        uses: docker/metadata-action@v4
+      - name: Cosign Setup
+        uses: liatrio/gh-trusted-builds-workflows/.github/actions/cosign@main
         with:
-          images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha,prefix=
-            latest
-
-      - name: Build Image
-        uses: docker/build-push-action@v4
-        id: build
-        with:
-          context: .
-          push: false
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=docker,dest=/tmp/image.tar
-
-      - name: Upload Image Archive
-        uses: actions/upload-artifact@v3
-        with:
-          name: image
-          path: /tmp/image.tar
-
-  push:
-    permissions:
-      packages: write # required to push the image to GHCR
-    runs-on: ubuntu-latest
-    needs: [build]
-    outputs:
-      digest: ${{ steps.push.outputs.digest }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Download Image Archive
-        uses: actions/download-artifact@v3
-        with:
-          name: image
-          path: /tmp
+          tufRoot: ${{ inputs.tufRoot }}
+          tufMirror: ${{ inputs.tufMirror }}
+          version: ${{ inputs.cosignVersion }}
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
@@ -142,15 +151,25 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Load & Push Image
-        id: push
+      - uses: anchore/sbom-action/download-syft@v0
+        with:
+          syft-version: ${{ inputs.syftVersion }}
+
+      - name: Generate SPDX SBOM
+        env:
+          SYFT_FILE_METADATA_CATALOGER_ENABLED: true
+          SYFT_FILE_METADATA_DIGESTS: sha256
         run: |
-          docker load --input /tmp/image.tar
-          image='ghcr.io/${{ github.repository }}'
-          docker push -a $image
-          digest=$(docker inspect --format='{{index .RepoDigests 0}}' "${image}" | awk -F "${image}@" '{print $2}')
-          echo "image digest: ${digest}"
-          echo "digest=${digest}" >> $GITHUB_OUTPUT
+          syft -o spdx-json --file sbom.spdx.json ghcr.io/${{ github.repository }}@${{ needs.build.outputs.digest }}
+
+          cosign attest --predicate="sbom.spdx.json" \
+            --rekor-url ${{ inputs.rekorUrl }} \
+            --type spdxjson \
+            --fulcio-url ${{ inputs.fulcioUrl }} \
+            --yes \
+            ghcr.io/${{ github.repository }}@${{ needs.build.outputs.digest }}
+
+          rm sbom.spdx.json
 
   provenance:
     permissions:
@@ -160,7 +179,9 @@ jobs:
       packages: write # required to upload attestations to GHCR
     concurrency: attestations-${{ github.ref }}
     runs-on: ubuntu-latest
-    needs: [push]
+    needs:
+     - build
+     - source-attestations # prevent race conditions when updating attestation tag
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -207,7 +228,7 @@ jobs:
             --type slsaprovenance \
             --fulcio-url ${{ inputs.fulcioUrl }} \
             --yes \
-            ghcr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
+            ghcr.io/${{ github.repository }}@${{ needs.build.outputs.digest }}
 
   sign:
     permissions:
@@ -215,7 +236,7 @@ jobs:
       contents: read # for reading local TUF root.json file
       packages: write # required to upload signature to GHCR
     runs-on: ubuntu-latest
-    needs: [push]
+    needs: [build]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -241,4 +262,4 @@ jobs:
               --annotations liatr.io/signed-off-by=platform-team \
               --rekor-url ${{ inputs.rekorUrl }} \
               --fulcio-url ${{ inputs.fulcioUrl }} \
-              --yes ghcr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
+              --yes ghcr.io/${{ github.repository }}@${{ needs.build.outputs.digest }}
