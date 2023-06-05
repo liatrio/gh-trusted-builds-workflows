@@ -5,7 +5,7 @@ on:
     inputs:
       attestorVersion:
         description: "liatrio/gh-trusted-builds-attestations version"
-        default: "1.0.0"
+        default: "1.1.0"
         type: string
       cosignVersion:
         description: "Sigstore cosign version"
@@ -101,7 +101,7 @@ jobs:
           attestation vsa \
             --artifact-uri ghcr.io/${{ github.repository }} \
             --artifact-digest ${{ inputs.digest }} \
-            --policy-url "https://github.com/liatrio/gh-trusted-builds-policy/releases/download/v1.2.0/bundle.tar.gz" \
+            --policy-url "https://github.com/liatrio/gh-trusted-builds-policy/releases/download/v1.4.0/bundle.tar.gz" \
             --verifier-id ${{ github.server_url }}/${{ needs.detect-workflow.outputs.repository }}/${{ needs.detect-workflow.outputs.workflow }}@${{ needs.detect-workflow.outputs.ref }} \
             --fulcio-url ${{ inputs.fulcioUrl }} \
             --rekor-url ${{ inputs.rekorUrl }}
