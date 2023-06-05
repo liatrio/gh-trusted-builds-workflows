@@ -58,12 +58,12 @@ jobs:
         working-directory: ./app
     steps:
       - name: Checkout App Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3
         with:
           path: app
 
       - name: Checkout Workflows Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3
         with:
           repository: ${{ needs.detect-workflow.outputs.repository }}
           ref: ${{ needs.detect-workflow.outputs.ref }}
@@ -78,7 +78,7 @@ jobs:
           version: ${{ inputs.cosignVersion }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
