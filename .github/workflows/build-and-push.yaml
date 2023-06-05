@@ -60,14 +60,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@4b4e9c3e2d4531116a6f8ba8e71fc6e2cb6e6c8c # v2
 
       - name: Image Metadata
         id: meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@c4ee3adeed93b1fa6a762f209fb01608c1a22f1e # v4
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
@@ -77,7 +77,7 @@ jobs:
             latest
 
       - name: Build Image
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671 # v4
         with:
           context: .
           push: false
@@ -86,7 +86,7 @@ jobs:
           outputs: type=docker,dest=/tmp/image.tar
 
       - name: Upload Image Archive
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3
         with:
           name: image
           path: /tmp/image.tar
@@ -101,13 +101,13 @@ jobs:
       digest: ${{ steps.push.outputs.digest }}
     steps:
       - name: Download Image Archive
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
         with:
           name: image
           path: /tmp
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -137,12 +137,12 @@ jobs:
         working-directory: ./app
     steps:
       - name: Checkout App Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3
         with:
           path: app
 
       - name: Checkout Workflows Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3
         with:
           repository: ${{ needs.detect-workflow.outputs.repository }}
           ref: ${{ needs.detect-workflow.outputs.ref }}
@@ -157,7 +157,7 @@ jobs:
           version: ${{ inputs.cosignVersion }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -188,12 +188,12 @@ jobs:
         working-directory: ./app
     steps:
       - name: Checkout App Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3
         with:
           path: app
 
       - name: Checkout Workflows Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3
         with:
           repository: ${{ needs.detect-workflow.outputs.repository }}
           ref: ${{ needs.detect-workflow.outputs.ref }}
@@ -229,7 +229,7 @@ jobs:
           version: ${{ inputs.cosignVersion }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -260,12 +260,12 @@ jobs:
         working-directory: ./app
     steps:
       - name: Checkout App Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3
         with:
           path: app
 
       - name: Checkout Workflows Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3
         with:
           repository: ${{ needs.detect-workflow.outputs.repository }}
           ref: ${{ needs.detect-workflow.outputs.ref }}
@@ -280,13 +280,13 @@ jobs:
           version: ${{ inputs.cosignVersion }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: anchore/sbom-action/download-syft@v0
+      - uses: anchore/sbom-action/download-syft@4d571ad1038a9cc29d676154ef265ab8f9027042 # v0
         with:
           syft-version: ${{ inputs.syftVersion }}
 
@@ -322,12 +322,12 @@ jobs:
         working-directory: ./app
     steps:
       - name: Checkout App Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3
         with:
           path: app
 
       - name: Checkout Workflows Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3
         with:
           repository: ${{ needs.detect-workflow.outputs.repository }}
           ref: ${{ needs.detect-workflow.outputs.ref }}
@@ -342,7 +342,7 @@ jobs:
           version: ${{ inputs.cosignVersion }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
