@@ -8,5 +8,8 @@
   "private": true,
   "dependencies": {
     "@octokit/rest": "19.0.11"
+  },
+  "devDependencies": {
+    "adm-zip": "0.5.10"
   }
 }

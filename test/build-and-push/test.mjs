@@ -1,6 +1,8 @@
 import {before, describe, it} from 'node:test';
 import {strict as assert} from 'node:assert';
 import {Octokit} from "@octokit/rest";
+import AdmZip from "adm-zip";
+import {getWorkflowRunForCommit, waitForWorkflowRunToComplete} from "../utils.mjs";
 
 const octokit = new Octokit({
     auth: process.env.GITHUB_TOKEN
@@ -31,6 +33,7 @@ describe('build and push workflow', () => {
             await octokit.git.createRef({
                 owner, repo, ref: `refs/heads/${hexTimestamp}`, sha: mainBranch.commit.sha
             })
+            console.log(`created branch ${hexTimestamp}`)
 
             const {
                 data: testFileData
@@ -53,6 +56,7 @@ describe('build and push workflow', () => {
             } = await octokit.pulls.create({
                 owner, repo, title: 'test', base: 'main', head: hexTimestamp
             });
+            console.log(`created pull request ${pullRequest.number}`)
 
             const {data: merge} = await octokit.pulls.merge({
                 owner,
@@ -61,72 +65,70 @@ describe('build and push workflow', () => {
                 merge_method: 'squash',
                 'commit_title': `test: ${hexTimestamp}`
             })
+            console.log(`merged pull request ${pullRequest.number}`)
 
             await octokit.git.deleteRef({
                 owner,
                 repo,
                 ref: `heads/${hexTimestamp}`
             })
+            console.log(`deleted branch ${hexTimestamp}`)
 
-            workflowRun = await getWorkflowRunForCommit(owner, repo, 'build-and-push.yaml', merge.sha)
+            workflowRun = await getWorkflowRunForCommit(octokit, owner, repo, 'build-and-push.yaml', merge.sha)
             if (workflowRun === null) {
                 assert.fail('did not find workflow run for build-and-push pull-request merge')
             }
+            console.log(`found workflow run ${workflowRun.id}`)
+
+            workflowRun = await waitForWorkflowRunToComplete(octokit, owner, repo, workflowRun.id);
+            console.log(`workflow run ${workflowRun.id} completed`)
         })
 
         it('should successfully complete a run', {timeout: 300000}, async () => {
-            let completed = false
+            assert.equal(workflowRun.conclusion, 'success')
+        })
 
-            while (!completed) {
-                const {
-                    data: workflow
-                } = await octokit.actions.getWorkflowRun({
-                    owner, repo, run_id: workflowRun.id
-                })
-
-                if (workflow.status === 'completed') {
-                    completed = true
-                    assert.equal(workflow.conclusion, 'success')
+        it('should upload the image with expected tags', async () => {
+            const {
+                data: {
+                    artifacts: workflowRunArtifacts
                 }
+            } = await octokit.actions.listWorkflowRunArtifacts({
+                repo,
+                owner,
+                run_id: workflowRun.id,
+            });
+            const artifact = await octokit.actions.downloadArtifact({
+                owner,
+                repo,
+                artifact_id: workflowRunArtifacts.find(artifact => artifact.name === 'results-metadata.json').id,
+                archive_format: 'zip'
+            })
 
-                await sleep(10)
+            const zip = new AdmZip(Buffer.from(artifact.data));
+            const entry = zip.getEntries().find(e => e.entryName === 'results-metadata.json');
+            const resultsMetadata = JSON.parse(zip.readAsText(entry))
+
+            const digest = resultsMetadata.digest;
+
+            let packageVersion
+            for await (const resp of octokit.paginate.iterator(
+                octokit.packages.getAllPackageVersionsForPackageOwnedByAuthenticatedUser, {
+                    package_name: repo,
+                    package_type: 'container'
+                })) {
+
+                packageVersion = resp.data.find((pv) => pv.name === digest);
+                if (packageVersion !== undefined) {
+                    break
+                }
             }
+
+            const expectedTags = ['main', 'latest'];
+            expectedTags.forEach(t => {
+                assert(packageVersion.metadata.container.tags.includes(t))
+            })
         })
     });
 })
 
-async function getWorkflowRunForCommit(owner, repo, workflowId, headSha, event = 'push') {
-    for (let i = 0; i < 10; i++) {
-        try {
-            const {
-                data: {
-                    workflow_runs: recentWorkflows
-                }
-            } = await octokit.actions.listWorkflowRuns({
-                owner,
-                repo,
-                workflow_id: workflowId,
-                head_sha: headSha,
-                event
-            })
-
-            if (recentWorkflows.length > 0) {
-                return recentWorkflows[0]
-            }
-        } catch (e) {
-            console.log(e)
-        }
-
-        await sleep(5)
-    }
-
-    return null
-}
-
-function sleep(seconds) {
-    const timeoutMilliseconds = seconds * 1000;
-
-    return new Promise((resolve) => {
-        setTimeout(resolve, timeoutMilliseconds);
-    });
-}
