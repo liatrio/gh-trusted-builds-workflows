@@ -1,0 +1,12 @@
+{
+  "name": "gh-trusted-builds-workflows",
+  "version": "1.0.0",
+  "description": "A collection of reusable GitHub Actions workflows used in a demo on automated governance.",
+  "scripts": {
+    "test": "GITHUB_TOKEN=$(gh auth token) node --test test"
+  },
+  "private": true,
+  "dependencies": {
+    "@octokit/rest": "19.0.11"
+  }
+}
