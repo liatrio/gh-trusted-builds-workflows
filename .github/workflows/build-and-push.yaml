@@ -123,6 +123,16 @@ jobs:
           echo "image digest: ${digest}"
           echo "digest=${digest}" >> $GITHUB_OUTPUT
 
+      - name: Create Results Metadata
+        run: |
+          jq -n --arg digest ${{ steps.push.outputs.digest }} '{digest: "$digest"}' > /tmp/results-metadata.json
+
+      - name: Upload Results Metadata
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3
+        with:
+          name: results-metadata.json
+          path: /tmp/results-metadata.json
+
   sign:
     permissions:
       id-token: write # required to sign image
