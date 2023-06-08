@@ -2,7 +2,7 @@ import {before, describe, it} from 'node:test';
 import {strict as assert} from 'node:assert';
 import {Octokit} from "@octokit/rest";
 import AdmZip from "adm-zip";
-import {getWorkflowRunForCommit, waitForWorkflowRunToComplete} from "../utils.mjs";
+import {getWorkflowRunForCommit, waitForWorkflowRunToComplete} from "./utils.mjs";
 
 const octokit = new Octokit({
     auth: process.env.GITHUB_TOKEN
