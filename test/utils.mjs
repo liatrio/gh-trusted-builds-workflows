@@ -1,3 +1,5 @@
+import AdmZip from "adm-zip";
+
 export function sleep(seconds) {
   const timeoutMilliseconds = seconds * 1000;
 
@@ -61,4 +63,35 @@ export async function waitForWorkflowRunToComplete(
   }
 
   throw new Error(`workflow run ${runId} failed to complete in time`);
+}
+
+export async function getWorkflowRunMetadataArtifact(
+  octokit,
+  owner,
+  repo,
+  runId
+) {
+  const {
+    data: { artifacts: workflowRunArtifacts },
+  } = await octokit.actions.listWorkflowRunArtifacts({
+    repo,
+    owner,
+    run_id: runId,
+  });
+
+  const artifact = await octokit.actions.downloadArtifact({
+    owner,
+    repo,
+    artifact_id: workflowRunArtifacts.find(
+      (artifact) => artifact.name === "workflow-metadata"
+    ).id,
+    archive_format: "zip",
+  });
+
+  const zip = new AdmZip(Buffer.from(artifact.data));
+  const entry = zip
+    .getEntries()
+    .find((e) => e.entryName === "workflow-metadata.json");
+
+  return JSON.parse(zip.readAsText(entry));
 }

@@ -1,11 +1,13 @@
 import { before, describe, it } from "node:test";
 import { strict as assert } from "node:assert";
 import { Octokit } from "@octokit/rest";
-import AdmZip from "adm-zip";
 import {
   getWorkflowRunForCommit,
+  getWorkflowRunMetadataArtifact,
   waitForWorkflowRunToComplete,
 } from "./utils.mjs";
+import { exec } from "node:child_process";
+import { promisify } from "node:util";
 
 const octokit = new Octokit({
   auth: process.env.GITHUB_TOKEN,
@@ -17,9 +19,9 @@ const {
 const repo = "gh-trusted-builds-workflows-integration-tests";
 
 describe("build and push workflow", () => {
-  describe("with unreviewed pull request", () => {
+  describe("with unreviewed pull request", { concurrency: true }, () => {
     const hexTimestamp = Date.now().toString(16);
-    let workflowRun;
+    let workflowRun, runMetadata;
 
     before(async () => {
       const testFilename = "test";
@@ -100,6 +102,14 @@ describe("build and push workflow", () => {
         workflowRun.id
       );
       console.log(`workflow run ${workflowRun.id} completed`);
+
+      runMetadata = await getWorkflowRunMetadataArtifact(
+        octokit,
+        owner,
+        repo,
+        workflowRun.id
+      );
+      console.log("retrieved workflow run metadata artifact");
     });
 
     it("should successfully complete a run", { timeout: 300000 }, async () => {
@@ -107,28 +117,6 @@ describe("build and push workflow", () => {
     });
 
     it("should upload the image with expected tags", async () => {
-      const {
-        data: { artifacts: workflowRunArtifacts },
-      } = await octokit.actions.listWorkflowRunArtifacts({
-        repo,
-        owner,
-        run_id: workflowRun.id,
-      });
-      const artifact = await octokit.actions.downloadArtifact({
-        owner,
-        repo,
-        artifact_id: workflowRunArtifacts.find(
-          (artifact) => artifact.name === "workflow-metadata"
-        ).id,
-        archive_format: "zip",
-      });
-
-      const zip = new AdmZip(Buffer.from(artifact.data));
-      const entry = zip
-        .getEntries()
-        .find((e) => e.entryName === "workflow-metadata.json");
-      const runMetadata = JSON.parse(zip.readAsText(entry));
-
       const digest = runMetadata.digest;
 
       let packageVersion;
@@ -152,6 +140,13 @@ describe("build and push workflow", () => {
       });
     });
 
-    it("should create a valid sbom attestation", async () => {});
+    it("should create a valid sbom attestation", async () => {
+      const e = promisify(exec);
+
+      await e(`cosign verify-attestation \
+        --type "spdxjson" ghcr.io/${owner}/${repo}@${runMetadata.digest} \
+        --certificate-identity=https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml@refs/heads/workflow-integration-tests \
+        --certificate-oidc-issuer=https://token.actions.githubusercontent.com`);
+    });
   });
 });
