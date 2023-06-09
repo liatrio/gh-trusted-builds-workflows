@@ -118,7 +118,7 @@ describe("build and push workflow", () => {
         owner,
         repo,
         artifact_id: workflowRunArtifacts.find(
-          (artifact) => artifact.name === "results-metadata.json"
+          (artifact) => artifact.name === "workflow-metadata"
         ).id,
         archive_format: "zip",
       });
@@ -126,10 +126,10 @@ describe("build and push workflow", () => {
       const zip = new AdmZip(Buffer.from(artifact.data));
       const entry = zip
         .getEntries()
-        .find((e) => e.entryName === "results-metadata.json");
-      const resultsMetadata = JSON.parse(zip.readAsText(entry));
+        .find((e) => e.entryName === "workflow-metadata.json");
+      const runMetadata = JSON.parse(zip.readAsText(entry));
 
-      const digest = resultsMetadata.digest;
+      const digest = runMetadata.digest;
 
       let packageVersion;
       for await (const resp of octokit.paginate.iterator(
@@ -151,5 +151,7 @@ describe("build and push workflow", () => {
         assert(packageVersion.metadata.container.tags.includes(t));
       });
     });
+
+    it("should create a valid sbom attestation", async () => {});
   });
 });
