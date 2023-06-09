@@ -1,4 +1,5 @@
 import AdmZip from "adm-zip";
+import { spawnSync } from "node:child_process";
 
 export function sleep(seconds) {
   const timeoutMilliseconds = seconds * 1000;
@@ -94,4 +95,17 @@ export async function getWorkflowRunMetadataArtifact(
     .find((e) => e.entryName === "workflow-metadata.json");
 
   return JSON.parse(zip.readAsText(entry));
+}
+
+export function cosignVerifyAttestation(image, attestationType, certIdentity, certOidcIssuer) {
+  return spawnSync("cosign", [
+      'verify-attestation',
+      '--type',
+      attestationType,
+      '--certificate-identity',
+      certIdentity,
+      '--certificate-oidc-issuer',
+      certOidcIssuer,
+      image
+  ])
 }

@@ -2,12 +2,11 @@ import { before, describe, it } from "node:test";
 import { strict as assert } from "node:assert";
 import { Octokit } from "@octokit/rest";
 import {
+  cosignVerifyAttestation,
   getWorkflowRunForCommit,
   getWorkflowRunMetadataArtifact,
   waitForWorkflowRunToComplete,
 } from "./utils.mjs";
-import { exec } from "node:child_process";
-import { promisify } from "node:util";
 
 const octokit = new Octokit({
   auth: process.env.GITHUB_TOKEN,
@@ -141,12 +140,34 @@ describe("build and push workflow", () => {
     });
 
     it("should create a valid sbom attestation", async () => {
-      const e = promisify(exec);
+      const result = cosignVerifyAttestation(
+        `ghcr.io/${owner}/${repo}@${runMetadata.digest}`,
+        "spdxjson",
+        "https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml@refs/heads/workflow-integration-tests",
+        "https://token.actions.githubusercontent.com"
+      );
+      assert.equal(result.status, 0, result.stderr.toString());
+    });
 
-      await e(`cosign verify-attestation \
-        --type "spdxjson" ghcr.io/${owner}/${repo}@${runMetadata.digest} \
-        --certificate-identity=https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml@refs/heads/workflow-integration-tests \
-        --certificate-oidc-issuer=https://token.actions.githubusercontent.com`);
+    it("should create a valid pull request attestation", async () => {
+      const result = cosignVerifyAttestation(
+        `ghcr.io/${owner}/${repo}@${runMetadata.digest}`,
+        "https://liatr.io/attestations/github-pull-request/v1",
+        "https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml@refs/heads/workflow-integration-tests",
+        "https://token.actions.githubusercontent.com"
+      );
+
+      assert.equal(result.status, 0, result.stderr.toString());
+    });
+
+    it("should create a valid provenance attestation", async () => {
+      const result = cosignVerifyAttestation(
+        `ghcr.io/${owner}/${repo}@${runMetadata.digest}`,
+        "slsaprovenance",
+        "https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml@refs/heads/workflow-integration-tests",
+        "https://token.actions.githubusercontent.com"
+      );
+      assert.equal(result.status, 0, result.stderr.toString());
     });
   });
 });
