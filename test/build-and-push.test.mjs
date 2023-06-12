@@ -1,21 +1,15 @@
 import { before, describe, it } from "node:test";
 import { strict as assert } from "node:assert";
-import { Octokit } from "@octokit/rest";
-import {
-  cosignVerifyAttestation,
-  getWorkflowRunForCommit,
-  getWorkflowRunMetadataArtifact,
-  waitForWorkflowRunToComplete,
-} from "./utils.mjs";
+import { cosignVerifyAttestation } from "./helpers/cosign.mjs";
+import { GitHub } from "./helpers/github.mjs";
+import config from "config";
 
-const octokit = new Octokit({
-  auth: process.env.GITHUB_TOKEN,
-});
+const github = GitHub();
 
-const {
-  data: { login: owner },
-} = await octokit.users.getAuthenticated();
-const repo = "gh-trusted-builds-workflows-integration-tests";
+const owner = config.has("owner")
+  ? config.get("owner")
+  : await github.GetAuthenticatedUser();
+const repo = config.get("repositoryName");
 
 describe("build and push workflow", () => {
   describe("with unreviewed pull request", { concurrency: true }, () => {
@@ -25,27 +19,28 @@ describe("build and push workflow", () => {
     before(async () => {
       const testFilename = "test";
 
-      const { data: mainBranch } = await octokit.repos.getBranch({
+      const { data: mainBranch } = await github.GetBranch({
         owner,
         repo,
         branch: "main",
       });
 
-      await octokit.git.createRef({
+      await github.CreateBranch(
         owner,
         repo,
-        ref: `refs/heads/${hexTimestamp}`,
-        sha: mainBranch.commit.sha,
-      });
+        hexTimestamp,
+        mainBranch.commit.sha
+      );
+
       console.log(`created branch ${hexTimestamp}`);
 
-      const { data: testFileData } = await octokit.repos.getContent({
+      const { data: testFileData } = await github.GetRepoContent({
         owner,
         repo,
         path: testFilename,
       });
 
-      await octokit.repos.createOrUpdateFileContents({
+      await github.CreateOrUpdateFileContentsInRepo({
         owner,
         repo,
         path: testFilename,
@@ -55,7 +50,7 @@ describe("build and push workflow", () => {
         branch: hexTimestamp,
       });
 
-      const { data: pullRequest } = await octokit.pulls.create({
+      const { data: pullRequest } = await github.CreatePullRequest({
         owner,
         repo,
         title: "test",
@@ -64,7 +59,7 @@ describe("build and push workflow", () => {
       });
       console.log(`created pull request ${pullRequest.number}`);
 
-      const { data: merge } = await octokit.pulls.merge({
+      const { data: merge } = await github.MergePullRequest({
         owner,
         repo,
         pull_number: pullRequest.number,
@@ -73,20 +68,19 @@ describe("build and push workflow", () => {
       });
       console.log(`merged pull request ${pullRequest.number}`);
 
-      await octokit.git.deleteRef({
+      await github.DeleteBranch({
         owner,
         repo,
-        ref: `heads/${hexTimestamp}`,
+        branchName: hexTimestamp,
       });
       console.log(`deleted branch ${hexTimestamp}`);
 
-      workflowRun = await getWorkflowRunForCommit(
-        octokit,
+      workflowRun = await github.GetWorkflowRunForCommit({
         owner,
         repo,
-        "build-and-push.yaml",
-        merge.sha
-      );
+        workflowId: "build-and-push.yaml",
+        headSha: merge.sha,
+      });
       if (workflowRun === null) {
         assert.fail(
           "did not find workflow run for build-and-push pull-request merge"
@@ -94,20 +88,18 @@ describe("build and push workflow", () => {
       }
       console.log(`found workflow run ${workflowRun.id}`);
 
-      workflowRun = await waitForWorkflowRunToComplete(
-        octokit,
+      workflowRun = await github.WaitForWorkflowRunToComplete({
         owner,
         repo,
-        workflowRun.id
-      );
+        runId: workflowRun.id,
+      });
       console.log(`workflow run ${workflowRun.id} completed`);
 
-      runMetadata = await getWorkflowRunMetadataArtifact(
-        octokit,
+      runMetadata = await github.GetWorkflowRunMetadataArtifact({
         owner,
         repo,
-        workflowRun.id
-      );
+        runId: workflowRun.id,
+      });
       console.log("retrieved workflow run metadata artifact");
     });
 
@@ -118,20 +110,11 @@ describe("build and push workflow", () => {
     it("should upload the image with expected tags", async () => {
       const digest = runMetadata.digest;
 
-      let packageVersion;
-      for await (const resp of octokit.paginate.iterator(
-        octokit.packages
-          .getAllPackageVersionsForPackageOwnedByAuthenticatedUser,
-        {
-          package_name: repo,
-          package_type: "container",
-        }
-      )) {
-        packageVersion = resp.data.find((pv) => pv.name === digest);
-        if (packageVersion !== undefined) {
-          break;
-        }
-      }
+      const packageVersion = await github.GetPackageVersionByDigest(
+        owner,
+        repo,
+        digest
+      );
 
       const expectedTags = ["main", "latest"];
       expectedTags.forEach((t) => {

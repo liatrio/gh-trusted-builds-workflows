@@ -4,8 +4,7 @@
   "description": "A collection of reusable GitHub Actions workflows used in a demo on automated governance.",
   "scripts": {
     "prettier": "prettier --write **/*.mjs package.json",
-    "pretest": "npm run prettier",
-    "test": "GITHUB_TOKEN=$(gh auth token) node --test test"
+    "test": "NODE_CONFIG_DIR=test/config GITHUB_TOKEN=$(gh auth token) node --test test"
   },
   "private": true,
   "dependencies": {
@@ -13,6 +12,7 @@
   },
   "devDependencies": {
     "adm-zip": "0.5.10",
+    "config": "3.3.9",
     "prettier": "2.8.8"
   }
 }
