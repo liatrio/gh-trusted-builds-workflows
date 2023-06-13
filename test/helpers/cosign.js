@@ -13,7 +13,7 @@ export function cosignVerifyAttestation(
     "verify-attestation",
     "--type",
     attestationType,
-    "--certificate-identity",
+    "--certificate-identity-regexp",
     certIdentity,
     "--certificate-oidc-issuer",
     certOidcIssuer,

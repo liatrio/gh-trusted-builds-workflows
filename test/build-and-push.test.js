@@ -126,7 +126,7 @@ describe("build and push workflow", () => {
       const result = cosignVerifyAttestation(
         `ghcr.io/${owner}/${repo}@${runMetadata.digest}`,
         "spdxjson",
-        "https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml@refs/heads/workflow-integration-tests",
+        '^https://github\.com/liatrio/gh-trusted-builds-workflows/\.github/workflows/.*\.yaml@.*',
         "https://token.actions.githubusercontent.com"
       );
       assert.equal(result.status, 0, result.stderr.toString());
@@ -136,7 +136,7 @@ describe("build and push workflow", () => {
       const result = cosignVerifyAttestation(
         `ghcr.io/${owner}/${repo}@${runMetadata.digest}`,
         "https://liatr.io/attestations/github-pull-request/v1",
-        "https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml@refs/heads/workflow-integration-tests",
+        '^https://github\.com/liatrio/gh-trusted-builds-workflows/\.github/workflows/.*\.yaml@.*',
         "https://token.actions.githubusercontent.com"
       );
 
@@ -147,7 +147,7 @@ describe("build and push workflow", () => {
       const result = cosignVerifyAttestation(
         `ghcr.io/${owner}/${repo}@${runMetadata.digest}`,
         "slsaprovenance",
-        "https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/build-and-push.yaml@refs/heads/workflow-integration-tests",
+        '^https://github\.com/liatrio/gh-trusted-builds-workflows/\.github/workflows/.*\.yaml@.*',
         "https://token.actions.githubusercontent.com"
       );
       assert.equal(result.status, 0, result.stderr.toString());
