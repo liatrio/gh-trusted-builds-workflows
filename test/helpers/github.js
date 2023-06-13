@@ -1,6 +1,6 @@
 import { Octokit } from "@octokit/rest";
 import config from "config";
-import { sleep } from "./sleep.mjs";
+import { sleep } from "./sleep.js";
 import AdmZip from "adm-zip";
 import { createAppAuth } from "@octokit/auth-app";
 

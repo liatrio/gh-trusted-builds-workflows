@@ -1,7 +1,7 @@
 import { before, describe, it } from "node:test";
 import { strict as assert } from "node:assert";
-import { cosignVerifyAttestation } from "./helpers/cosign.mjs";
-import { GitHub } from "./helpers/github.mjs";
+import { cosignVerifyAttestation } from "./helpers/cosign.js";
+import { GitHub } from "./helpers/github.js";
 import config from "config";
 
 const github = GitHub();
