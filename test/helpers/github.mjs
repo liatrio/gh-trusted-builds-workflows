@@ -2,11 +2,27 @@ import { Octokit } from "@octokit/rest";
 import config from "config";
 import { sleep } from "./sleep.mjs";
 import AdmZip from "adm-zip";
+import { createAppAuth } from "@octokit/auth-app";
 
 export const GitHub = () => {
-  const octokit = new Octokit({
-    auth: process.env.GITHUB_TOKEN,
-  });
+  const octokit = newOctokit();
+
+  function newOctokit() {
+    if (config.util.getEnv("NODE_ENV") === "ci") {
+      return new Octokit({
+        authStrategy: createAppAuth,
+        auth: {
+          appId: config.get("github.app.id"),
+          privateKey: config.get("github.app.privateKey"),
+          installationId: config.get("github.app.installationId"),
+        },
+      });
+    }
+
+    return new Octokit({
+      auth: config.get("github.user.token"),
+    });
+  }
 
   const CreateBranch = (owner, repo, branchName, sha) =>
     octokit.git.createRef({

@@ -1,0 +1,16 @@
+name: Integration Tests
+on: push
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+      - run: npm i
+      - run: npm test
+        env:
+          NODE_ENV: ci
+          INT_TESTS_GH_APP_APP_ID: ${{ secrets.INT_TESTS_GH_APP_APP_ID }}
+          INT_TESTS_GH_APP_INSTALLATION_ID: ${{ secrets.INT_TESTS_GH_APP_INSTALLATION_ID }}
+          INT_TESTS_GH_APP_PRIVATE_KE: ${{ secrets.INT_TESTS_GH_APP_PRIVATE_KEY }}
