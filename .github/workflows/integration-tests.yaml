@@ -1,7 +1,7 @@
 name: Integration Tests
 on: push
 jobs:
-  build-and-push:
+  integration:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
