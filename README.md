@@ -15,7 +15,7 @@ To run locally, you'll need to install:
 - Node.js. There is a [.nvmrc](.nvmrc) file to install with [nvm](https://github.com/nvm-sh/nvm).
 
 Fork https://github.com/liatrio/gh-trusted-builds-workflows-integration-tests to a personal account.
-This is a fixture repository that the workflows under test will be run.
+This is a fixture repository in which the workflows under test will run.
 
 Create a GitHub personal access token. 
 It's recommended to use the [GitHub cli](https://cli.github.com/),
