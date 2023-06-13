@@ -365,6 +365,7 @@ jobs:
             --fulcio-url ${{ inputs.fulcioUrl }}
 
   workflow-metadata:
+    permissions: {}
     runs-on: ubuntu-latest
     needs:
       - push
