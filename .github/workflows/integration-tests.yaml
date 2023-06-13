@@ -7,7 +7,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Cosign Setup
-        uses: .github/actions/cosign
+        uses: ./.github/actions/cosign
         with:
           tufRoot: ""
           tufMirror: ""
