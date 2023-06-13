@@ -4,11 +4,18 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-node@v3
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
           node-version-file: '.nvmrc'
-      - run: npm i
-      - run: npm test
+      - name: Install NPM Dependencies
+        run: npm i
+      - name: Prettier Check
+        run: npm run prettier-check
+      - name: Run Integration Tests
+        run: npm run test
         env:
           NODE_ENV: ci
           INT_TESTS_GH_APP_APP_ID: ${{ secrets.INT_TESTS_GH_APP_APP_ID }}

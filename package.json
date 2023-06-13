@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "A collection of reusable GitHub Actions workflows used in a demo on automated governance.",
   "scripts": {
-    "prettier": "prettier --write **/*.mjs package.json",
+    "prettier": "prettier --write '**/*.mjs' package.json",
+    "prettier-check": "prettier --check '**/*.mjs' package.json",
     "test": "NODE_CONFIG_DIR=test/config node --test test"
   },
   "private": true,
