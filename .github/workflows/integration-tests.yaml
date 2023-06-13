@@ -1,0 +1,34 @@
+name: Integration Tests
+on:
+  push:
+    branches:
+      - main
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.ref }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Cosign Setup
+        uses: ./.github/actions/cosign
+        with:
+          tufRoot: ""
+          tufMirror: ""
+          version: "v2.0.2"
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+      - name: Install NPM Dependencies
+        run: npm i
+      - name: Prettier Check
+        run: npm run prettier-check
+      - name: Run Integration Tests
+        run: npm run test
+        env:
+          NODE_ENV: ci
+          INT_TESTS_GH_APP_APP_ID: ${{ secrets.INT_TESTS_GH_APP_APP_ID }}
+          INT_TESTS_GH_APP_INSTALLATION_ID: ${{ secrets.INT_TESTS_GH_APP_INSTALLATION_ID }}
+          INT_TESTS_GH_APP_PRIVATE_KEY: ${{ secrets.INT_TESTS_GH_APP_PRIVATE_KEY }}
