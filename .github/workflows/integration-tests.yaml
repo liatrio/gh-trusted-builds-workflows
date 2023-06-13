@@ -3,6 +3,8 @@ on: push
 jobs:
   integration:
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.ref }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
