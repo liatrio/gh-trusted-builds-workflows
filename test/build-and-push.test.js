@@ -14,7 +14,7 @@ const repo = config.get("repositoryName");
 describe("build and push workflow", () => {
   describe("with unreviewed pull request", { concurrency: true }, () => {
     const hexTimestamp = Date.now().toString(16);
-    let workflowRun, runMetadata;
+    let workflowRun, runMetadata, merge;
 
     before(async () => {
       const testFilename = "test";
@@ -59,13 +59,14 @@ describe("build and push workflow", () => {
       });
       console.log(`created pull request ${pullRequest.number}`);
 
-      const { data: merge } = await github.MergePullRequest({
+      const { data: mergeData } = await github.MergePullRequest({
         owner,
         repo,
         pull_number: pullRequest.number,
         merge_method: "squash",
         commit_title: `test: ${hexTimestamp}`,
       });
+      merge = mergeData;
       console.log(`merged pull request ${pullRequest.number}`);
 
       await github.DeleteBranch({
@@ -116,8 +117,15 @@ describe("build and push workflow", () => {
         digest
       );
 
-      const expectedTags = ["main", "latest"];
-      expectedTags.forEach((t) => {
+      assert(
+        packageVersion.metadata.container.tags.some((t) =>
+          merge.sha.startsWith(t)
+        ),
+        "missing git short commit tag"
+      );
+
+      const movingTags = ["main", "latest"];
+      movingTags.forEach((t) => {
         assert(packageVersion.metadata.container.tags.includes(t));
       });
     });
