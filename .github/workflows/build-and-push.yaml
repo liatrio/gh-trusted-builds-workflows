@@ -148,13 +148,13 @@ jobs:
 
           localImage='registry:5000/${{ github.repository }}'
           remoteImage='ghcr.io/${{ github.repository }}'
-          crane push "${localImage}"
+          crane push --insecure /tmp/image.tar "${localImage}"
 
           digest=$(docker inspect --format='{{index .RepoDigests 0}}' "${image}" | awk -F "${localImage}@" '{print $2}')
           echo "image digest: ${digest}"
           echo "digest=${digest}" >> $GITHUB_OUTPUT
 
-          crane copy -v "${localImage}" "${remoteImage}"
+          crane copy --insecure -v "${localImage}" "${remoteImage}"
 
   sign:
     permissions:
