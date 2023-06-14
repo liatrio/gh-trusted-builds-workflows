@@ -132,6 +132,8 @@ jobs:
           --repo google/go-containerregistry \
           --pattern "go-containerregistry_Linux_arm64.tar.gz" "${{ inputs.version }}"
 
+          tar xvf go-containerregistry_Linux_arm64.tar.gz
+
           mkdir -p $HOME/.bin/crane
           mv ./crane $HOME/.bin/crane
           echo "$HOME/.bin/crane" >> $GITHUB_PATH
