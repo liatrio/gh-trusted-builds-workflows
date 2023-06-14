@@ -7,6 +7,10 @@ on:
         description: "liatrio/gh-trusted-builds-attestations version"
         default: "1.1.0"
         type: string
+      craneVersion:
+        description: "google/go-containerregistry crane version"
+        default: "v0.15.2"
+        type: string
       cosignVersion:
         description: "Sigstore cosign version"
         default: "v2.0.2"
@@ -99,6 +103,11 @@ jobs:
       - build
     outputs:
       digest: ${{ steps.push.outputs.digest }}
+    services:
+      registry:
+        image: registry:2
+        ports:
+          - 5000:5000
     steps:
       - name: Download Image Archive
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
@@ -113,15 +122,35 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install Crane
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd $(mktemp -d)
+
+          gh release download \
+          --repo google/go-containerregistry \
+          --pattern "go-containerregistry_Linux_arm64.tar.gz" "${{ inputs.version }}"
+
+          mkdir -p $HOME/.bin/crane
+          mv ./crane $HOME/.bin/crane
+          echo "$HOME/.bin/crane" >> $GITHUB_PATH
+          $HOME/.bin/crane/crane version
+
       - name: Load & Push Image
         id: push
         run: |
           docker load --input /tmp/image.tar
-          image='ghcr.io/${{ github.repository }}'
-          docker push -a $image
-          digest=$(docker inspect --format='{{index .RepoDigests 0}}' "${image}" | awk -F "${image}@" '{print $2}')
+
+          localImage='registry:5000/${{ github.repository }}'
+          remoteImage='ghcr.io/${{ github.repository }}'
+          docker push -a "${localImage}"
+
+          digest=$(docker inspect --format='{{index .RepoDigests 0}}' "${image}" | awk -F "${localImage}@" '{print $2}')
           echo "image digest: ${digest}"
           echo "digest=${digest}" >> $GITHUB_OUTPUT
+
+          crane copy -v "${localImage}" "${remoteImage}"
 
   sign:
     permissions:
