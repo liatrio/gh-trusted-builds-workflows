@@ -130,9 +130,9 @@ jobs:
 
           gh release download \
           --repo google/go-containerregistry \
-          --pattern "go-containerregistry_Linux_arm64.tar.gz" "${{ inputs.version }}"
+          --pattern "go-containerregistry_Linux_x86_64.tar.gz" "${{ inputs.craneVersion }}"
 
-          tar xvf go-containerregistry_Linux_arm64.tar.gz
+          tar xvf go-containerregistry_Linux_x86_64.tar.gz
 
           mkdir -p $HOME/.bin/crane
           mv ./crane $HOME/.bin/crane
