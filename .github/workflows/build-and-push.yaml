@@ -74,7 +74,6 @@ jobs:
         uses: docker/metadata-action@c4ee3adeed93b1fa6a762f209fb01608c1a22f1e # v4
         with:
           images: |
-            registry:5000/${{ github.repository }}
             ghcr.io/${{ github.repository }}
           tags: |
             type=ref,event=branch
@@ -146,7 +145,7 @@ jobs:
         run: |
           docker load --input /tmp/image.tar
 
-          localImage='registry:5000/${{ github.repository }}'
+          localImage='localhost:5000/${{ github.repository }}'
           remoteImage='ghcr.io/${{ github.repository }}'
           crane push --insecure /tmp/image.tar "${localImage}"
 
