@@ -148,7 +148,7 @@ jobs:
 
           localImage='registry:5000/${{ github.repository }}'
           remoteImage='ghcr.io/${{ github.repository }}'
-          docker push -a "${localImage}"
+          crane push "${localImage}"
 
           digest=$(docker inspect --format='{{index .RepoDigests 0}}' "${image}" | awk -F "${localImage}@" '{print $2}')
           echo "image digest: ${digest}"
