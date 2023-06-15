@@ -78,16 +78,7 @@ env:
                       startswith(input.predicate.verifier.id, "https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/policy-verification.yaml")
                       input.predicate.verification_result == "PASSED"
                     }
-      policy:
-        type: rego
-        data: |
-          package sigstore
-          default isCompliant = false
-          # require the image to be signed by the build-and-push workflow and to have a passing VSA
-          isCompliant {
-            count(input.authorityMatches["build-and-push"].signatures) >= 1
-            count(input.authorityMatches["vsa"].attestations) >= 1
-          }
+
 
   TRUST_ROOT: |
     apiVersion: policy.sigstore.dev/v1alpha1
