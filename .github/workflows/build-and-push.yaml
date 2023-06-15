@@ -143,17 +143,16 @@ jobs:
       - name: Load & Push Image
         id: push
         run: |
-          docker load --input /tmp/image.tar
-
           localImage='localhost:5000/${{ github.repository }}'
           remoteImage='ghcr.io/${{ github.repository }}'
-          crane push --insecure /tmp/image.tar "${localImage}"
 
-          digest=$(docker inspect --format='{{index .RepoDigests 0}}' "${image}" | awk -F "${localImage}@" '{print $2}')
+          crane push --image-refs=push.log /tmp/image.tar "${localImage}"
+          digest=$(awk -F "${localImage}@" '{print $2}' < push.log)
+
           echo "image digest: ${digest}"
           echo "digest=${digest}" >> $GITHUB_OUTPUT
 
-          crane copy --insecure -v "${localImage}" "${remoteImage}"
+          crane copy -a -v "${localImage}" "${remoteImage}"
 
   sign:
     permissions:
