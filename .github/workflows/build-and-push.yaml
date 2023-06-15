@@ -19,6 +19,10 @@ on:
         description: "Sigstore Rekor URL. Defaults to the production public good instance"
         default: "https://rekor.sigstore.dev"
         type: string
+      sign:
+        description: "sign the container image"
+        default: "true"
+        type: string
       slsaGeneratorVersion:
         description: "SLSA container provenance generator version"
         default: "1.6.0"
@@ -124,6 +128,7 @@ jobs:
           echo "digest=${digest}" >> $GITHUB_OUTPUT
 
   sign:
+    if: inputs.sign == 'true'
     permissions:
       id-token: write # required to sign image
       contents: read # for reading local TUF root.json file
