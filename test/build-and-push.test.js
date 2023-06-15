@@ -132,7 +132,7 @@ describe("build and push workflow", () => {
 
     it("should create a valid sbom attestation", async () => {
       const result = await verifyAttestation(
-        `ghcr.io/${owner}/${repo}@sha256:98231220ca50030ae95b0a0ed73945337a4b95930225bddc58bab86f00afb2f0`,
+        `ghcr.io/${owner}/${repo}@${runMetadata.digest}`,
         "spdxjson",
         "^https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/.*.yaml@.*",
         "https://token.actions.githubusercontent.com"
@@ -142,7 +142,7 @@ describe("build and push workflow", () => {
 
     it("should create a valid pull request attestation", async () => {
       const result = await verifyAttestation(
-        `ghcr.io/${owner}/${repo}@sha256:98231220ca50030ae95b0a0ed73945337a4b95930225bddc58bab86f00afb2f0`,
+        `ghcr.io/${owner}/${repo}@${runMetadata.digest}`,
         "https://liatr.io/attestations/github-pull-request/v1",
         "^https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/.*.yaml@.*",
         "https://token.actions.githubusercontent.com"
@@ -153,7 +153,7 @@ describe("build and push workflow", () => {
 
     it("should create a valid provenance attestation", async () => {
       const result = await verifyAttestation(
-        `ghcr.io/${owner}/${repo}@sha256:98231220ca50030ae95b0a0ed73945337a4b95930225bddc58bab86f00afb2f0`,
+        `ghcr.io/${owner}/${repo}@${runMetadata.digest}`,
         "slsaprovenance",
         "^https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/.*.yaml@.*",
         "https://token.actions.githubusercontent.com"
