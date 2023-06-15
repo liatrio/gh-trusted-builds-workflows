@@ -75,8 +75,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@c4ee3adeed93b1fa6a762f209fb01608c1a22f1e # v4
         with:
-          images: |
-            ghcr.io/${{ github.repository }}
+          images: ghcr.io/${{ github.repository }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -105,7 +104,7 @@ jobs:
     needs:
       - build
     outputs:
-      digest: ${{ steps.push.outputs.digest }}
+      digest: ${{ steps.digest.outputs.digest }}
     steps:
       - name: Download Image Archive
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
@@ -137,30 +136,44 @@ jobs:
           echo "$HOME/.bin/crane" >> $GITHUB_PATH
           $HOME/.bin/crane/crane version
 
-      - name: Load & Push Image
+      - name: Compute Digest
+        id: digest
+        run: |
+          localDigest=$(crane digest --tarball /tmp/image.tar)
+          echo "locally-computed digest: ${localDigest}"
+          echo "digest=${localDigest}" >> $GITHUB_OUTPUT
+
+      - name: Push Image
         id: push
         env:
           IMAGE_METADATA: ${{ needs.build.outputs.metadata }}
         run: |
-          image="ghcr.io/${{ github.repository }}"
-
-          localDigest=$(crane digest --tarball /tmp/image.tar)
-          echo "locally-computed digest: ${localDigest}"
-
           pushedImage=$(printf "${IMAGE_METADATA}" | jq -r '.tags[0]')
           echo "Pushing ${pushedImage}"
-          crane push --image-refs=push.log /tmp/image.tar "${pushedImage}"
+          crane push /tmp/image.tar "${pushedImage}"
+          echo "image=${pushedImage}" >> $GITHUB_OUTPUT
 
-          registryDigest=$(awk -F "${image}@" '{print $2}' < push.log)
+      - name: Compare Digests
+        run: |
+          pushedImage=${{ steps.push.outputs.image }}
+          registryDigest=$(crane digest "${pushedImage}")
+          localDigest=${{ steps.digest.outputs.digest }}
+
           if [[ "${localDigest}" == "${registryDigest}" ]]; then
-             echo "Remote digest matches digest from local registry"
+              echo "Remote digest matches digest from local registry"
           else
-            echo "Digest in registry doesn't match expected digest"
-            echo "Locally-computed digest: ${localDigest}"
-            echo "Digest from registry: ${registryDigest}"
-            echo "This may indicate the image was modified by the registry"
-            exit 1
+              echo "Digest in registry doesn't match expected digest"
+              echo "Locally-computed digest: ${localDigest}"
+              echo "Digest from registry: ${registryDigest}"
+              echo "This may indicate the image was modified by the registry"
+              exit 1
           fi
+
+      - name: Add Tags
+        env:
+          IMAGE_METADATA: ${{ needs.build.outputs.metadata }}
+        run: |
+          pushedImage=${{ steps.push.outputs.image }}
 
           # add the remaining tags, skipping the tag that was pushed initially
           printf "${IMAGE_METADATA}" | jq -rc '.tags | .[]' | while read taggedImage; do
@@ -172,8 +185,6 @@ jobs:
             echo "adding tag ${tag}"
             crane tag "${pushedImage}" "${tag}"
           done
-
-          echo "digest=${localDigest}" >> $GITHUB_OUTPUT
 
   sign:
     permissions:
