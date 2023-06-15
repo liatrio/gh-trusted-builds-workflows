@@ -19,6 +19,9 @@ on:
         description: "Sigstore Fulcio URL. Defaults to the production public good instance"
         default: "https://fulcio.sigstore.dev"
         type: string
+      policyQuery:
+        description: "VSA policy query"
+        type: string
       rekorUrl:
         description: "Sigstore Rekor URL. Defaults to the production public good instance"
         default: "https://rekor.sigstore.dev"
@@ -101,7 +104,8 @@ jobs:
           attestation vsa \
             --artifact-uri ghcr.io/${{ github.repository }} \
             --artifact-digest ${{ inputs.digest }} \
-            --policy-url "https://github.com/liatrio/gh-trusted-builds-policy/releases/download/v1.4.0/bundle.tar.gz" \
+            --policy-url ./gh-trusted-builds-workflows/policies/governance \
+            --policy-query ${{ inputs.policyQuery }} \
             --verifier-id ${{ github.server_url }}/${{ needs.detect-workflow.outputs.repository }}/${{ needs.detect-workflow.outputs.workflow }}@${{ needs.detect-workflow.outputs.ref }} \
             --fulcio-url ${{ inputs.fulcioUrl }} \
             --rekor-url ${{ inputs.rekorUrl }}
