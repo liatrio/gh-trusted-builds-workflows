@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { queue } from "async";
+import { promisify } from "util";
 
 // A queue is used to avoid local cache lock errors when running cosign cli in multiple processes at once.
 // This ensures only a single cosign process is running at one time, while remaining asynchronous.
@@ -18,11 +19,12 @@ const q = queue((task, callback) => {
     err += data;
   });
 
-  s.on("exit", (code) => {
-    task.code = code;
-    task.out = out;
-    task.err = err;
-    callback();
+  s.on("exit", (status) => {
+    callback(null, { status, out, err });
+  });
+
+  s.on("error", (err) => {
+    callback(err, null);
   });
 });
 
@@ -43,15 +45,5 @@ export function verifyAttestation(
     image,
   ];
 
-  const task = { args };
-
-  return new Promise((resolve, reject) => {
-    q.push(task, (err) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(task);
-      }
-    });
-  });
+  return promisify(q.push)({ args });
 }
