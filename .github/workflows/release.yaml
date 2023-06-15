@@ -8,7 +8,7 @@ jobs:
   integration:
     uses: ./.github/workflows/integration-tests.yaml
     with:
-      concurrencyGroup: ${{ github.sha }} # always run, so releases are not skipped.
+      concurrencyGroupTag: ${{ github.sha }} # always run, so releases are not skipped.
 
   release:
     runs-on: ubuntu-latest
