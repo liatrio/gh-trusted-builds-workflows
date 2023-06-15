@@ -26,7 +26,7 @@ const q = queue((task, callback) => {
   });
 });
 
-export function VerifyAttestation(
+export function verifyAttestation(
   image,
   attestationType,
   certIdentity,

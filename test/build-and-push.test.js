@@ -1,6 +1,6 @@
 import { describe, it, before } from "node:test";
 import { strict as assert } from "node:assert";
-import { VerifyAttestation } from "./helpers/cosign.js";
+import { verifyAttestation } from "./helpers/cosign.js";
 import { GitHub } from "./helpers/github.js";
 import config from "config";
 
@@ -131,7 +131,7 @@ describe("build and push workflow", () => {
     });
 
     it("should create a valid sbom attestation", async () => {
-      const result = await VerifyAttestation(
+      const result = await verifyAttestation(
         `ghcr.io/${owner}/${repo}@${runMetadata.digest}`,
         "spdxjson",
         "^https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/.*.yaml@.*",
@@ -141,7 +141,7 @@ describe("build and push workflow", () => {
     });
 
     it("should create a valid pull request attestation", async () => {
-      const result = await VerifyAttestation(
+      const result = await verifyAttestation(
         `ghcr.io/${owner}/${repo}@${runMetadata.digest}`,
         "https://liatr.io/attestations/github-pull-request/v1",
         "^https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/.*.yaml@.*",
@@ -152,7 +152,7 @@ describe("build and push workflow", () => {
     });
 
     it("should create a valid provenance attestation", async () => {
-      const result = await VerifyAttestation(
+      const result = await verifyAttestation(
         `ghcr.io/${owner}/${repo}@${runMetadata.digest}`,
         "slsaprovenance",
         "^https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/.*.yaml@.*",
