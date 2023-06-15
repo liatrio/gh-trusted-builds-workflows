@@ -1,13 +1,17 @@
 name: Integration Tests
 on:
-  push:
-    branches:
-      - main
+  workflow_call:
+    inputs:
+      concurrencyGroup:
+        type: string
+        required: false
+        default: ${{ github.ref }}
+        description: Name for concurrency group to cancel older, queued test runs
 jobs:
   integration:
     runs-on: ubuntu-latest
     concurrency:
-      group: ${{ github.ref }}
+      group: ${{ inputs.concurrencyGroup }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3

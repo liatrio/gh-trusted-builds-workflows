@@ -3,9 +3,17 @@ on:
   push:
     branches:
       - main
+
 jobs:
+  integration:
+    uses: ./.github/workflows/integration-tests.yaml
+    with:
+      concurrencyGroup: ${{ github.sha }} # always run, so releases are not skipped.
+
   release:
     runs-on: ubuntu-latest
+    needs:
+      - integration
     steps:
       - name: Checkout
         uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3
