@@ -62,6 +62,8 @@ jobs:
     permissions:
       contents: read # required to build the container image
     runs-on: ubuntu-latest
+    outputs:
+      metadata: ${{ steps.meta.outputs.json }}
     steps:
       - name: Checkout
         uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3
@@ -104,11 +106,6 @@ jobs:
       - build
     outputs:
       digest: ${{ steps.push.outputs.digest }}
-    services:
-      registry:
-        image: registry:2
-        ports:
-          - 5000:5000
     steps:
       - name: Download Image Archive
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
@@ -143,16 +140,41 @@ jobs:
       - name: Load & Push Image
         id: push
         run: |
-          localImage='localhost:5000/${{ github.repository }}'
-          remoteImage='ghcr.io/${{ github.repository }}'
+          image="ghcr.io/${{ github.repository }}"
 
-          crane push --image-refs=push.log /tmp/image.tar "${localImage}"
-          digest=$(awk -F "${localImage}@" '{print $2}' < push.log)
+          localDigest=$(crane digest --tarball /tmp/image.tar)
+          echo "locally-computed digest: ${localDigest}"
 
-          echo "image digest: ${digest}"
-          echo "digest=${digest}" >> $GITHUB_OUTPUT
+          printf "${{ needs.build.outputs.metadata }}" > metadata.json
+          cat metadata.json
 
-          crane copy -a -v "${localImage}" "${remoteImage}"
+          pushedImage=$(jq -r '.tags[0]' < metadata.json)
+          echo "Pushing ${pushedImage}"
+          crane push --image-refs=push.log /tmp/image.tar "${pushedImage}"
+
+          registryDigest=$(awk -F "${image}@" '{print $2}' < push.log)
+          if [[ "${localDigest}" == "${registryDigest}" ]]; then
+             echo "Remote digest matches digest from local registry"
+          else
+            echo "Digest in registry doesn't match expected digest"
+            echo "Locally-computed digest: ${localDigest}"
+            echo "Digest from registry: ${registryDigest}"
+            echo "This may indicate the image was modified by the registry"
+            exit 1
+          fi
+
+          # add the remaining tags, skipping the tag that was pushed initially
+          jq -rc '.tags | .[]' < metadata.json | while read taggedImage; do
+            if [[ "${taggedImage}" == "${pushedImage}" ]]; then
+              continue
+            fi
+
+            tag=$(printf "${taggedImage}" | awk -F "${image}:" '{print $2}')
+            echo "adding tag ${tag}"
+            crane tag "${pushedImage}" "${tag}"
+          done
+
+          echo "digest=${localDigest}" >> $GITHUB_OUTPUT
 
   sign:
     permissions:
