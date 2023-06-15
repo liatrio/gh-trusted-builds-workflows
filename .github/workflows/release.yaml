@@ -9,6 +9,7 @@ jobs:
     uses: ./.github/workflows/integration-tests.yaml
     with:
       concurrencyGroupTag: ${{ github.sha }} # always run, so releases are not skipped.
+    secrets: inherit
 
   release:
     runs-on: ubuntu-latest

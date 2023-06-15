@@ -7,6 +7,16 @@ on:
         required: false
         default: ${{ github.ref_name }}
         description: Tag for integration test concurrency group to cancel older, queued test runs
+    secrets:
+      INT_TESTS_GH_APP_APP_ID:
+        required: true
+        description: GitHub App id for test identity
+      INT_TESTS_GH_APP_INSTALLATION_ID:
+        required: true
+        description: GitHub App installation id for test identity
+      INT_TESTS_GH_APP_PRIVATE_KEY:
+        required: true
+        description: GitHub App private key for test identity
 
 concurrency:
   group: integration-test-${{ inputs.concurrencyGroupTag }}
