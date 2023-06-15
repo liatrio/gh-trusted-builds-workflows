@@ -1,6 +1,6 @@
-import { before, describe, it } from "node:test";
+import { describe, it, before } from "node:test";
 import { strict as assert } from "node:assert";
-import { cosignVerifyAttestation } from "./helpers/cosign.js";
+import { VerifyAttestation } from "./helpers/cosign.js";
 import { GitHub } from "./helpers/github.js";
 import config from "config";
 
@@ -131,34 +131,34 @@ describe("build and push workflow", () => {
     });
 
     it("should create a valid sbom attestation", async () => {
-      const result = cosignVerifyAttestation(
+      const result = await VerifyAttestation(
         `ghcr.io/${owner}/${repo}@${runMetadata.digest}`,
         "spdxjson",
         "^https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/.*.yaml@.*",
         "https://token.actions.githubusercontent.com"
       );
-      assert.equal(result.status, 0, result.stderr.toString());
+      assert.equal(result.code, 0, result.err);
     });
 
     it("should create a valid pull request attestation", async () => {
-      const result = cosignVerifyAttestation(
+      const result = await VerifyAttestation(
         `ghcr.io/${owner}/${repo}@${runMetadata.digest}`,
         "https://liatr.io/attestations/github-pull-request/v1",
         "^https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/.*.yaml@.*",
         "https://token.actions.githubusercontent.com"
       );
 
-      assert.equal(result.status, 0, result.stderr.toString());
+      assert.equal(result.code, 0, result.err);
     });
 
     it("should create a valid provenance attestation", async () => {
-      const result = cosignVerifyAttestation(
+      const result = await VerifyAttestation(
         `ghcr.io/${owner}/${repo}@${runMetadata.digest}`,
         "slsaprovenance",
         "^https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/.*.yaml@.*",
         "https://token.actions.githubusercontent.com"
       );
-      assert.equal(result.status, 0, result.stderr.toString());
+      assert.equal(result.code, 0, result.err);
     });
   });
 });
