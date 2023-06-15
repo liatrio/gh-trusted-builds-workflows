@@ -139,16 +139,15 @@ jobs:
 
       - name: Load & Push Image
         id: push
+        env:
+          IMAGE_METADATA: ${{ needs.build.outputs.metadata }}
         run: |
           image="ghcr.io/${{ github.repository }}"
 
           localDigest=$(crane digest --tarball /tmp/image.tar)
           echo "locally-computed digest: ${localDigest}"
 
-          printf "${{ needs.build.outputs.metadata }}" > metadata.json
-          cat metadata.json
-
-          pushedImage=$(jq -r '.tags[0]' < metadata.json)
+          pushedImage=$(printf "${IMAGE_METADATA}" | jq -r '.tags[0]')
           echo "Pushing ${pushedImage}"
           crane push --image-refs=push.log /tmp/image.tar "${pushedImage}"
 
@@ -164,7 +163,7 @@ jobs:
           fi
 
           # add the remaining tags, skipping the tag that was pushed initially
-          jq -rc '.tags | .[]' < metadata.json | while read taggedImage; do
+          printf "${IMAGE_METADATA}" | jq -rc '.tags | .[]' | while read taggedImage; do
             if [[ "${taggedImage}" == "${pushedImage}" ]]; then
               continue
             fi
