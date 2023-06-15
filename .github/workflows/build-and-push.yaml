@@ -148,7 +148,8 @@ jobs:
         env:
           IMAGE_METADATA: ${{ needs.build.outputs.metadata }}
         run: |
-          pushedImage=$(printf "${IMAGE_METADATA}" | jq -r '.tags[0]')
+          commit=$(git rev-parse --short HEAD)
+          pushedImage=$(printf "${IMAGE_METADATA}" | jq --arg commit "${commit}" -r '.tags | .[] | select(.|endswith($commit))')
           echo "Pushing ${pushedImage}"
           crane push /tmp/image.tar "${pushedImage}"
           echo "image=${pushedImage}" >> $GITHUB_OUTPUT
