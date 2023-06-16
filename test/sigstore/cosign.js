@@ -3,6 +3,7 @@ import { queue } from "async";
 import { promisify } from "util";
 import { access, rename, rm } from "fs/promises";
 import { join } from "path";
+import { homedir } from "os";
 import config from "config";
 // A queue is used to avoid local cache lock errors when running cosign cli in multiple processes at once.
 // This ensures only a single cosign process is running at one time, while remaining asynchronous.
@@ -30,7 +31,7 @@ const q = queue((task, callback) => {
   });
 });
 
-const home = config.get("home");
+const home = homedir();
 const sigstoreDir = join(home, ".sigstore");
 const sigstoreBackupDir = join(home, ".sigstore-backup");
 const rekorUrl = config.get("sigstore.rekor.url");
