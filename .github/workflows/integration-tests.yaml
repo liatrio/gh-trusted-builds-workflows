@@ -32,8 +32,8 @@ jobs:
         with:
           fulcioUrl: "https://fulcio.sigstage.dev"
           rekorUrl: "https://rekor.sigstage.dev"
-          tufMirror: "https://tuf-root-staging.storage.googleapis.com"
-          tufRoot: "test/sigstore/root.json"
+          tufMirror: "https://tuf-repo-cdn.sigstage.dev"
+          tufRoot: "test/sigstore/1.root.json"
           version: "v2.0.2"
       - name: Setup Node.js
         uses: actions/setup-node@v3
