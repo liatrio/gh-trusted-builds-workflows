@@ -6,8 +6,8 @@
       "url": "https://rekor.sigstage.dev"
     },
     "tuf": {
-      "mirror": "https://tuf-root-staging.storage.googleapis.com",
-      "root": "test/sigstore/root.json"
+      "mirror": "https://tuf-repo-cdn.sigstage.dev",
+      "root": "test/sigstore/1.root.json"
     }
   }
 }
