@@ -14,7 +14,7 @@ To run locally, you'll need to install:
 - Sigstore [cosign](https://docs.sigstore.dev/cosign/installation/) cli
 - Node.js. There is a [.nvmrc](.nvmrc) file to install with [nvm](https://github.com/nvm-sh/nvm).
 
-⚠️ WARNING: The tests run the equivalent of cosign initialize, meaning that if you have a custom TUF root configured, it will be temporarily overwritten in place of the TUF root created by the scaffolding setup. 
+⚠️ WARNING: The tests run cosign initialize, meaning that if you have a custom TUF root configured, it will be temporarily overwritten in place of the TUF root for Sigstore's staging environment. 
 The tests will attempt to save the TUF root in ~/.sigstore-backup before running, and restore it after.
 If the tests fail to restore the custom root, you can remove it by running rm -rf ~/.sigstore and mv ~/.sigstore-backup ~/.sigstore. 
 If you're not using a custom TUF root, deleting the ~/.sigstore directory should suffice.
