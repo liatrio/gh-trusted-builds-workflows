@@ -74,7 +74,7 @@ export async function resetSigstoreConfig() {
     console.log(`moving ${sigstoreBackupDir} to ${sigstoreDir}`);
     await rename(sigstoreBackupDir, sigstoreDir);
   } catch (e) {
-    console.log("no .sigstore-backup to restore");
+    console.log(`no ${sigstoreBackupDir} to restore`);
   }
 
   console.log("finished resetting cosign");
