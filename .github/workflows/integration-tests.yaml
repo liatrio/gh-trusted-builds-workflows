@@ -30,8 +30,6 @@ jobs:
       - name: Cosign Setup
         uses: ./.github/actions/cosign
         with:
-          fulcioUrl: "https://fulcio.sigstage.dev"
-          rekorUrl: "https://rekor.sigstage.dev"
           tufMirror: "https://tuf-repo-cdn.sigstage.dev"
           tufRoot: "test/sigstore/1.root.json"
           version: "v2.0.2"
