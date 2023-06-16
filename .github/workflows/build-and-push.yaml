@@ -7,6 +7,10 @@ on:
         description: "liatrio/gh-trusted-builds-attestations version"
         default: "1.1.0"
         type: string
+      craneVersion:
+        description: "google/go-containerregistry crane version"
+        default: "v0.15.2"
+        type: string
       cosignVersion:
         description: "Sigstore cosign version"
         default: "v2.0.2"
@@ -58,6 +62,8 @@ jobs:
     permissions:
       contents: read # required to build the container image
     runs-on: ubuntu-latest
+    outputs:
+      metadata: ${{ steps.meta.outputs.json }}
     steps:
       - name: Checkout
         uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3
@@ -98,7 +104,7 @@ jobs:
     needs:
       - build
     outputs:
-      digest: ${{ steps.push.outputs.digest }}
+      digest: ${{ steps.digest.outputs.digest }}
     steps:
       - name: Download Image Archive
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
@@ -113,15 +119,73 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Load & Push Image
-        id: push
+      - name: Install Crane
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          docker load --input /tmp/image.tar
-          image='ghcr.io/${{ github.repository }}'
-          docker push -a $image
-          digest=$(docker inspect --format='{{index .RepoDigests 0}}' "${image}" | awk -F "${image}@" '{print $2}')
-          echo "image digest: ${digest}"
-          echo "digest=${digest}" >> $GITHUB_OUTPUT
+          cd $(mktemp -d)
+
+          gh release download \
+          --repo google/go-containerregistry \
+          --pattern "go-containerregistry_Linux_x86_64.tar.gz" "${{ inputs.craneVersion }}"
+
+          tar xvf go-containerregistry_Linux_x86_64.tar.gz
+
+          mkdir -p $HOME/.bin/crane
+          mv ./crane $HOME/.bin/crane
+          echo "$HOME/.bin/crane" >> $GITHUB_PATH
+          $HOME/.bin/crane/crane version
+
+      - name: Compute Digest
+        id: digest
+        run: |
+          localDigest=$(crane digest --tarball /tmp/image.tar)
+          echo "locally-computed digest: ${localDigest}"
+          echo "digest=${localDigest}" >> $GITHUB_OUTPUT
+
+      - name: Push Image
+        id: push
+        env:
+          IMAGE_METADATA: ${{ needs.build.outputs.metadata }}
+        run: |
+          commit="${{ github.sha }}"
+          pushedImage=$(printf "${IMAGE_METADATA}" | jq --arg commit "${commit::7}" -r '.tags | .[] | select(.|endswith($commit))')
+          echo "Pushing ${pushedImage}"
+          crane push /tmp/image.tar "${pushedImage}"
+          echo "image=${pushedImage}" >> $GITHUB_OUTPUT
+
+      - name: Compare Digests
+        run: |
+          pushedImage=${{ steps.push.outputs.image }}
+          registryDigest=$(crane digest "${pushedImage}")
+          localDigest=${{ steps.digest.outputs.digest }}
+
+          if [[ "${localDigest}" == "${registryDigest}" ]]; then
+              echo "Remote digest matches digest from local registry"
+          else
+              echo "Digest in registry doesn't match expected digest"
+              echo "Locally-computed digest: ${localDigest}"
+              echo "Digest from registry: ${registryDigest}"
+              echo "This may indicate the image was modified by the registry"
+              exit 1
+          fi
+
+      - name: Add Tags
+        env:
+          IMAGE_METADATA: ${{ needs.build.outputs.metadata }}
+        run: |
+          pushedImage=${{ steps.push.outputs.image }}
+
+          # add the remaining tags, skipping the tag that was pushed initially
+          printf "${IMAGE_METADATA}" | jq -rc '.tags | .[]' | while read taggedImage; do
+            if [[ "${taggedImage}" == "${pushedImage}" ]]; then
+              continue
+            fi
+
+            tag=$(printf "${taggedImage}" | awk -F "${image}:" '{print $2}')
+            echo "adding tag ${tag}"
+            crane tag "${pushedImage}" "${tag}"
+          done
 
   sign:
     permissions:
