@@ -56,7 +56,7 @@ env:
           ctlog:
             url: ${REKOR_URL}
             trustRootRef: ${TRUST_ROOT_NAME}
-        - name: vsa
+        - name: policy-verification
           keyless:
             url: ${FULCIO_URL}
             trustRootRef: ${TRUST_ROOT_NAME}
@@ -67,26 +67,65 @@ env:
             url: ${REKOR_URL}
             trustRootRef: ${TRUST_ROOT_NAME}
           attestations:
-              - name: has-passing-vsa
+              - name: vsa
                 predicateType: "https://slsa.dev/verification_summary/v0.2"
                 policy:
                   type: rego
                   data: |
                     package sigstore
+
                     default isCompliant = false
                     isCompliant {
                       startswith(input.predicate.verifier.id, "https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/policy-verification.yaml")
-                      input.predicate.verification_result == "PASSED"
                     }
       policy:
         type: rego
         data: |
           package sigstore
-          default isCompliant = false
-          # require the image to be signed by the build-and-push workflow and to have a passing VSA
-          isCompliant {
-            count(input.authorityMatches["build-and-push"].signatures) >= 1
-            count(input.authorityMatches["vsa"].attestations) >= 1
+
+          import future.keywords.in
+
+          default signatures := []
+          default policyAttestations := []
+          signatures := input.authorityMatches["build-and-push"].signatures
+          policyAttestations := input.authorityMatches["policy-verification"].attestations
+
+          isCompliant[response] {
+            response := {
+              "result": count(violations) == 0,
+              "error": concat(", ", violations)
+            }
+          }
+
+          violations[msg] {
+            count(signatures) < 1
+            msg := "image is unsigned"
+          }
+
+          violations[msg] {
+            count(policyAttestations) < 1
+            msg := "image must have a verification summary attestation"
+          }
+
+          violations[msg] {
+            count(sorted_atts) >= 1
+            sorted_atts[0].verification_result == "FAILED"
+            msg := "VSA result was failure"
+          }
+
+          atts := [ att | att := json.unmarshal(policyAttestations["vsa"][_].payload) ]
+          # adapted from https://stackoverflow.com/a/73033146
+          rank(x, collection) := count(smaller) {
+            smaller := {y | some y in collection; time.parse_rfc3339_ns(x["time_verified"]) <= time.parse_rfc3339_ns(y["time_verified"]) }
+          }
+
+          sorted_atts := result {
+            result := [
+              e |
+                some r in numbers.range(1, count(atts))
+                some e in atts;
+                r == rank(e, atts)
+            ]
           }
 
   TRUST_ROOT: |
