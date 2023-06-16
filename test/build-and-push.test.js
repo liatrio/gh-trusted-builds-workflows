@@ -1,6 +1,10 @@
-import { before, describe, it } from "node:test";
+import { after, before, describe, it } from "node:test";
 import { strict as assert } from "node:assert";
-import { verifyAttestation } from "./helpers/cosign.js";
+import {
+  initializeSigstoreStaging,
+  resetSigstoreConfig,
+  verifyAttestation,
+} from "./sigstore/cosign.js";
 import { GitHub } from "./helpers/github.js";
 import config from "config";
 
@@ -12,6 +16,18 @@ const owner = config.has("owner")
 const repo = config.get("repositoryName");
 
 describe("build and push workflow", () => {
+  // When the tests are run in CI,
+  // cosign cli is initialized to Sigstore staging environment via a setup action.
+  if (config.util.getEnv("NODE_ENV") !== "ci") {
+    before(async () => {
+      await initializeSigstoreStaging();
+    });
+
+    after(async () => {
+      await resetSigstoreConfig();
+    });
+  }
+
   describe("with unreviewed pull request", { concurrency: true }, () => {
     const hexTimestamp = Date.now().toString(16);
     let workflowRun, runMetadata, merge;
@@ -104,7 +120,7 @@ describe("build and push workflow", () => {
       console.log("retrieved workflow run metadata artifact");
     });
 
-    it("should successfully complete a run", { timeout: 300000 }, async () => {
+    it("should successfully complete a run", () => {
       assert.equal(workflowRun.conclusion, "success");
     });
 
