@@ -40,7 +40,7 @@ jobs:
     steps:
       - name: Detect the repository and ref
         id: detect
-        uses: slsa-framework/slsa-github-generator/.github/actions/detect-workflow-js@0779f7bec68e2bf54a7b0a32bf4763f25ab29702 # v1.6.0
+        uses: slsa-framework/slsa-github-generator/.github/actions/detect-workflow-js@e55b76ce421082dfa4b34a6ac3c5e59de0f3bb58 # v1.7.0
 
   scan:
     permissions:
