@@ -5,7 +5,7 @@ on:
     inputs:
       attestorVersion:
         description: "liatrio/gh-trusted-builds-attestations version"
-        default: "1.1.0"
+        default: "1.1.4"
         type: string
       cosignVersion:
         description: "Sigstore cosign version"
