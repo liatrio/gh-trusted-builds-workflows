@@ -1,5 +1,5 @@
 name: Config
-description: Config
+description: Common configuration values shared across the different workflows
 
 inputs:
   environment:
@@ -53,21 +53,17 @@ runs:
       env:
         ENVIRONMENT: ${{ inputs.environment }}
       run: |
-
-        echo "env: ${ENVIRONMENT}"
-
         function output() {
           name="${1}"
           value="${2}"
 
-          echo "output: ${name}=${value}"
           echo "${name}=${value}" >> $GITHUB_OUTPUT
         }
 
         case "${ENVIRONMENT}" in
           "production")
             output "fulcioUrl" "https://fulcio.sigstore.dev"
-            output "rekorUrl" "https://rekor.sigstore.dev"
+            output "rekorUrl"  "https://rekor.sigstore.dev"
             ;;
           "staging")
             output "fulcioUrl" "https://fulcio.sigstage.dev"

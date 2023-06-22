@@ -33,4 +33,4 @@ Install npm dependencies, `npm i`.
 
 ### Run
 
-`GITHUB_TOKEN=$(gh auth token) npm test.`
+`GITHUB_TOKEN=$(gh auth token) npm test`
