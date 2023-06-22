@@ -28,7 +28,7 @@ env:
             trustRootRef: ${TRUST_ROOT_NAME}
             identities:
               - issuer: https://token.actions.githubusercontent.com
-                subjectRegExp: ^https://github\.com/liatrio/gh-trusted-builds-workflows/\.github/workflows/build-and-push\.yaml@.*
+                subjectRegExp: ^https://github\.com/liatrio/gh-trusted-builds-workflows/\.github/workflows/build-and-push\.yaml@refs/tags/v\d\.\d\.\d$
           ctlog:
             url: ${REKOR_URL}
             trustRootRef: ${TRUST_ROOT_NAME}
@@ -38,7 +38,7 @@ env:
             trustRootRef: ${TRUST_ROOT_NAME}
             identities:
               - issuer: https://token.actions.githubusercontent.com
-                subjectRegExp: ^https://github\.com/liatrio/gh-trusted-builds-workflows/\.github/workflows/policy-verification\.yaml@.*
+                subjectRegExp: ^https://github\.com/liatrio/gh-trusted-builds-workflows/\.github/workflows/policy-verification\.yaml@refs/tags/v\d\.\d\.\d$
           ctlog:
             url: ${REKOR_URL}
             trustRootRef: ${TRUST_ROOT_NAME}
