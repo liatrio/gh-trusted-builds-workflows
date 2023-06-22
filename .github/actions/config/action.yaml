@@ -1,0 +1,81 @@
+name: Config
+description: Config
+
+inputs:
+  environment:
+    description: "Sigstore public good environment"
+    default: "production"
+
+outputs:
+  attestorVersion:
+    description: "liatrio/gh-trusted-builds-attestations version"
+    value: "1.1.4"
+  cosignVersion:
+    description: "Sigstore cosign version"
+    value: "v2.0.2"
+  craneVersion:
+    description: "google/go-containerregistry crane version"
+    value: "v0.15.2"
+  fulcioUrl:
+    description: "Sigstore Fulcio URL. Defaults to the production public good instance"
+    value: "${{ steps.config.outputs.fulcioUrl }}"
+  helmVersion:
+    description: "Helm version"
+    value: "v3.10.3"
+  k3dVersion:
+    description: "k3d version"
+    value: "v5.4.9"
+  policyControllerVersion:
+    description: "Policy controller Helm chart version"
+    value: "0.5.8"
+  rekorUrl:
+    description: "Sigstore Rekor URL. Defaults to the production public good instance"
+    value: "${{ steps.config.outputs.rekorUrl }}"
+  slsaGeneratorVersion:
+    description: "SLSA container provenance generator version"
+    value: "1.6.0"
+  syftVersion:
+    description: "Anchore syft version"
+    value: "v0.82.0"
+  tufMirror:
+    description: "cosign TUF root mirror URL"
+    value: "${{ steps.config.outputs.tufMirror }}"
+  tufRoot:
+    description: "cosign TUF initial trusted root"
+    value: "${{ steps.config.outputs.tufRoot }}"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set outputs
+      id: config
+      shell: bash
+      env:
+        ENVIRONMENT: ${{ inputs.environment }}
+      run: |
+
+        echo "env: ${ENVIRONMENT}"
+
+        function output() {
+          name="${1}"
+          value="${2}"
+
+          echo "output: ${name}=${value}"
+          echo "${name}=${value}" >> $GITHUB_OUTPUT
+        }
+
+        case "${ENVIRONMENT}" in
+          "production")
+            output "fulcioUrl" "https://fulcio.sigstore.dev"
+            output "rekorUrl" "https://rekor.sigstore.dev"
+            ;;
+          "staging")
+            output "fulcioUrl" "https://fulcio.sigstage.dev"
+            output "rekorUrl"  "https://rekor.sigstage.dev"
+            output "tufMirror" "https://tuf-repo-cdn.sigstage.dev"
+            output "tufRoot"   "sigstore/staging"
+            ;;
+          *)
+            echo "Invalid value for environment: '${ENVIRONMENT}'. Must be one of 'production' or 'staging'"
+            exit 1
+            ;;

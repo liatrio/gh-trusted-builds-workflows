@@ -7,33 +7,9 @@ on:
         type: string
         required: true
         description: "Docker image digest"
-      helmVersion:
-        type: string
-        description: "Helm version"
-        default: "v3.10.3"
-      k3dVersion:
-        type: string
-        description: "k3s version"
-        default: "v5.4.9"
-      policyControllerVersion:
-        type: string
-        description: "Policy controller Helm chart version"
-        default: "0.5.8"
-      fulcioUrl:
-        description: "Sigstore Fulcio URL. Defaults to the production public good instance"
-        default: "https://fulcio.sigstore.dev"
-        type: string
-      rekorUrl:
-        description: "Sigstore Rekor URL. Defaults to the production public good instance"
-        default: "https://rekor.sigstore.dev"
-        type: string
-      tufMirror:
-        description: "cosign TUF root mirror URL. If not specified, cosign initialize will not be invoked"
-        default: ""
-        type: string
-      tufRoot:
-        description: "cosign TUF initial trusted root. If not specified, cosign initialize will not be invoked"
-        default: ""
+      environment:
+        description: "Name of the Sigstore environment to use. Should be one of [staging, production]"
+        default: "production"
         type: string
 
 env:
@@ -99,19 +75,53 @@ env:
         mirror: ${TUF_MIRROR}
         root: ${TUF_ROOT}
 jobs:
+  detect-workflow:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # needed to grab job_workflow_ref information
+    outputs:
+      repository: ${{ steps.detect.outputs.repository }}
+      ref: ${{ steps.detect.outputs.ref }}
+      workflow: ${{ steps.detect.outputs.workflow }}
+    steps:
+      - name: Detect the repository and ref
+        id: detect
+        uses: slsa-framework/slsa-github-generator/.github/actions/detect-workflow-js@e55b76ce421082dfa4b34a6ac3c5e59de0f3bb58 # v1.7.0
+
   deploy:
     permissions:
       packages: read # needed to pull images from GHCR
       contents: read # for reading local TUF root.json file
     runs-on: ubuntu-latest
+    needs:
+      - detect-workflow
+    defaults:
+      run:
+        working-directory: ./app
     steps:
       - name: Checkout
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
+        with:
+          path: app
+
+      - name: Checkout Workflows Repo
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
+        with:
+          repository: ${{ needs.detect-workflow.outputs.repository }}
+          ref: ${{ needs.detect-workflow.outputs.ref }}
+          path: gh-trusted-builds-workflows
+          persist-credentials: false
+
+      - name: Configuration
+        id: config
+        uses: ./gh-trusted-builds-workflows/.github/actions/config
+        with:
+          environment: ${{ inputs.environment }}
 
       - name: Install Helm
         uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78 # v3
         with:
-         version: ${{ inputs.helmVersion }}
+         version: ${{ steps.config.outputs.helmVersion }}
 
       - name: Install k3s
         env:
@@ -119,7 +129,7 @@ jobs:
         run: |
           gh release download --repo k3d-io/k3d \
             --pattern k3d-linux-amd64 \
-            ${{ inputs.k3dVersion }}
+            ${{ steps.config.outputs.k3dVersion }}
           chmod +x k3d-linux-amd64
           mkdir -p $HOME/.bin/k3d
           mv k3d-linux-amd64 $HOME/.bin/k3d/k3d
@@ -148,7 +158,7 @@ jobs:
             --wait \
             --create-namespace \
             -n policy-controller \
-            --version ${{ inputs.policyControllerVersion }} \
+            --version ${{ steps.config.outputs.policyControllerVersion }} \
             policy-controller sigstore/policy-controller
 
       - name: App Setup
@@ -165,11 +175,11 @@ jobs:
       - name: Create Policy
         env:
           IMAGE_REPO: ${{ github.repository }}
-          FULCIO_URL: ${{ inputs.fulcioUrl }}
-          REKOR_URL: ${{ inputs.rekorUrl }}
+          FULCIO_URL: ${{ steps.config.outputs.fulcioUrl }}
+          REKOR_URL: ${{ steps.config.outputs.rekorUrl }}
         run: |
-          tufRoot="${{ inputs.tufRoot }}"
-          tufMirror="${{ inputs.tufMirror}}"
+          tufRoot="${{ steps.config.outputs.tufRoot }}"
+          tufMirror="${{ steps.config.outputs.tufMirror}}"
 
           if [[ "${tufRoot}" && "${tufMirror}" ]]; then
             echo "Using custom TUF root"

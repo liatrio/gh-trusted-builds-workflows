@@ -3,33 +3,13 @@ name: Policy Verification
 on:
   workflow_call:
     inputs:
-      attestorVersion:
-        description: "liatrio/gh-trusted-builds-attestations version"
-        default: "1.1.4"
-        type: string
-      cosignVersion:
-        description: "Sigstore cosign version"
-        default: "v2.0.2"
-        type: string
       digest:
         type: string
         required: true
         description: "Docker image digest"
-      fulcioUrl:
-        description: "Sigstore Fulcio URL. Defaults to the production public good instance"
-        default: "https://fulcio.sigstore.dev"
-        type: string
-      rekorUrl:
-        description: "Sigstore Rekor URL. Defaults to the production public good instance"
-        default: "https://rekor.sigstore.dev"
-        type: string
-      tufMirror:
-        description: "cosign TUF root mirror URL. If not specified, cosign initialize will not be invoked"
-        default: ""
-        type: string
-      tufRoot:
-        description: "cosign TUF initial trusted root. If not specified, cosign initialize will not be invoked"
-        default: ""
+      environment:
+        description: "Name of the Sigstore environment to use. Should be one of [staging, production]"
+        default: "production"
         type: string
 
 jobs:
@@ -70,13 +50,19 @@ jobs:
           path: gh-trusted-builds-workflows
           persist-credentials: false
 
+      - name: Configuration
+        id: config
+        uses: ./gh-trusted-builds-workflows/.github/actions/config
+        with:
+          environment: ${{ inputs.environment }}
+
       - name: Cosign Setup
         uses: ./gh-trusted-builds-workflows/.github/actions/cosign
         with:
-          tufRoot: ${{ inputs.tufRoot }}
-          tufMirror: ${{ inputs.tufMirror }}
-          version: ${{ inputs.cosignVersion }}
-          workingDirectory: ./app
+          tufRoot: ${{ steps.config.outputs.tufRoot }}
+          tufMirror: ${{ steps.config.outputs.tufMirror }}
+          version: ${{ steps.config.outputs.cosignVersion }}
+          workingDirectory: ./gh-trusted-builds-workflows
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2
@@ -92,7 +78,7 @@ jobs:
       - name: Attestor Install
         uses: ./gh-trusted-builds-workflows/.github/actions/attestor
         with:
-          version: ${{ inputs.attestorVersion }}
+          version: ${{ steps.config.outputs.attestorVersion }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Verification Summary Attestation
@@ -104,5 +90,5 @@ jobs:
             --artifact-digest ${{ inputs.digest }} \
             --policy-url "https://github.com/liatrio/gh-trusted-builds-policy/releases/download/v1.4.0/bundle.tar.gz" \
             --verifier-id ${{ github.server_url }}/${{ needs.detect-workflow.outputs.repository }}/${{ needs.detect-workflow.outputs.workflow }}@${{ needs.detect-workflow.outputs.ref }} \
-            --fulcio-url ${{ inputs.fulcioUrl }} \
-            --rekor-url ${{ inputs.rekorUrl }}
+            --fulcio-url ${{ steps.config.outputs.fulcioUrl }} \
+            --rekor-url ${{ steps.config.outputs.rekorUrl }}

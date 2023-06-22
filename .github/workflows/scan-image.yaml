@@ -3,29 +3,13 @@ name: Scan Image
 on:
   workflow_call:
     inputs:
-      cosignVersion:
-        description: "Sigstore cosign version"
-        default: "v2.0.2"
-        type: string
       digest:
         type: string
         required: true
         description: "Docker image digest"
-      fulcioUrl:
-        description: "Sigstore Fulcio URL. Defaults to the production public good instance"
-        default: "https://fulcio.sigstore.dev"
-        type: string
-      rekorUrl:
-        description: "Sigstore Rekor URL. Defaults to the production public good instance"
-        default: "https://rekor.sigstore.dev"
-        type: string
-      tufMirror:
-        description: "cosign TUF root mirror URL. If not specified, cosign initialize will not be invoked"
-        default: ""
-        type: string
-      tufRoot:
-        description: "cosign TUF initial trusted root. If not specified, cosign initialize will not be invoked"
-        default: ""
+      environment:
+        description: "Name of the Sigstore environment to use. Should be one of [staging, production]"
+        default: "production"
         type: string
 
 jobs:
@@ -66,6 +50,12 @@ jobs:
           path: gh-trusted-builds-workflows
           persist-credentials: false
 
+      - name: Configuration
+        id: config
+        uses: ./gh-trusted-builds-workflows/.github/actions/config
+        with:
+          environment: ${{ inputs.environment }}
+
       - name: Trivy Scan
         uses: aquasecurity/trivy-action@41f05d9ecffa2ed3f1580af306000f734b733e54 # 0.11.2
         with:
@@ -79,10 +69,10 @@ jobs:
       - name: Cosign Setup
         uses: ./gh-trusted-builds-workflows/.github/actions/cosign
         with:
-          tufRoot: ${{ inputs.tufRoot }}
-          tufMirror: ${{ inputs.tufMirror }}
-          version: ${{ inputs.cosignVersion }}
-          workingDirectory: ./app
+          tufRoot: ${{ steps.config.outputs.tufRoot }}
+          tufMirror: ${{ steps.config.outputs.tufMirror }}
+          version: ${{ steps.config.outputs.cosignVersion }}
+          workingDirectory: ./gh-trusted-builds-workflows
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2
@@ -96,7 +86,7 @@ jobs:
           cosign attest \
             --predicate ./trivy.report.json \
             --type vuln \
-            --rekor-url ${{ inputs.rekorUrl }} \
-            --fulcio-url ${{ inputs.fulcioUrl }} \
+            --rekor-url ${{ steps.config.outputs.rekorUrl }} \
+            --fulcio-url ${{ steps.config.outputs.fulcioUrl }} \
             --yes \
             ghcr.io/${{ github.repository }}@${{ inputs.digest }}
