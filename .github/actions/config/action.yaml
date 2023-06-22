@@ -73,7 +73,7 @@ runs:
             output "fulcioUrl" "https://fulcio.sigstage.dev"
             output "rekorUrl"  "https://rekor.sigstage.dev"
             output "tufMirror" "https://tuf-repo-cdn.sigstage.dev"
-            output "tufRoot"   "sigstore/staging"
+            output "tufRoot"   "sigstore/staging/1.root.json"
             ;;
           *)
             echo "Invalid value for environment: '${ENVIRONMENT}'. Must be one of 'production' or 'staging'"
