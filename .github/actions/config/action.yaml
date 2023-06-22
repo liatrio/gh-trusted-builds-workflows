@@ -79,3 +79,4 @@ runs:
             echo "Invalid value for environment: '${ENVIRONMENT}'. Must be one of 'production' or 'staging'"
             exit 1
             ;;
+        esac
