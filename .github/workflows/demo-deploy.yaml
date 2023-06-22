@@ -179,13 +179,13 @@ jobs:
           REKOR_URL: ${{ steps.config.outputs.rekorUrl }}
         run: |
           tufRoot="${{ steps.config.outputs.tufRoot }}"
-          tufMirror="${{ steps.config.outputs.tufMirror}}"
+          tufMirror="${{ steps.config.outputs.tufMirror }}"
 
           if [[ "${tufRoot}" && "${tufMirror}" ]]; then
             echo "Using custom TUF root"
             ls -la
             export TUF_MIRROR="${tufMirror}"
-            export TUF_ROOT=$(base64 -w 0 < "${tufRoot}")
+            export TUF_ROOT=$(base64 -w 0 < "../gh-trusted-builds-workflows/${tufRoot}")
             export TRUST_ROOT_NAME="custom-root"
 
             echo "Creating trust root:"
