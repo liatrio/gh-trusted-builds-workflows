@@ -219,6 +219,7 @@ jobs:
           tufRoot: ${{ inputs.tufRoot }}
           tufMirror: ${{ inputs.tufMirror }}
           version: ${{ inputs.cosignVersion }}
+          workingDirectory: ./app
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2
@@ -291,6 +292,7 @@ jobs:
           tufRoot: ${{ inputs.tufRoot }}
           tufMirror: ${{ inputs.tufMirror }}
           version: ${{ inputs.cosignVersion }}
+          workingDirectory: ./app
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2
@@ -342,6 +344,7 @@ jobs:
           tufRoot: ${{ inputs.tufRoot }}
           tufMirror: ${{ inputs.tufMirror }}
           version: ${{ inputs.cosignVersion }}
+          workingDirectory: ./app
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2
@@ -404,6 +407,7 @@ jobs:
           tufRoot: ${{ inputs.tufRoot }}
           tufMirror: ${{ inputs.tufMirror }}
           version: ${{ inputs.cosignVersion }}
+          workingDirectory: ./app
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2
