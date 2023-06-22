@@ -11,6 +11,9 @@ inputs:
   tufMirror:
     description: "TUF Mirror URL"
     default: ""
+  workingDirectory:
+    description: "Working directory used when running cosign initialize"
+    default: ""
 
 runs:
   using: "composite"
@@ -22,5 +25,6 @@ runs:
     - name: Initialize Cosign
       if: inputs.tufMirror != '' && inputs.tufRoot != ''
       shell: bash
+      working-directory: ${{ inputs.workingDirectory }}
       run: |
         cosign initialize --mirror ${{ inputs.tufMirror }} --root ${{ inputs.tufRoot }}

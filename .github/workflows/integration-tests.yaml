@@ -31,7 +31,7 @@ jobs:
         uses: ./.github/actions/cosign
         with:
           tufMirror: "https://tuf-repo-cdn.sigstage.dev"
-          tufRoot: "test/sigstore/1.root.json"
+          tufRoot: "sigstore/staging/1.root.json"
           version: "v2.0.2"
       - name: Setup Node.js
         uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3

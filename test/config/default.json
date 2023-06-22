@@ -7,7 +7,7 @@
     },
     "tuf": {
       "mirror": "https://tuf-repo-cdn.sigstage.dev",
-      "root": "test/sigstore/1.root.json"
+      "root": "sigstore/staging/1.root.json"
     }
   }
 }
