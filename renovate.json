@@ -7,5 +7,5 @@
     ":semanticCommitScopeDisabled",
     "helpers:pinGitHubActionDigests"
   ],
-  "enabledManagers": ["github-actions"]
+  "enabledManagers": ["github-actions", "npm"]
 }
