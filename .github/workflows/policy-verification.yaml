@@ -30,18 +30,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write # required to sign attestations
-      contents: read # for reading local TUF root.json file
       packages: write # required to upload attestations to GHCR
     needs: [detect-workflow]
-    defaults:
-      run:
-        working-directory: ./app
     steps:
-      - name: Checkout App Repo
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
-        with:
-          path: app
-
       - name: Checkout Workflows Repo
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
         with:

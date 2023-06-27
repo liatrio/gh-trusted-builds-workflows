@@ -27,8 +27,7 @@ jobs:
         uses: slsa-framework/slsa-github-generator/.github/actions/detect-workflow-js@e55b76ce421082dfa4b34a6ac3c5e59de0f3bb58 # v1.7.0
 
   build:
-    permissions:
-      contents: read # required to build the container image
+    permissions: {}
     runs-on: ubuntu-latest
     outputs:
       metadata: ${{ steps.meta.outputs.json }}
@@ -68,7 +67,6 @@ jobs:
   sign:
     permissions:
       id-token: write # required to sign image
-      contents: read # for reading local TUF root.json file
       packages: write # required to upload signature to GHCR
     runs-on: ubuntu-latest
     outputs:
@@ -76,15 +74,7 @@ jobs:
     needs:
       - build
       - detect-workflow
-    defaults:
-      run:
-        working-directory: ./app
     steps:
-      - name: Checkout App Repo
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
-        with:
-          path: app
-
       - name: Checkout Workflows Repo
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
         with:
@@ -251,21 +241,12 @@ jobs:
     permissions:
       actions: read # for populating provenance: https://github.com/slsa-framework/slsa-github-generator/blob/934435652996c02a6317092984312602dfaf2a21/.github/workflows/generator_container_slsa3.yml#L122
       id-token: write # required to sign attestations
-      contents: read # for reading local TUF root.json file
       packages: write # required to upload attestations to GHCR
     runs-on: ubuntu-latest
     needs:
       - sign
       - detect-workflow
-    defaults:
-      run:
-        working-directory: ./app
     steps:
-      - name: Checkout App Repo
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
-        with:
-          path: app
-
       - name: Checkout Workflows Repo
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
         with:
@@ -329,7 +310,6 @@ jobs:
   sbom:
     permissions:
       id-token: write # used to sign attestations
-      contents: read # for reading local TUF root.json file
       packages: write # used to push attestations to GHCR
     runs-on: ubuntu-latest
     needs:
@@ -337,15 +317,7 @@ jobs:
       - sign
       - detect-workflow
       - provenance # prevent race conditions when updating attestation tag
-    defaults:
-      run:
-        working-directory: ./app
     steps:
-      - name: Checkout App Repo
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
-        with:
-          path: app
-
       - name: Checkout Workflows Repo
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
         with:
