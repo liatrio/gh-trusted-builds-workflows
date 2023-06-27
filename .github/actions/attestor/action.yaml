@@ -2,8 +2,12 @@ name: "attestor"
 description: "Installs liatrio/gh-trusted-builds-attestations tool"
 
 inputs:
+  checksum:
+    description: "expected binary checksum"
+    default: "cafabe3c52b22f87abdc53344967bbc3c676563d2434cdcb9ba0017d1559becf"
   version:
     description: "Version of the attestor to install"
+    default: "1.1.4"
   token:
     description: "GitHub token - used to download release assets"
 
@@ -20,11 +24,19 @@ runs:
           --pattern "gh-trusted-builds-attestations_${{ inputs.version }}_linux_amd64.tar.gz" "v${{ inputs.version }}"
 
         tar xvf "gh-trusted-builds-attestations_${{ inputs.version }}_linux_amd64.tar.gz"
+        rm -rf gh-trusted-builds-attestations_${{ inputs.version }}_linux_amd64
+        rm "gh-trusted-builds-attestations_${{ inputs.version }}_linux_amd64.tar.gz"
+
+        expectedChecksum=${{ inputs.checksum }}
+        actualChecksum=$(sha256sum < ./attestation | cut -d' ' -f1)
+
+        if [[ "${expectedChecksum}" != "${actualChecksum}" ]]; then
+          echo "Expected ${{ inputs.version }} to have checksum ${expectedChecksum}, but was ${actualChecksum}"
+          exit 1
+        fi
 
         mkdir -p $HOME/.bin/attestation
         mv ./attestation $HOME/.bin/attestation
-        rm -rf gh-trusted-builds-attestations_${{ inputs.version }}_linux_amd64
-        rm "gh-trusted-builds-attestations_${{ inputs.version }}_linux_amd64.tar.gz"
         
         echo "$HOME/.bin/attestation" >> $GITHUB_PATH
         $HOME/.bin/attestation/attestation version

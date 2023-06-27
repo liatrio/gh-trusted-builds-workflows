@@ -13,6 +13,8 @@ on:
         type: string
 
 env:
+  K3D_VERSION: "v5.4.9"
+  POLICY_CONTROLLER_VERSION: "0.5.8"
   DEMO_IMAGE_POLICY: |
     apiVersion: policy.sigstore.dev/v1alpha1
     kind: ClusterImagePolicy
@@ -103,16 +105,17 @@ jobs:
           path: gh-trusted-builds-workflows
           persist-credentials: false
 
-      - name: Configuration
-        id: config
-        uses: ./gh-trusted-builds-workflows/.github/actions/config
-        with:
-          environment: ${{ inputs.environment }}
-
       - name: Install Helm
         uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78 # v3
         with:
-         version: ${{ steps.config.outputs.helmVersion }}
+         version: v3.10.3
+
+      - name: Sigstore Setup
+        id: sigstore
+        uses: ./gh-trusted-builds-workflows/.github/actions/sigstore
+        with:
+          environment: ${{ inputs.environment }}
+          workingDirectory: ./gh-trusted-builds-workflows
 
       - name: Install k3s
         env:
@@ -120,7 +123,7 @@ jobs:
         run: |
           gh release download --repo k3d-io/k3d \
             --pattern k3d-linux-amd64 \
-            ${{ steps.config.outputs.k3dVersion }}
+            ${{ env.K3D_VERSION }}
           chmod +x k3d-linux-amd64
           mkdir -p $HOME/.bin/k3d
           mv k3d-linux-amd64 $HOME/.bin/k3d/k3d
@@ -149,7 +152,7 @@ jobs:
             --wait \
             --create-namespace \
             -n policy-controller \
-            --version ${{ steps.config.outputs.policyControllerVersion }} \
+            --version ${{ env.POLICY_CONTROLLER_VERSION }} \
             policy-controller sigstore/policy-controller
 
       - name: App Setup
@@ -166,11 +169,11 @@ jobs:
       - name: Create Policy
         env:
           IMAGE_REPO: ${{ github.repository }}
-          FULCIO_URL: ${{ steps.config.outputs.fulcioUrl }}
-          REKOR_URL: ${{ steps.config.outputs.rekorUrl }}
+          FULCIO_URL: ${{ steps.sigstore.outputs.fulcioUrl }}
+          REKOR_URL: ${{ steps.sigstore.outputs.rekorUrl }}
         run: |
-          tufRoot="${{ steps.config.outputs.tufRoot }}"
-          tufMirror="${{ steps.config.outputs.tufMirror }}"
+          tufRoot="${{ steps.sigstore.outputs.tufRoot }}"
+          tufMirror="${{ steps.sigstore.outputs.tufMirror }}"
 
           if [[ "${tufRoot}" && "${tufMirror}" ]]; then
             echo "Using custom TUF root"
