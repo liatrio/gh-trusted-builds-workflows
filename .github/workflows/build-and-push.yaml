@@ -156,6 +156,7 @@ jobs:
       packages: write # required to push the image to GHCR
     runs-on: ubuntu-latest
     needs:
+      - build
       - sign
       - detect-workflow
     steps:
@@ -332,7 +333,7 @@ jobs:
       packages: write # used to push attestations to GHCR
     runs-on: ubuntu-latest
     needs:
-      - sign
+      - push
       - detect-workflow
       - provenance # prevent race conditions when updating attestation tag
     defaults:
