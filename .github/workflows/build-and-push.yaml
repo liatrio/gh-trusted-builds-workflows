@@ -10,7 +10,7 @@ on:
     outputs:
       digest:
         description: "Docker image digest"
-        value: ${{ jobs.push.outputs.digest }}
+        value: ${{ jobs.digest.outputs.digest }}
 
 jobs:
   detect-workflow:
@@ -65,9 +65,8 @@ jobs:
           name: image
           path: /tmp/image.tar
 
-  push:
-    permissions:
-      packages: write # required to push the image to GHCR
+  digest:
+    permissions: {}
     runs-on: ubuntu-latest
     needs:
       - build
@@ -95,13 +94,6 @@ jobs:
           name: image
           path: /tmp
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Install Crane
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -122,53 +114,7 @@ jobs:
       - name: Compute Digest
         id: digest
         run: |
-          localDigest=$(crane digest --tarball /tmp/image.tar)
-          echo "locally-computed digest: ${localDigest}"
-          echo "digest=${localDigest}" >> $GITHUB_OUTPUT
-
-      - name: Push Image
-        id: push
-        env:
-          IMAGE_METADATA: ${{ needs.build.outputs.metadata }}
-        run: |
-          commit="${{ github.sha }}"
-          pushedImage=$(printf "${IMAGE_METADATA}" | jq --arg commit "${commit::7}" -r '.tags | .[] | select(.|endswith($commit))')
-          echo "Pushing ${pushedImage}"
-          crane push /tmp/image.tar "${pushedImage}"
-          echo "image=${pushedImage}" >> $GITHUB_OUTPUT
-
-      - name: Compare Digests
-        run: |
-          pushedImage=${{ steps.push.outputs.image }}
-          registryDigest=$(crane digest "${pushedImage}")
-          localDigest=${{ steps.digest.outputs.digest }}
-
-          if [[ "${localDigest}" == "${registryDigest}" ]]; then
-              echo "Remote digest matches digest from local registry"
-          else
-              echo "Digest in registry doesn't match expected digest"
-              echo "Locally-computed digest: ${localDigest}"
-              echo "Digest from registry: ${registryDigest}"
-              echo "This may indicate the image was modified by the registry"
-              exit 1
-          fi
-
-      - name: Add Tags
-        env:
-          IMAGE_METADATA: ${{ needs.build.outputs.metadata }}
-        run: |
-          pushedImage=${{ steps.push.outputs.image }}
-
-          # add the remaining tags, skipping the tag that was pushed initially
-          printf "${IMAGE_METADATA}" | jq -rc '.tags | .[]' | while read taggedImage; do
-            if [[ "${taggedImage}" == "${pushedImage}" ]]; then
-              continue
-            fi
-
-            tag=$(printf "${taggedImage}" | awk -F "${image}:" '{print $2}')
-            echo "adding tag ${tag}"
-            crane tag "${pushedImage}" "${tag}"
-          done
+          echo "digest=$(crane digest --tarball /tmp/image.tar)" >> $GITHUB_OUTPUT
 
   sign:
     permissions:
@@ -177,7 +123,7 @@ jobs:
       packages: write # required to upload signature to GHCR
     runs-on: ubuntu-latest
     needs:
-      - push
+      - build
       - detect-workflow
     defaults:
       run:
@@ -224,7 +170,87 @@ jobs:
               --annotations liatr.io/signed-off-by=platform-team \
               --rekor-url ${{ steps.config.outputs.rekorUrl }} \
               --fulcio-url ${{ steps.config.outputs.fulcioUrl }} \
-              --yes ghcr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
+              --yes ghcr.io/${{ github.repository }}@${{ needs.digest.outputs.digest }}
+
+  push:
+    permissions:
+      packages: write # required to push the image to GHCR
+    runs-on: ubuntu-latest
+    needs:
+      - digest
+      - detect-workflow
+    steps:
+      - name: Checkout Workflows Repo
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
+        with:
+          repository: ${{ needs.detect-workflow.outputs.repository }}
+          ref: ${{ needs.detect-workflow.outputs.ref }}
+          path: gh-trusted-builds-workflows
+          persist-credentials: false
+
+      - name: Configuration
+        id: config
+        uses: ./gh-trusted-builds-workflows/.github/actions/config
+        with:
+          environment: ${{ inputs.environment }}
+
+      - name: Download Image Archive
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
+        with:
+          name: image
+          path: /tmp
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Crane
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd $(mktemp -d)
+
+          gh release download \
+          --repo google/go-containerregistry \
+          --pattern "go-containerregistry_Linux_x86_64.tar.gz" "${{ steps.config.outputs.craneVersion }}"
+
+          tar xvf go-containerregistry_Linux_x86_64.tar.gz
+
+          mkdir -p $HOME/.bin/crane
+          mv ./crane $HOME/.bin/crane
+          echo "$HOME/.bin/crane" >> $GITHUB_PATH
+          $HOME/.bin/crane/crane version
+
+      - name: Push Image
+        id: push
+        env:
+          IMAGE_METADATA: ${{ needs.build.outputs.metadata }}
+        run: |
+          commit="${{ github.sha }}"
+          pushedImage=$(printf "${IMAGE_METADATA}" | jq --arg commit "${commit::7}" -r '.tags | .[] | select(.|endswith($commit))')
+          echo "Pushing ${pushedImage}"
+          crane push /tmp/image.tar "${pushedImage}"
+          echo "image=${pushedImage}" >> $GITHUB_OUTPUT
+
+      - name: Add Tags
+        env:
+          IMAGE_METADATA: ${{ needs.build.outputs.metadata }}
+        run: |
+          pushedImage=${{ steps.push.outputs.image }}
+
+          # add the remaining tags, skipping the tag that was pushed initially
+          printf "${IMAGE_METADATA}" | jq -rc '.tags | .[]' | while read taggedImage; do
+            if [[ "${taggedImage}" == "${pushedImage}" ]]; then
+              continue
+            fi
+
+            tag=$(printf "${taggedImage}" | awk -F "${image}:" '{print $2}')
+            echo "adding tag ${tag}"
+            crane tag "${pushedImage}" "${tag}"
+          done
 
 
   provenance:
@@ -235,7 +261,7 @@ jobs:
       packages: write # required to upload attestations to GHCR
     runs-on: ubuntu-latest
     needs:
-      - push
+      - digest
       - detect-workflow
     defaults:
       run:
@@ -303,7 +329,7 @@ jobs:
             --type slsaprovenance \
             --fulcio-url ${{ steps.config.outputs.fulcioUrl }} \
             --yes \
-            ghcr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
+            ghcr.io/${{ github.repository }}@${{ needs.digest.outputs.digest }}
 
 
   sbom:
@@ -313,7 +339,7 @@ jobs:
       packages: write # used to push attestations to GHCR
     runs-on: ubuntu-latest
     needs:
-      - push
+      - digest
       - detect-workflow
       - provenance # prevent race conditions when updating attestation tag
     defaults:
@@ -363,14 +389,14 @@ jobs:
           SYFT_FILE_METADATA_CATALOGER_ENABLED: true
           SYFT_FILE_METADATA_DIGESTS: sha256
         run: |
-          syft -o spdx-json --file sbom.spdx.json ghcr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
+          syft -o spdx-json --file sbom.spdx.json ghcr.io/${{ github.repository }}@${{ needs.digest.outputs.digest }}
 
           cosign attest --predicate="sbom.spdx.json" \
             --rekor-url ${{ steps.config.outputs.rekorUrl }} \
             --type spdxjson \
             --fulcio-url ${{ steps.config.outputs.fulcioUrl }} \
             --yes \
-            ghcr.io/${{ github.repository }}@${{ needs.push.outputs.digest }}
+            ghcr.io/${{ github.repository }}@${{ needs.digest.outputs.digest }}
 
           rm sbom.spdx.json
 
@@ -435,7 +461,7 @@ jobs:
         run: |
           attestation github-pull-request \
             --artifact-uri ghcr.io/${{ github.repository }} \
-            --artifact-digest ${{ needs.push.outputs.digest }} \
+            --artifact-digest ${{ needs.digest.outputs.digest }} \
             --rekor-url ${{ steps.config.outputs.rekorUrl }} \
             --fulcio-url ${{ steps.config.outputs.fulcioUrl }}
 
@@ -447,7 +473,7 @@ jobs:
     steps:
       - name: Create Results Metadata
         run: |
-          jq -n --arg digest ${{ needs.push.outputs.digest }} '{digest: $digest}' > /tmp/workflow-metadata.json
+          jq -n --arg digest ${{ needs.digest.outputs.digest }} '{digest: $digest}' > /tmp/workflow-metadata.json
 
       - name: Upload Workflow Metadata
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3
