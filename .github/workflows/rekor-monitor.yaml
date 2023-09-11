@@ -7,9 +7,6 @@ on:
 #  schedule:
 #    - cron: '0 * * * *' # hourly
 
-env:
-  GITHUB_ACTIONS_ISSUER: "https://token.actions.githubusercontent.com"
-
 jobs:
   run-consistency-proof:
     permissions:
@@ -24,10 +21,10 @@ jobs:
         certIdentities:
           - certSubject: ^${{ github.server_url }}/${{ github.repository }}/.\github/workflows/build-and-push\.yaml@.*
             issuers:
-              - ${{ env.GITHUB_ACTIONS_ISSUER }}
+              - https://token.actions.githubusercontent.com
           - certSubject: ^${{ github.server_url }}/${{ github.repository }}/.\github/workflows/scan-image\.yaml@.*
             issuers:
-              - ${{ env.GITHUB_ACTIONS_ISSUER }}
+              - https://token.actions.githubusercontent.com
           - certSubject: ^${{ github.server_url }}/${{ github.repository }}/.\github/workflows/policy-verification\.yaml@.*
             issuers:
-              - ${{ env.GITHUB_ACTIONS_ISSUER }}
+              - https://token.actions.githubusercontent.com
