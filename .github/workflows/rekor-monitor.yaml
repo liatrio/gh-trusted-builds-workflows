@@ -1,11 +1,8 @@
 name: Rekor Monitor
 
 on:
-  push:
-    branches:
-      - fix-rekor-monitor
-#  schedule:
-#    - cron: '0 * * * *' # hourly
+ schedule:
+   - cron: '0 * * * *' # hourly
 
 jobs:
   run-consistency-proof:
@@ -13,7 +10,7 @@ jobs:
       contents: read
       issues: write
       id-token: write
-    uses: sigstore/rekor-monitor/.github/workflows/reusable_monitoring.yml@main
+    uses: sigstore/rekor-monitor/.github/workflows/reusable_monitoring.yml@be31d0d7ff5766e27baac1f6029edc07cbf04a54
     with:
       file_issue: true
       artifact_retention_days: 14
