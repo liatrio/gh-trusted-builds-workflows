@@ -37,7 +37,7 @@ export const GitHub = () => {
   const GetPackageVersionByDigest = async (
     owner,
     packageName,
-    packageDigest
+    packageDigest,
   ) => {
     const ownerType = config.get("fixtureOwnerType");
     const getAllPackageVersionsByOwnerType = {
@@ -56,7 +56,7 @@ export const GitHub = () => {
         package_name: packageName,
         package_type: "container",
         ...parametersByOwnerType[ownerType],
-      }
+      },
     )) {
       const packageVersion = resp.data.find((pv) => pv.name === packageDigest);
       if (packageVersion !== undefined) {
@@ -145,7 +145,7 @@ export const GitHub = () => {
       owner,
       repo,
       artifact_id: workflowRunArtifacts.find(
-        (artifact) => artifact.name === "workflow-metadata"
+        (artifact) => artifact.name === "workflow-metadata",
       ).id,
       archive_format: "zip",
     });

@@ -47,7 +47,7 @@ export async function initializeSigstoreStaging() {
     await access(sigstoreDir);
 
     console.log(
-      `moving current ${sigstoreDir} directory to ${sigstoreBackupDir}`
+      `moving current ${sigstoreDir} directory to ${sigstoreBackupDir}`,
     );
     await rename(sigstoreDir, sigstoreBackupDir);
   } catch (e) {
@@ -85,7 +85,7 @@ export function verifyAttestation(
   image,
   attestationType,
   certIdentity,
-  certOidcIssuer
+  certOidcIssuer,
 ) {
   const args = [
     "verify-attestation",
