@@ -24,7 +24,7 @@ jobs:
     steps:
       - name: Detect the repository and ref
         id: detect
-        uses: slsa-framework/slsa-github-generator/.github/actions/detect-workflow-js@e55b76ce421082dfa4b34a6ac3c5e59de0f3bb58 # v1.7.0
+        uses: slsa-framework/slsa-github-generator/.github/actions/detect-workflow-js@07e64b653f10a80b6510f4568f685f8b7b9ea830 # v1.9.0
 
   scan:
     permissions:
@@ -57,7 +57,7 @@ jobs:
           environment: ${{ inputs.environment }}
 
       - name: Trivy Scan
-        uses: aquasecurity/trivy-action@41f05d9ecffa2ed3f1580af306000f734b733e54 # 0.11.2
+        uses: aquasecurity/trivy-action@062f2592684a31eb3aa050cc61e7ca1451cecd3d # 0.18.0
         with:
           image-ref: ghcr.io/${{ github.repository }}@${{ inputs.digest }}
           format: 'cosign-vuln'
@@ -75,7 +75,7 @@ jobs:
           workingDirectory: ./gh-trusted-builds-workflows
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}

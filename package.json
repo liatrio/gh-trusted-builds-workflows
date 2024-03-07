@@ -10,11 +10,11 @@
   },
   "private": true,
   "devDependencies": {
-    "@octokit/auth-app": "5.0.6",
-    "@octokit/rest": "19.0.13",
+    "@octokit/auth-app": "6.0.4",
+    "@octokit/rest": "20.0.2",
     "adm-zip": "0.5.10",
-    "async": "3.2.4",
-    "config": "3.3.9",
+    "async": "3.2.5",
+    "config": "3.3.11",
     "prettier": "3.2.5"
   }
 }
