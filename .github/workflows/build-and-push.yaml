@@ -34,7 +34,7 @@ jobs:
       metadata: ${{ steps.meta.outputs.json }}
     steps:
       - name: Checkout
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@ecf95283f03858871ff00b787d79c419715afc34 # v2
@@ -76,7 +76,7 @@ jobs:
       digest: ${{ steps.digest.outputs.digest }}
     steps:
       - name: Checkout Workflows Repo
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         with:
           repository: ${{ needs.detect-workflow.outputs.repository }}
           ref: ${{ needs.detect-workflow.outputs.ref }}
@@ -184,12 +184,12 @@ jobs:
         working-directory: ./app
     steps:
       - name: Checkout App Repo
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         with:
           path: app
 
       - name: Checkout Workflows Repo
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         with:
           repository: ${{ needs.detect-workflow.outputs.repository }}
           ref: ${{ needs.detect-workflow.outputs.ref }}
@@ -242,12 +242,12 @@ jobs:
         working-directory: ./app
     steps:
       - name: Checkout App Repo
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         with:
           path: app
 
       - name: Checkout Workflows Repo
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         with:
           repository: ${{ needs.detect-workflow.outputs.repository }}
           ref: ${{ needs.detect-workflow.outputs.ref }}
@@ -321,12 +321,12 @@ jobs:
         working-directory: ./app
     steps:
       - name: Checkout App Repo
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         with:
           path: app
 
       - name: Checkout Workflows Repo
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         with:
           repository: ${{ needs.detect-workflow.outputs.repository }}
           ref: ${{ needs.detect-workflow.outputs.ref }}
@@ -390,12 +390,12 @@ jobs:
         working-directory: ./app
     steps:
       - name: Checkout App Repo
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         with:
           path: app
 
       - name: Checkout Workflows Repo
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         with:
           repository: ${{ needs.detect-workflow.outputs.repository }}
           ref: ${{ needs.detect-workflow.outputs.ref }}
