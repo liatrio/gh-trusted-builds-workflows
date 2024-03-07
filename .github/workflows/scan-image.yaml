@@ -57,7 +57,7 @@ jobs:
           environment: ${{ inputs.environment }}
 
       - name: Trivy Scan
-        uses: aquasecurity/trivy-action@41f05d9ecffa2ed3f1580af306000f734b733e54 # 0.11.2
+        uses: aquasecurity/trivy-action@062f2592684a31eb3aa050cc61e7ca1451cecd3d # 0.18.0
         with:
           image-ref: ghcr.io/${{ github.repository }}@${{ inputs.digest }}
           format: 'cosign-vuln'
