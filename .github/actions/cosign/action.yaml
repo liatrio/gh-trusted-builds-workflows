@@ -4,7 +4,7 @@ description: "Setups cosign with a custom TUF mirror"
 inputs:
   version:
     description: "Cosign version to install"
-    default: "v2.0.2"
+    default: "v2.2.3"
   tufRoot:
     description: "TUF trusted root file"
     default: ""
