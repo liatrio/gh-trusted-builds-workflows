@@ -32,7 +32,7 @@ jobs:
         with:
           tufMirror: "https://tuf-repo-cdn.sigstage.dev"
           tufRoot: "sigstore/staging/1.root.json"
-          version: "v2.0.2"
+          version: "v2.2.3"
       - name: Setup Node.js
         uses: actions/setup-node@e33196f7422957bea03ed53f6fbb155025ffc7b8 # v3
         with:
