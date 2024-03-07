@@ -7,5 +7,21 @@
     ":semanticCommitScopeDisabled",
     "helpers:pinGitHubActionDigests"
   ],
-  "enabledManagers": ["github-actions", "npm"]
+  "packageRules": [
+    {
+      "matchDatasources": ["helm"],
+      "registryUrls": [
+        "https://sigstore.github.io/helm-charts"
+      ]
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": [".github/actions/config/action.yaml"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>.*?)\\s+depName=(?<depName>.*?)\\s+value:\\s?\"(?<currentValue>.*)\""
+      ]
+    }
+  ]
 }
