@@ -34,7 +34,7 @@ jobs:
           tufRoot: "sigstore/staging/1.root.json"
           version: "v2.2.3"
       - name: Setup Node.js
-        uses: actions/setup-node@e33196f7422957bea03ed53f6fbb155025ffc7b8 # v3
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4
         with:
           node-version-file: '.nvmrc'
       - name: Install NPM Dependencies
