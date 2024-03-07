@@ -14,7 +14,7 @@
     "@octokit/rest": "19.0.13",
     "adm-zip": "0.5.10",
     "async": "3.2.5",
-    "config": "3.3.9",
+    "config": "3.3.11",
     "prettier": "3.2.5"
   }
 }
