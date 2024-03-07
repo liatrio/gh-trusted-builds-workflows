@@ -9,7 +9,7 @@ inputs:
 outputs:
   attestorVersion:
     description: "liatrio/gh-trusted-builds-attestations version"
-    value: "1.1.4"
+    value: "1.1.5"
   cosignVersion:
     description: "Sigstore cosign version"
     value: "v2.2.3"
