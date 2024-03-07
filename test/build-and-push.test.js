@@ -45,7 +45,7 @@ describe("build and push workflow", () => {
         owner,
         repo,
         hexTimestamp,
-        mainBranch.commit.sha
+        mainBranch.commit.sha,
       );
 
       console.log(`created branch ${hexTimestamp}`);
@@ -100,7 +100,7 @@ describe("build and push workflow", () => {
       });
       if (workflowRun === null) {
         assert.fail(
-          "did not find workflow run for build-and-push pull-request merge"
+          "did not find workflow run for build-and-push pull-request merge",
         );
       }
       console.log(`found workflow run ${workflowRun.id}`);
@@ -130,14 +130,14 @@ describe("build and push workflow", () => {
       const packageVersion = await github.GetPackageVersionByDigest(
         owner,
         repo,
-        digest
+        digest,
       );
 
       assert(
         packageVersion.metadata.container.tags.some((t) =>
-          merge.sha.startsWith(t)
+          merge.sha.startsWith(t),
         ),
-        "missing git short commit tag"
+        "missing git short commit tag",
       );
 
       const movingTags = ["main", "latest"];
@@ -151,7 +151,7 @@ describe("build and push workflow", () => {
         `ghcr.io/${owner}/${repo}@${runMetadata.digest}`,
         "spdxjson",
         "^https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/.*.yaml@.*",
-        "https://token.actions.githubusercontent.com"
+        "https://token.actions.githubusercontent.com",
       );
       assert.equal(result.status, 0, result.err);
     });
@@ -161,7 +161,7 @@ describe("build and push workflow", () => {
         `ghcr.io/${owner}/${repo}@${runMetadata.digest}`,
         "https://liatr.io/attestations/github-pull-request/v1",
         "^https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/.*.yaml@.*",
-        "https://token.actions.githubusercontent.com"
+        "https://token.actions.githubusercontent.com",
       );
 
       assert.equal(result.status, 0, result.err);
@@ -172,7 +172,7 @@ describe("build and push workflow", () => {
         `ghcr.io/${owner}/${repo}@${runMetadata.digest}`,
         "slsaprovenance",
         "^https://github.com/liatrio/gh-trusted-builds-workflows/.github/workflows/.*.yaml@.*",
-        "https://token.actions.githubusercontent.com"
+        "https://token.actions.githubusercontent.com",
       );
       assert.equal(result.status, 0, result.err);
     });
