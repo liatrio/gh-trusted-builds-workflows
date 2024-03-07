@@ -44,7 +44,7 @@ outputs:
   syftVersion:
     description: "Anchore syft version"
     # renovate: datasource=github-releases depName=anchore/syft
-    value: "v0.82.0"
+    value: "v0.105.1"
   tufMirror:
     description: "cosign TUF root mirror URL"
     value: "${{ steps.config.outputs.tufMirror }}"
