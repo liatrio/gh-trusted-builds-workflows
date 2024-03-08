@@ -29,7 +29,7 @@ outputs:
   k3dVersion:
     description: "k3d version"
     # renovate: datasource=github-releases depName=k3d-io/k3d
-    value: "v5.4.9"
+    value: "v5.6.0"
   policyControllerVersion:
     description: "Policy controller Helm chart version"
     # renovate: datasource=helm depName=policy-controller
