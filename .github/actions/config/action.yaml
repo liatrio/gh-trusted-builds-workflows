@@ -33,7 +33,7 @@ outputs:
   policyControllerVersion:
     description: "Policy controller Helm chart version"
     # renovate: datasource=helm depName=policy-controller
-    value: "0.5.8"
+    value: "0.6.8"
   rekorUrl:
     description: "Sigstore Rekor URL. Defaults to the production public good instance"
     value: "${{ steps.config.outputs.rekorUrl }}"
