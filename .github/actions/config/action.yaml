@@ -25,7 +25,7 @@ outputs:
   helmVersion:
     description: "Helm version"
     # renovate: datasource=github-releases depName=helm/helm
-    value: "v3.10.3"
+    value: "v3.14.3"
   k3dVersion:
     description: "k3d version"
     # renovate: datasource=github-releases depName=k3d-io/k3d
