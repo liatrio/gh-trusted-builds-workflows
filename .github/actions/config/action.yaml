@@ -30,6 +30,10 @@ outputs:
     description: "k3d version"
     # renovate: datasource=github-releases depName=k3d-io/k3d
     value: "v5.6.0"
+  policyVersion:
+    description: "Rego policy version used to create the verification summary attestation"
+    # renovate: datasource=github-releases depName=liatrio/gh-trusted-builds-policy
+    value: "v1.4.1"
   policyControllerVersion:
     description: "Policy controller Helm chart version"
     # renovate: datasource=helm depName=policy-controller
