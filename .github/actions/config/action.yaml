@@ -10,7 +10,7 @@ outputs:
   attestorVersion:
     description: "liatrio/gh-trusted-builds-attestations version"
     # renovate: datasource=github-releases depName=liatrio/gh-trusted-builds-attestations
-    value: "1.1.5"
+    value: "1.1.7"
   cosignVersion:
     description: "Sigstore cosign version"
     # renovate: datasource=github-releases depName=sigstore/cosign
