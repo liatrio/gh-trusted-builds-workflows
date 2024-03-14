@@ -10,7 +10,7 @@ outputs:
   attestorVersion:
     description: "liatrio/gh-trusted-builds-attestations version"
     # renovate: datasource=github-releases depName=liatrio/gh-trusted-builds-attestations
-    value: "1.1.5"
+    value: "1.1.7"
   cosignVersion:
     description: "Sigstore cosign version"
     # renovate: datasource=github-releases depName=sigstore/cosign
@@ -18,33 +18,33 @@ outputs:
   craneVersion:
     description: "google/go-containerregistry crane version"
     # renovate: datasource=github-releases depName=google/go-containerregistry
-    value: "v0.15.2"
+    value: "v0.19.0"
   fulcioUrl:
     description: "Sigstore Fulcio URL. Defaults to the production public good instance"
     value: "${{ steps.config.outputs.fulcioUrl }}"
   helmVersion:
     description: "Helm version"
     # renovate: datasource=github-releases depName=helm/helm
-    value: "v3.10.3"
+    value: "v3.14.3"
   k3dVersion:
     description: "k3d version"
     # renovate: datasource=github-releases depName=k3d-io/k3d
-    value: "v5.4.9"
+    value: "v5.6.0"
   policyControllerVersion:
     description: "Policy controller Helm chart version"
     # renovate: datasource=helm depName=policy-controller
-    value: "0.5.8"
+    value: "0.6.8"
   rekorUrl:
     description: "Sigstore Rekor URL. Defaults to the production public good instance"
     value: "${{ steps.config.outputs.rekorUrl }}"
   slsaGeneratorVersion:
     description: "SLSA container provenance generator version"
     # renovate: datasource=github-releases depName=slsa-framework/slsa-github-generator
-    value: "1.6.0"
+    value: "1.9.0"
   syftVersion:
     description: "Anchore syft version"
     # renovate: datasource=github-releases depName=anchore/syft
-    value: "v0.82.0"
+    value: "v1.0.1"
   tufMirror:
     description: "cosign TUF root mirror URL"
     value: "${{ steps.config.outputs.tufMirror }}"
