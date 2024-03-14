@@ -33,7 +33,7 @@ outputs:
   policyVersion:
     description: "Rego policy version used to create the verification summary attestation"
     # renovate: datasource=github-releases depName=liatrio/gh-trusted-builds-policy
-    value: "v1.4.1"
+    value: "v1.4.2"
   policyControllerVersion:
     description: "Policy controller Helm chart version"
     # renovate: datasource=helm depName=policy-controller
