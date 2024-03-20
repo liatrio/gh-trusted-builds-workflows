@@ -156,6 +156,7 @@ jobs:
       packages: write # required to push the image to GHCR
     runs-on: ubuntu-latest
     needs:
+      - build
       - sign
       - detect-workflow
     steps:
