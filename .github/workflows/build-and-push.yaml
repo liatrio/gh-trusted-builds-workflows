@@ -120,6 +120,23 @@ jobs:
           version: ${{ steps.config.outputs.cosignVersion }}
           workingDirectory: ./gh-trusted-builds-workflows
 
+      - name: Install Crane
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd $(mktemp -d)
+
+          gh release download \
+          --repo google/go-containerregistry \
+          --pattern "go-containerregistry_Linux_x86_64.tar.gz" "${{ steps.config.outputs.craneVersion }}"
+
+          tar xvf go-containerregistry_Linux_x86_64.tar.gz
+
+          mkdir -p $HOME/.bin/crane
+          mv ./crane $HOME/.bin/crane
+          echo "$HOME/.bin/crane" >> $GITHUB_PATH
+          $HOME/.bin/crane/crane version
+
       - name: Compute Digest
         id: digest
         run: |
