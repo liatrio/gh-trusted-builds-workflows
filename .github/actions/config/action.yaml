@@ -44,7 +44,7 @@ outputs:
   slsaGeneratorVersion:
     description: "SLSA container provenance generator version"
     # renovate: datasource=github-releases depName=slsa-framework/slsa-github-generator
-    value: "1.9.0"
+    value: "1.10.0"
   syftVersion:
     description: "Anchore syft version"
     # renovate: datasource=github-releases depName=anchore/syft
