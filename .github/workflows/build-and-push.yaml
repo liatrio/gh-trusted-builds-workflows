@@ -251,13 +251,13 @@ jobs:
         with:
           path: app
 
-      # - name: Checkout Workflows Repo
-      #   uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-      #   with:
-      #     repository: ${{ needs.detect-workflow.outputs.repository }}
-      #     ref: ${{ needs.detect-workflow.outputs.ref }}
-      #     path: gh-trusted-builds-workflows
-      #     persist-credentials: false
+      - name: Checkout Workflows Repo
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        with:
+          repository: ${{ needs.detect-workflow.outputs.repository }}
+          ref: ${{ needs.detect-workflow.outputs.ref }}
+          path: gh-trusted-builds-workflows
+          persist-credentials: false
 
       - name: Configuration
         id: config
