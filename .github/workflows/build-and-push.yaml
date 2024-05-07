@@ -251,13 +251,13 @@ jobs:
         with:
           path: app
 
-      - name: Checkout Workflows Repo
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-        with:
-          repository: ${{ needs.detect-workflow.outputs.repository }}
-          ref: ${{ needs.detect-workflow.outputs.ref }}
-          path: gh-trusted-builds-workflows
-          persist-credentials: false
+      # - name: Checkout Workflows Repo
+      #   uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      #   with:
+      #     repository: ${{ needs.detect-workflow.outputs.repository }}
+      #     ref: ${{ needs.detect-workflow.outputs.ref }}
+      #     path: gh-trusted-builds-workflows
+      #     persist-credentials: false
 
       - name: Configuration
         id: config
@@ -265,34 +265,34 @@ jobs:
         with:
           environment: ${{ inputs.environment }}
 
-      - name: Download SLSA Generator
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release download \
-            --repo slsa-framework/slsa-github-generator \
-            --pattern slsa-generator-container-linux-amd64 "v${{ steps.config.outputs.slsaGeneratorVersion }}"
+      # - name: Download SLSA Generator
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   run: |
+      #     gh release download \
+      #       --repo slsa-framework/slsa-github-generator \
+      #       --pattern slsa-generator-container-linux-amd64 "v${{ steps.config.outputs.slsaGeneratorVersion }}"
 
-          chmod +x slsa-generator-container-linux-amd64
-          ./slsa-generator-container-linux-amd64 --help
+      #     chmod +x slsa-generator-container-linux-amd64
+      #     ./slsa-generator-container-linux-amd64 --help
 
-          mkdir -p $HOME/.bin/slsa-generator-container
-          mv ./slsa-generator-container-linux-amd64 $HOME/.bin/slsa-generator-container/slsa-generator-container
-          echo "$HOME/.bin/slsa-generator-container" >> $GITHUB_PATH
+      #     mkdir -p $HOME/.bin/slsa-generator-container
+      #     mv ./slsa-generator-container-linux-amd64 $HOME/.bin/slsa-generator-container/slsa-generator-container
+      #     echo "$HOME/.bin/slsa-generator-container" >> $GITHUB_PATH
 
-      - name: Generate Provenance
-        env:
-          GITHUB_CONTEXT: "${{ toJSON(github) }}"
-        run: |
-          slsa-generator-container generate --predicate predicate.json
+      # - name: Generate Provenance
+      #   env:
+      #     GITHUB_CONTEXT: "${{ toJSON(github) }}"
+      #   run: |
+      #     slsa-generator-container generate --predicate predicate.json
 
-      - name: Cosign Setup
-        uses: ./gh-trusted-builds-workflows/.github/actions/cosign
-        with:
-          tufRoot: ${{ steps.config.outputs.tufRoot }}
-          tufMirror: ${{ steps.config.outputs.tufMirror }}
-          version: ${{ steps.config.outputs.cosignVersion }}
-          workingDirectory: ./gh-trusted-builds-workflows
+      # - name: Cosign Setup
+      #   uses: ./gh-trusted-builds-workflows/.github/actions/cosign
+      #   with:
+      #     tufRoot: ${{ steps.config.outputs.tufRoot }}
+      #     tufMirror: ${{ steps.config.outputs.tufMirror }}
+      #     version: ${{ steps.config.outputs.cosignVersion }}
+      #     workingDirectory: ./gh-trusted-builds-workflows
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3
@@ -301,14 +301,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Attest Provenance
-        run: |
-          cosign attest --predicate="predicate.json" \
-            --rekor-url ${{ steps.config.outputs.rekorUrl }} \
-            --type slsaprovenance \
-            --fulcio-url ${{ steps.config.outputs.fulcioUrl }} \
-            --yes \
-            ghcr.io/${{ github.repository }}@${{ needs.sign.outputs.digest }}
+      - name: Attest
+        uses: actions/attest-build-provenance@v1
+        id: attest
+        with:
+          subject-name: ghcr.io/${{ github.repository }}
+          subject-digest: ${{ needs.sign.outputs.digest }}
+          push-to-registry: true
+
+      # - name: Attest Provenance
+      #   run: |
+      #     cosign attest --predicate="predicate.json" \
+      #       --rekor-url ${{ steps.config.outputs.rekorUrl }} \
+      #       --type slsaprovenance \
+      #       --fulcio-url ${{ steps.config.outputs.fulcioUrl }} \
+      #       --yes \
+      #       ghcr.io/${{ github.repository }}@${{ needs.sign.outputs.digest }}
 
 
   sbom:
@@ -330,27 +338,27 @@ jobs:
         with:
           path: app
 
-      - name: Checkout Workflows Repo
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-        with:
-          repository: ${{ needs.detect-workflow.outputs.repository }}
-          ref: ${{ needs.detect-workflow.outputs.ref }}
-          path: gh-trusted-builds-workflows
-          persist-credentials: false
+  #     - name: Checkout Workflows Repo
+  #       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+  #       with:
+  #         repository: ${{ needs.detect-workflow.outputs.repository }}
+  #         ref: ${{ needs.detect-workflow.outputs.ref }}
+  #         path: gh-trusted-builds-workflows
+  #         persist-credentials: false
 
-      - name: Configuration
-        id: config
-        uses: ./gh-trusted-builds-workflows/.github/actions/config
-        with:
-          environment: ${{ inputs.environment }}
+  #     - name: Configuration
+  #       id: config
+  #       uses: ./gh-trusted-builds-workflows/.github/actions/config
+  #       with:
+  #         environment: ${{ inputs.environment }}
 
-      - name: Cosign Setup
-        uses: ./gh-trusted-builds-workflows/.github/actions/cosign
-        with:
-          tufRoot: ${{ steps.config.outputs.tufRoot }}
-          tufMirror: ${{ steps.config.outputs.tufMirror }}
-          version: ${{ steps.config.outputs.cosignVersion }}
-          workingDirectory: ./gh-trusted-builds-workflows
+  #     - name: Cosign Setup
+  #       uses: ./gh-trusted-builds-workflows/.github/actions/cosign
+  #       with:
+  #         tufRoot: ${{ steps.config.outputs.tufRoot }}
+  #         tufMirror: ${{ steps.config.outputs.tufMirror }}
+  #         version: ${{ steps.config.outputs.cosignVersion }}
+  #         workingDirectory: ./gh-trusted-builds-workflows
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3
@@ -370,14 +378,24 @@ jobs:
         run: |
           syft -o spdx-json --file sbom.spdx.json ghcr.io/${{ github.repository }}@${{ needs.sign.outputs.digest }}
 
-          cosign attest --predicate="sbom.spdx.json" \
-            --rekor-url ${{ steps.config.outputs.rekorUrl }} \
-            --type spdxjson \
-            --fulcio-url ${{ steps.config.outputs.fulcioUrl }} \
-            --yes \
-            ghcr.io/${{ github.repository }}@${{ needs.sign.outputs.digest }}
+      - name: Attest
+        uses: actions/attest-sbom@v1
+        id: attest
+        with:
+          subject-name: ghcr.io/${{ github.repository }}
+          subject-digest: ${{ needs.sign.outputs.digest }}
+          sbom-path: 'sbom.cyclonedx.json'
+          push-to-registry: true
 
-          rm sbom.spdx.json
+
+  #         cosign attest --predicate="sbom.spdx.json" \
+  #           --rekor-url ${{ steps.config.outputs.rekorUrl }} \
+  #           --type spdxjson \
+  #           --fulcio-url ${{ steps.config.outputs.fulcioUrl }} \
+  #           --yes \
+  #           ghcr.io/${{ github.repository }}@${{ needs.sign.outputs.digest }}
+
+  #         rm sbom.spdx.json
 
   source-attestations:
     permissions:
