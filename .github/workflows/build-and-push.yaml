@@ -389,7 +389,7 @@ jobs:
         with:
           subject-name: ghcr.io/${{ github.repository }}
           subject-digest: ${{ needs.sign.outputs.digest }}
-          sbom-path: 'ssbom.spdx.json'
+          sbom-path: 'sbom.spdx.json'
           push-to-registry: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
