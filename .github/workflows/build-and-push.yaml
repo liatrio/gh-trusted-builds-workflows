@@ -238,6 +238,7 @@ jobs:
       id-token: write # required to sign attestations
       contents: read # for reading local TUF root.json file
       packages: write # required to upload attestations to GHCR
+      attestations: write
     runs-on: ubuntu-latest
     needs:
       - sign
@@ -327,6 +328,7 @@ jobs:
       id-token: write # used to sign attestations
       contents: read # for reading local TUF root.json file
       packages: write # used to push attestations to GHCR
+      attestations: write
     runs-on: ubuntu-latest
     needs:
       - sign
