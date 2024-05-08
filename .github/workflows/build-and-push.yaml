@@ -245,6 +245,8 @@ jobs:
     defaults:
       run:
         working-directory: ./app
+    env:
+      ACTIONS_STEP_DEBUG: true
     steps:
       - name: Checkout App Repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
