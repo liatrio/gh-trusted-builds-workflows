@@ -308,6 +308,7 @@ jobs:
           subject-name: ghcr.io/${{ github.repository }}
           subject-digest: ${{ needs.sign.outputs.digest }}
           push-to-registry: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       # - name: Attest Provenance
       #   run: |
@@ -386,6 +387,7 @@ jobs:
           subject-digest: ${{ needs.sign.outputs.digest }}
           sbom-path: 'sbom.cyclonedx.json'
           push-to-registry: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
 
   #         cosign attest --predicate="sbom.spdx.json" \
