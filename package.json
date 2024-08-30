@@ -12,7 +12,7 @@
   "devDependencies": {
     "@octokit/auth-app": "6.0.4",
     "@octokit/rest": "20.0.2",
-    "adm-zip": "0.5.10",
+    "adm-zip": "0.5.16",
     "async": "3.2.5",
     "config": "3.3.11",
     "prettier": "3.2.5"
