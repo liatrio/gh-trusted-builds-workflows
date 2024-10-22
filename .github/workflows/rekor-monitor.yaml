@@ -10,7 +10,7 @@ jobs:
       contents: read
       issues: write
       id-token: write
-    uses: sigstore/rekor-monitor/.github/workflows/reusable_monitoring.yml@be31d0d7ff5766e27baac1f6029edc07cbf04a54
+    uses: sigstore/rekor-monitor/.github/workflows/reusable_monitoring.yml@d7458ab1ec52524bf11057d4c2e38bf07b6a5a5c
     with:
       file_issue: true
       artifact_retention_days: 14
